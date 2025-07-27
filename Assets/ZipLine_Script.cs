@@ -25,11 +25,12 @@ public class ZipLine_Script : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        _is_active = true;
+        _is_active = false;
         _is_attached = false;
         _forward = true;
         atachment_point.transform.position = start_point.transform.position;
         direction = end_point.transform.position - start_point.transform.position;
+        direction.Normalize();
     }
 
     // Update is called once per frame
