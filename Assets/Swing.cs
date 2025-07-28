@@ -9,7 +9,7 @@ public class Swing : MonoBehaviour
     public Rigidbody2D RigidBody;
     public LineRenderer LineRenderer;
     public Transform TailOrigin;
-    public ScriptableStats ScriptableStats;
+    public float GravityMultipler = 1;
 
     [Header("Input")]
     public float MaxTailLength = 15f;
@@ -101,7 +101,7 @@ public class Swing : MonoBehaviour
         RigidBody.AddForce(forceDirection * SwingForce);
 
         // Gravity
-        RigidBody.AddForce(Vector2.down * ScriptableStats.FallAcceleration);
+        RigidBody.AddForce(Vector2.down * GravityMultipler);
     }
 
     void HandleWebRelease()
