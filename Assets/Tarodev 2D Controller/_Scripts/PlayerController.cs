@@ -13,8 +13,11 @@ namespace TarodevController
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
     public class PlayerController : MonoBehaviour, IPlayerController
     {
-        [SerializeField] private ScriptableStats _stats;
-        private Rigidbody2D _rb;
+        [Header("Input")]
+        public ScriptableStats _stats;
+        public Swing SwingScript;
+
+        private Rigidbody2D _RigidBody;
         private CapsuleCollider2D _col;
         private FrameInput _frameInput;
         private Vector2 _frameVelocity;
@@ -32,7 +35,7 @@ namespace TarodevController
 
         private void Awake()
         {
-            _rb = GetComponent<Rigidbody2D>();
+            _RigidBody = GetComponent<Rigidbody2D>();
             _col = GetComponent<CapsuleCollider2D>();
 
             _cachedQueryStartInColliders = Physics2D.queriesStartInColliders;
@@ -40,11 +43,28 @@ namespace TarodevController
 
         private void Update()
         {
+            if (SwingScript.IsSwinging)
+                return;
+
             _time += Time.deltaTime;
             GatherInput();
         }
 
-        private void GatherInput()
+		private void FixedUpdate()
+		{
+            if (SwingScript.IsSwinging)
+                return;
+
+			CheckCollisions();
+
+			HandleJump();
+			HandleDirection();
+			HandleGravity();
+
+			ApplyMovement();
+		}
+
+		private void GatherInput()
         {
             _frameInput = new FrameInput
             {
@@ -64,17 +84,6 @@ namespace TarodevController
                 _jumpToConsume = true;
                 _timeJumpWasPressed = _time;
             }
-        }
-
-        private void FixedUpdate()
-        {
-            CheckCollisions();
-
-            HandleJump();
-            HandleDirection();
-            HandleGravity();
-            
-            ApplyMovement();
         }
 
         #region Collisions
@@ -129,7 +138,7 @@ namespace TarodevController
 
         private void HandleJump()
         {
-            if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _rb.linearVelocity.y > 0) _endedJumpEarly = true;
+            if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _RigidBody.linearVelocity.y > 0) _endedJumpEarly = true;
 
             if (!_jumpToConsume && !HasBufferedJump) return;
 
@@ -185,7 +194,7 @@ namespace TarodevController
 
         #endregion
 
-        private void ApplyMovement() => _rb.linearVelocity = _frameVelocity;
+        private void ApplyMovement() => _RigidBody.linearVelocity = _frameVelocity;
 
 #if UNITY_EDITOR
         private void OnValidate()
