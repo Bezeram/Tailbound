@@ -17,5 +17,5 @@ MonoBehaviour:
   SwingForce: 0.14
   NormalJumpForce: 0
   GravityMultiplier: 1.47
-  MaxTailLength: 15
+  MaxTailLength: 4
   MinTailLength: 2
