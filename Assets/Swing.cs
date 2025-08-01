@@ -10,6 +10,7 @@ public class Swing : MonoBehaviour
     public LineRenderer LineRenderer;
     public Transform TailOrigin;
     public float GravityMultipler = 1;
+    public PlayerController PlayerControllerScript;
 
     [Header("Input")]
     public float MaxTailLength = 15f;
@@ -111,6 +112,10 @@ public class Swing : MonoBehaviour
         IsSwinging = false;
         RigidBody.linearDamping = 0f;
         ApplyReleaseJump();
+
+        // Make sure the normal movement script inherits the velocity left over
+        // from this script.
+        PlayerControllerScript.InheritVelocity(RigidBody.linearVelocity);
     }
 
     void ApplyReleaseJump()

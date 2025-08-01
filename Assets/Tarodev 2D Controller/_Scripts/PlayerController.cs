@@ -64,6 +64,11 @@ namespace TarodevController
 			ApplyMovement();
 		}
 
+        public void InheritVelocity(Vector2 velocity)
+        {
+            _frameVelocity = velocity;
+        }
+
 		private void GatherInput()
         {
             _frameInput = new FrameInput
