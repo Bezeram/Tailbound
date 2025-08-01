@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc541b3c391597a478ec5a98744fe9e0, type: 3}
+  m_Name: Tail Settings
+  m_EditorClassIdentifier: 
+  frequency: 2.59
+  dampingRatio: 0.5
+  SwingForce: 0.14
+  NormalJumpForce: 0
+  GravityMultiplier: 1.47
+  MaxTailLength: 15
+  MinTailLength: 2
