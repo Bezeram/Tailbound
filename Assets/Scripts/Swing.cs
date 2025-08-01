@@ -1,4 +1,3 @@
-using NUnit.Framework.Constraints;
 using TarodevController;
 using UnityEngine;
 
@@ -9,22 +8,16 @@ public class Swing : MonoBehaviour
     public Rigidbody2D RigidBody;
     public LineRenderer LineRenderer;
     public Transform TailOrigin;
-    public float GravityMultipler = 1;
     public PlayerController PlayerControllerScript;
-
-    [Header("Input")]
-    public float MaxTailLength = 15f;
-    public float MinTailLength = 2f;
-    public float SwingForce = 1f;
-    public float NormalJumpForce = 7f;
+    public ScriptableTail TailSettings;
 
     [Header("Info")]
     public bool IsSwinging = false;
     public Vector2 SwingDirection = Vector2.zero;
 
-    private DistanceJoint2D _TailJoint;
+    private SpringJoint2D _TailJoint;
     private Vector2 _TailAttachPoint;
-    private KeyCode _SwingKey = KeyCode.X;
+    private readonly KeyCode _SwingKey = KeyCode.X;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -37,9 +30,9 @@ public class Swing : MonoBehaviour
         if (_TailJoint != null)
             HandleSwinging();
         if (Input.GetKeyDown(_SwingKey))
-            HandleWebShooting();
+            HandleTailUse();
         if (Input.GetKeyUp(_SwingKey) && _TailJoint != null)
-            HandleWebRelease();
+            HandleTailRelease();
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -47,13 +40,13 @@ public class Swing : MonoBehaviour
         if (IsSwinging)
         {
             Destroy(_TailJoint);
-            ClearWebLine();
+            ClearTailLine();
             IsSwinging = false;
             RigidBody.linearDamping = 0f;
         }
     }
 
-    void HandleWebShooting()
+    void HandleTailUse()
     {
         // Find swing direction
         SwingDirection = Vector2.zero;
@@ -68,12 +61,12 @@ public class Swing : MonoBehaviour
 
         if (SwingDirection != Vector2.zero)
         {
-            RaycastHit2D hit = Physics2D.Raycast(TailOrigin.position, SwingDirection.normalized, MaxTailLength, Attachable);
+            RaycastHit2D hit = Physics2D.Raycast(TailOrigin.position, SwingDirection.normalized, TailSettings.MaxTailLength, Attachable);
             if (hit.collider != null)
             {
                 float distanceToTarget = Vector2.Distance(TailOrigin.position, hit.point);
 
-                if (distanceToTarget < MinTailLength)
+                if (distanceToTarget < TailSettings.MinTailLength)
                 {
                     return;
                 }
@@ -89,26 +82,34 @@ public class Swing : MonoBehaviour
 
     void AttachWeb(Vector2 attachPoint)
     {
-        _TailJoint = gameObject.AddComponent<DistanceJoint2D>();
-        _TailJoint.connectedAnchor = attachPoint;
+        _TailJoint = gameObject.AddComponent<SpringJoint2D>();
+
+        // Configure spring joint
         _TailJoint.autoConfigureDistance = false;
-        _TailJoint.distance = Vector2.Distance(TailOrigin.position, attachPoint);
+        _TailJoint.connectedAnchor = attachPoint;
+
+        float distanceFromPoint = Vector2.Distance(TailOrigin.position, attachPoint);
+        _TailJoint.distance = distanceFromPoint;
         _TailJoint.enableCollision = true;
+
+        // Adjust spring settings
+        _TailJoint.frequency = TailSettings.frequency;
+        _TailJoint.dampingRatio = TailSettings.dampingRatio;
     }
 
     void HandleSwinging()
     {
         Vector2 forceDirection = new Vector2(Input.GetAxis("Horizontal"), 0);
-        RigidBody.AddForce(forceDirection * SwingForce);
+        RigidBody.AddForce(forceDirection * TailSettings.SwingForce);
 
         // Gravity
-        RigidBody.AddForce(Vector2.down * GravityMultipler);
+        RigidBody.AddForce(Vector2.down * TailSettings.GravityMultiplier);
     }
 
-    void HandleWebRelease()
+    void HandleTailRelease()
     {
         Destroy(_TailJoint);
-        ClearWebLine();
+        ClearTailLine();
         IsSwinging = false;
         RigidBody.linearDamping = 0f;
         ApplyReleaseJump();
@@ -120,7 +121,7 @@ public class Swing : MonoBehaviour
 
     void ApplyReleaseJump()
     {
-        Vector2 jumpForce = new Vector2(RigidBody.linearVelocityX, NormalJumpForce);
+        Vector2 jumpForce = new Vector2(RigidBody.linearVelocityX, TailSettings.NormalJumpForce);
         RigidBody.AddForce(jumpForce, ForceMode2D.Impulse);
     }
 
@@ -131,7 +132,7 @@ public class Swing : MonoBehaviour
         LineRenderer.SetPosition(1, _TailAttachPoint);
     }
 
-    void ClearWebLine()
+    void ClearTailLine()
     {
         LineRenderer.positionCount = 0;
     }
