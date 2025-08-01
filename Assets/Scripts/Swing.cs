@@ -61,15 +61,15 @@ public class Swing : MonoBehaviour
 
         if (SwingDirection != Vector2.zero)
         {
-            RaycastHit2D hit = Physics2D.Raycast(TailOrigin.position, SwingDirection.normalized, TailSettings.MaxTailLength, Attachable);
+            float castRadius = 0.4f * TailSettings.MaxTailLength;
+            RaycastHit2D hit = Physics2D.CircleCast(TailOrigin.position, castRadius, SwingDirection.normalized, 
+                TailSettings.MaxTailLength, Attachable);
             if (hit.collider != null)
             {
-                float distanceToTarget = Vector2.Distance(TailOrigin.position, hit.point);
+                float distanceToTarget = Vector2.Distance(TailOrigin.position, hit.point);  
 
                 if (distanceToTarget < TailSettings.MinTailLength)
-                {
                     return;
-                }
 
                 _TailAttachPoint = hit.point;
                 AttachWeb(_TailAttachPoint);
