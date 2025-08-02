@@ -1,0 +1,66 @@
+using System.Drawing;
+using UnityEngine;
+
+[ExecuteAlways]
+public class Screen : MonoBehaviour
+{
+    private LineRenderer[] lineRenderers = new LineRenderer[4];
+    public Vector2 size;
+    void OnValidate()
+    {
+        EnsureLinesExist();
+        UpdateLinePositions();
+    }
+
+    void EnsureLinesExist()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            if (lineRenderers[i] == null)
+            {
+                // Try to find an existing BoundLine_i child
+                Transform existingChild = transform.Find("BoundLine_" + i);
+                if (existingChild != null)
+                {
+                    lineRenderers[i] = existingChild.GetComponent<LineRenderer>();
+                    if (lineRenderers[i] != null)
+                        continue;
+                }
+
+                // Otherwise, create a new one
+                GameObject lineObj = new GameObject("BoundLine_" + i);
+                lineObj.transform.SetParent(this.transform, false);
+
+                var lr = lineObj.AddComponent<LineRenderer>();
+                lineRenderers[i] = lr;
+
+                // Configure line renderer
+                lr.material = new Material(Shader.Find("Sprites/Default"));
+                lr.startColor = UnityEngine.Color.white;
+                lr.endColor = UnityEngine.Color.white;
+
+                lr.startWidth = 0.05f;
+                lr.endWidth = 0.05f;
+                lr.positionCount = 2;
+                lr.useWorldSpace = false;
+            }
+        }
+    }
+
+    void UpdateLinePositions()
+    {
+        if (lineRenderers[0] == null) return;
+
+        Vector3 position = transform.position;
+
+        Vector3 bottomLeft = new Vector3(position.x, position.y, 0);
+        Vector3 bottomRight = new Vector3(position.x + size.x, position.y, 0);
+        Vector3 topRight = new Vector3(position.x + size.x, position.y + size.y, 0);
+        Vector3 topLeft = new Vector3(position.x, position.y + size.y, 0);
+
+        lineRenderers[0].SetPositions(new Vector3[] { bottomLeft, bottomRight });
+        lineRenderers[1].SetPositions(new Vector3[] { bottomRight, topRight });
+        lineRenderers[2].SetPositions(new Vector3[] { topRight, topLeft });
+        lineRenderers[3].SetPositions(new Vector3[] { topLeft, bottomLeft });
+    }
+}
