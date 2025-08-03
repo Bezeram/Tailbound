@@ -2652,7 +2652,7 @@ TilemapRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 23380631
-  m_SortingLayer: -3
+  m_SortingLayer: -4
   m_SortingOrder: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
@@ -6658,6 +6658,46 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 386586538530495629, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 3.169205
+      objectReference: {fileID: 0}
+    - target: {fileID: 386586538530495629, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 3.87
+      objectReference: {fileID: 0}
+    - target: {fileID: 386586538530495629, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.91499996
+      objectReference: {fileID: 0}
+    - target: {fileID: 386586538530495629, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.05784019
+      objectReference: {fileID: 0}
+    - target: {fileID: 386586538530495629, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 386586538530495629, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 386586538530495629, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.9983259
+      objectReference: {fileID: 0}
+    - target: {fileID: 386586538530495629, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 386586538530495629, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 386586538530495629, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3471523962317756936, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.25
@@ -6710,9 +6750,21 @@ PrefabInstance:
       propertyPath: speed
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 4258008601800167461, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: set_position
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4608288645020052648, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
       propertyPath: m_Name
       value: ZipLine
+      objectReference: {fileID: 0}
+    - target: {fileID: 6586368654650963647, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 11.74
+      objectReference: {fileID: 0}
+    - target: {fileID: 6586368654650963647, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.83
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
