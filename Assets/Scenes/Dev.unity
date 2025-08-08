@@ -6680,6 +6680,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2874667362984949378, guid: f9c4ed6633928754eb69af8dd5745ed8, type: 3}
+      propertyPath: transition
+      value: 
+      objectReference: {fileID: 2041723490752032677}
     - target: {fileID: 4067423233591614951, guid: f9c4ed6633928754eb69af8dd5745ed8, type: 3}
       propertyPath: m_Name
       value: LevelLoader
@@ -6729,6 +6733,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f9c4ed6633928754eb69af8dd5745ed8, type: 3}
+--- !u!95 &2041723490752032677 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 9138550364027525339, guid: f9c4ed6633928754eb69af8dd5745ed8, type: 3}
+  m_PrefabInstance: {fileID: 2041723490752032676}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2740473191319959997
 PrefabInstance:
   m_ObjectHideFlags: 0

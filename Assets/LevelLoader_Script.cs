@@ -15,7 +15,7 @@ public class LevelLoader_Script : MonoBehaviour
 
     IEnumerator ReloadLevel()
     {
-        transition.SetTrigger("Start");
+        transition.SetTrigger("Restart");
 
         yield return new WaitForSeconds(2);
 
