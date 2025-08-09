@@ -14,6 +14,7 @@ public class Swing : MonoBehaviour
     [Header("Info")]
     public bool IsSwinging = false;
     public Vector2 SwingDirection = Vector2.zero;
+    public Vector2 ReleaseDirection = Vector2.zero;
 
     private SpringJoint2D _TailJoint;
     private Vector2 _TailAttachPoint;
@@ -65,7 +66,7 @@ public class Swing : MonoBehaviour
                 TailSettings.MaxTailLength, Attachable);
             if (hit.collider != null)
             {
-                float distanceToTarget = Vector2.Distance(TailOrigin.position, hit.point);  
+                float distanceToTarget = Vector2.Distance(TailOrigin.position, hit.point);
 
                 if (distanceToTarget < TailSettings.MinTailLength)
                     return;
@@ -85,6 +86,7 @@ public class Swing : MonoBehaviour
 
         // Configure spring joint
         _TailJoint.autoConfigureDistance = false;
+        _TailJoint.autoConfigureConnectedAnchor = false;
         _TailJoint.connectedAnchor = attachPoint;
 
         float distanceFromPoint = Vector2.Distance(TailOrigin.position, attachPoint);
@@ -107,20 +109,33 @@ public class Swing : MonoBehaviour
 
     void HandleTailRelease()
     {
+        // Find swing direction
+        ReleaseDirection = Vector2.zero;
+        if (Input.GetKey(KeyCode.LeftArrow))
+            ReleaseDirection.x = -1;
+        if (Input.GetKey(KeyCode.RightArrow))
+            ReleaseDirection.x = 1;
+        if (Input.GetKey(KeyCode.DownArrow))
+            ReleaseDirection.y = -1;
+        if (Input.GetKey(KeyCode.UpArrow))
+            ReleaseDirection.y = 1;
+
         Destroy(_TailJoint);
         ClearTailLine();
         IsSwinging = false;
         RigidBody.linearDamping = 0f;
-        ApplyReleaseJump();
+        ApplyReleaseJump(ReleaseDirection);
 
         // Make sure the normal movement script inherits the velocity left over
         // from this script.
         PlayerControllerScript.InheritVelocity(RigidBody.linearVelocity);
     }
 
-    void ApplyReleaseJump()
+    void ApplyReleaseJump(Vector2 releaseDirection)
     {
-        Vector2 jumpForce = RigidBody.linearVelocity.normalized * TailSettings.JumpScalar;
+        Vector2 jumpDirection = RigidBody.linearVelocity.normalized;
+        float amplitude = Vector2.Dot(jumpDirection, releaseDirection) * TailSettings.JumpScalar;
+        Vector2 jumpForce = jumpDirection * amplitude;
         RigidBody.AddForce(jumpForce, ForceMode2D.Impulse);
     }
 
