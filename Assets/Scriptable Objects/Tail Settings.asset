@@ -15,7 +15,7 @@ MonoBehaviour:
   frequency: 2.59
   dampingRatio: 0.5
   SwingForce: 0.14
-  NormalJumpForce: 0
+  JumpScalar: 7
   GravityMultiplier: 1.47
   MaxTailLength: 4
-  MinTailLength: 2
+  MinTailLength: 0.1
