@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 386586538530495629}
   - component: {fileID: 9108282485170058274}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Connectingbelt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -97,7 +97,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1667839235624106571}
   - component: {fileID: 6497605055563469316}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: StartPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -184,7 +184,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3471523962317756936}
   - component: {fileID: 4258008601800167461}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: ZipLine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -239,7 +239,7 @@ GameObject:
   - component: {fileID: 3762576635693202706}
   - component: {fileID: 3728678924176522689}
   - component: {fileID: 7738109544394386482}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: AtachmentObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -372,7 +372,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6586368654650963647}
   - component: {fileID: 2262604249184580731}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: EndPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
