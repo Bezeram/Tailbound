@@ -38,6 +38,7 @@ namespace TarodevController
         {
             _RigidBody = GetComponent<Rigidbody2D>();
             _col = GetComponent<CapsuleCollider2D>();
+            LevelLoader = GameObject.FindGameObjectWithTag("LevelLoader");
 
             _cachedQueryStartInColliders = Physics2D.queriesStartInColliders;
         }
