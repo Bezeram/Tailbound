@@ -120,7 +120,7 @@ public class Swing : MonoBehaviour
 
     void ApplyReleaseJump()
     {
-        Vector2 jumpForce = new Vector2(RigidBody.linearVelocityX, TailSettings.NormalJumpForce);
+        Vector2 jumpForce = RigidBody.linearVelocity.normalized * TailSettings.JumpScalar;
         RigidBody.AddForce(jumpForce, ForceMode2D.Impulse);
     }
 
