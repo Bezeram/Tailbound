@@ -51,12 +51,11 @@ public class Screen : MonoBehaviour
     {
         if (lineRenderers[0] == null) return;
 
-        Vector3 position = transform.position;
-
-        Vector3 bottomLeft = new Vector3(position.x, position.y, 0);
-        Vector3 bottomRight = new Vector3(position.x + size.x, position.y, 0);
-        Vector3 topRight = new Vector3(position.x + size.x, position.y + size.y, 0);
-        Vector3 topLeft = new Vector3(position.x, position.y + size.y, 0);
+        // Local space coordinates, bottom-left is (0, 0)
+        Vector3 bottomLeft = new Vector3(0, 0, 0);
+        Vector3 bottomRight = new Vector3(size.x, 0, 0);
+        Vector3 topRight = new Vector3(size.x, size.y, 0);
+        Vector3 topLeft = new Vector3(0, size.y, 0);
 
         lineRenderers[0].SetPositions(new Vector3[] { bottomLeft, bottomRight });
         lineRenderers[1].SetPositions(new Vector3[] { bottomRight, topRight });

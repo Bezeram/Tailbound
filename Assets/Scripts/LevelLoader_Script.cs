@@ -13,6 +13,11 @@ public class LevelLoader_Script : MonoBehaviour
         StartCoroutine(ReloadLevel());
     }
 
+    public void Reload_level_no_transition()
+    {
+        StartCoroutine(ReloadLevelNoTransition());
+    }
+
     IEnumerator ReloadLevel()
     {
         transition.SetTrigger("Restart");
@@ -21,4 +26,11 @@ public class LevelLoader_Script : MonoBehaviour
 
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
+
+    IEnumerator ReloadLevelNoTransition()
+    {
+        yield return new WaitForSeconds(2);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
 }

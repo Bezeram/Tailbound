@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -31,25 +32,27 @@ public class CameraFollow : MonoBehaviour
 
     Vector2 GetCameraPosition()
     {
-        // Convert target position to pixels
-        float ppu = 16; // pixels per world unit
-        Vector2 cameraPosition =  Target.position * ppu;
+        float ppu = 16f; // pixels per world unit
+        Camera cam = pixelPerfectCamera.GetComponent<Camera>();
 
-        // Half camera size in pixels
-        float halfCamWidth = pixelPerfectCamera.refResolutionX / 2f;
-        float halfCamHeight = pixelPerfectCamera.refResolutionY / 2f;
+        // Target position in pixels
+        Vector2 cameraPosition = Target.position * ppu;
 
-        // Screen bounds are in pixels (position & size are now treated as pixels)
+        // Get actual camera size in pixels
+        float halfCamHeight = cam.orthographicSize * ppu;
+        float halfCamWidth = halfCamHeight * cam.aspect;
+
+        // Screen bounds in pixels
         Vector2 screenMin = Screen.transform.position * ppu;
-        Vector2 screenMax = screenMin + Screen.size;
+        Vector2 screenMax = screenMin + (Screen.size * ppu);
 
-        // Clamp X position in pixels
+        // Clamp X position
         if (cameraPosition.x - halfCamWidth < screenMin.x)
             cameraPosition.x = screenMin.x + halfCamWidth;
         else if (cameraPosition.x + halfCamWidth > screenMax.x)
             cameraPosition.x = screenMax.x - halfCamWidth;
 
-        // Clamp Y position in pixels
+        // Clamp Y position
         if (cameraPosition.y - halfCamHeight < screenMin.y)
             cameraPosition.y = screenMin.y + halfCamHeight;
         else if (cameraPosition.y + halfCamHeight > screenMax.y)
@@ -58,4 +61,25 @@ public class CameraFollow : MonoBehaviour
         // Convert back to world units
         return cameraPosition / ppu;
     }
+
+    public LevelLoader_Script levelLoader; // Reference your LevelLoader script here
+
+    public IEnumerator ScreenTransition(Screen newScreen)
+    {
+        ScreenWipe wipe = FindObjectOfType<ScreenWipe>();
+        if (wipe != null)
+            yield return StartCoroutine(wipe.WipeIn());
+
+        // Switch screen bounds here
+        this.Screen = newScreen; 
+        levelLoader.Reload_level();
+
+        yield return new WaitForSeconds(0.5f);
+
+        if (wipe != null)
+            yield return StartCoroutine(wipe.WipeOut());
+    }
+
+
+
 }
