@@ -16,6 +16,7 @@ namespace TarodevController
         [Header("Input")]
         public ScriptableStats _stats;
         public Swing SwingScript;
+        public GameObject LevelLoader;
 
         private Rigidbody2D _RigidBody;
         private CapsuleCollider2D _col;
@@ -37,6 +38,7 @@ namespace TarodevController
         {
             _RigidBody = GetComponent<Rigidbody2D>();
             _col = GetComponent<CapsuleCollider2D>();
+            LevelLoader = GameObject.FindGameObjectWithTag("LevelLoader");
 
             _cachedQueryStartInColliders = Physics2D.queriesStartInColliders;
         }
@@ -198,6 +200,12 @@ namespace TarodevController
         }
 
         #endregion
+
+        public void Die()
+        {
+            //play death animation
+            LevelLoader.GetComponent<LevelLoader_Script>().Reload_level();
+        }
 
         private void ApplyMovement() => _RigidBody.linearVelocity = _frameVelocity;
 

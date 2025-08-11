@@ -11,7 +11,7 @@ public class ScriptableTail : ScriptableObject
 
     [Header("Swinging")]
     public float SwingForce = 1f;
-    public float NormalJumpForce = 7f;
+    public float JumpScalar = 7f;
     public float GravityMultiplier = 1;
 
     [Header("Attaching")]

@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc541b3c391597a478ec5a98744fe9e0, type: 3}
   m_Name: Tail Settings
   m_EditorClassIdentifier: 
-  frequency: 2.59
-  dampingRatio: 0.5
+  frequency: 2.33
+  dampingRatio: 0.51
   SwingForce: 0.14
-  NormalJumpForce: 0
+  JumpScalar: 7
   GravityMultiplier: 1.47
-  MaxTailLength: 4
-  MinTailLength: 2
+  MaxTailLength: 3.5
+  MinTailLength: 0.1

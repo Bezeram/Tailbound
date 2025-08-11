@@ -5,7 +5,9 @@ public class ZipLine_Script : MonoBehaviour
     public GameObject start_point;
     public GameObject end_point;
     public GameObject atachment_point;
+    public GameObject connecting_belt;
     public float speed;
+    public bool set_position;
     private bool _is_attached;
     private bool _is_active;
     private bool _forward;
@@ -20,6 +22,16 @@ public class ZipLine_Script : MonoBehaviour
     public void Detach()
     {
         _is_attached = false;
+    }
+
+    private void OnValidate()
+    {
+        float delta_x = start_point.transform.position.x - end_point.transform.position.x;
+        float delta_y = start_point.transform.position.y - end_point.transform.position.y;
+
+        connecting_belt.transform.position = (start_point.transform.position + end_point.transform.position) / 2.0f;
+        connecting_belt.transform.localScale = new Vector3(Vector3.Distance(start_point.transform.position, end_point.transform.position) * 0.20f, 1.0f, 1.0f);
+        connecting_belt.transform.rotation = Quaternion.Euler(0.0f, 0.0f, 180.0f / Mathf.PI * Mathf.Atan2(delta_y, delta_x));
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
