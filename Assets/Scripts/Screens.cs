@@ -2,7 +2,7 @@ using System.Drawing;
 using UnityEngine;
 
 [ExecuteAlways]
-public class Screen : MonoBehaviour
+public class Screens : MonoBehaviour
 {
     private LineRenderer[] lineRenderers = new LineRenderer[4];
     public Vector2 size;
