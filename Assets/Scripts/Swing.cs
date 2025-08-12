@@ -95,7 +95,7 @@ public class Swing : MonoBehaviour
             // Configure the tail joint
             _TailAttachPoint = bestColliderPosition;
             AttachWeb(_TailAttachPoint);
-            DrawWebLine();
+            DrawTailLine();
             IsSwinging = true;
             RigidBody.linearDamping = 0.5f;
         }
@@ -147,13 +147,15 @@ public class Swing : MonoBehaviour
 
     void ApplyReleaseJump(Vector2 releaseDirection)
     {
+        // Apply jump boost by scaling the direction the player released the tail.
         Vector2 jumpDirection = RigidBody.linearVelocity.normalized;
         float amplitude = Vector2.Dot(jumpDirection, releaseDirection) * PlayerSettings.JumpScalar;
+
         Vector2 jumpForce = jumpDirection * amplitude;
         RigidBody.AddForce(jumpForce, ForceMode2D.Impulse);
     }
 
-    void DrawWebLine()
+    void DrawTailLine()
     {
         LineRenderer.positionCount = 2;
         LineRenderer.SetPosition(0, TailOrigin.position);
@@ -169,7 +171,7 @@ public class Swing : MonoBehaviour
     {
         if (_TailJoint != null)
         {
-            DrawWebLine();
+            DrawTailLine();
         }
     }
 }
