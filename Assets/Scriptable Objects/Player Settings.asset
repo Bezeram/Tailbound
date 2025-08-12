@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bc541b3c391597a478ec5a98744fe9e0, type: 3}
-  m_Name: Tail Settings
+  m_Name: Player Settings
   m_EditorClassIdentifier: 
   frequency: 2.33
   dampingRatio: 0.51

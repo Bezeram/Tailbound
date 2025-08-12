@@ -1,4 +1,5 @@
 using TarodevController;
+using UnityEditor;
 using UnityEngine;
 
 public class Swing : MonoBehaviour
@@ -9,7 +10,7 @@ public class Swing : MonoBehaviour
     public LineRenderer LineRenderer;
     public Transform TailOrigin;
     public PlayerController PlayerControllerScript;
-    public ScriptableTail TailSettings;
+    public ScriptablePlayer PlayerSettings;
 
     [Header("Info")]
     public bool IsSwinging = false;
@@ -18,7 +19,6 @@ public class Swing : MonoBehaviour
 
     private SpringJoint2D _TailJoint;
     private Vector2 _TailAttachPoint;
-    private readonly KeyCode _SwingKey = KeyCode.X;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -30,9 +30,9 @@ public class Swing : MonoBehaviour
     {
         if (_TailJoint != null)
             HandleSwinging();
-        if (Input.GetKeyDown(_SwingKey))
+        if (Input.GetKeyDown(PlayerSettings.SwingKey))
             HandleTailUse();
-        if (Input.GetKeyUp(_SwingKey) && _TailJoint != null)
+        if (Input.GetKeyUp(PlayerSettings.SwingKey) && _TailJoint != null)
             HandleTailRelease();
     }
 
@@ -63,12 +63,12 @@ public class Swing : MonoBehaviour
         if (SwingDirection != Vector2.zero)
         {
             RaycastHit2D hit = Physics2D.Raycast(TailOrigin.position, SwingDirection.normalized, 
-                TailSettings.MaxTailLength, Attachable);
+                PlayerSettings.MaxTailLength, Attachable);
             if (hit.collider != null)
             {
                 float distanceToTarget = Vector2.Distance(TailOrigin.position, hit.point);
 
-                if (distanceToTarget < TailSettings.MinTailLength)
+                if (distanceToTarget < PlayerSettings.MinTailLength)
                     return;
 
                 _TailAttachPoint = hit.point;
@@ -94,17 +94,17 @@ public class Swing : MonoBehaviour
         _TailJoint.enableCollision = true;
 
         // Adjust spring settings
-        _TailJoint.frequency = TailSettings.frequency;
-        _TailJoint.dampingRatio = TailSettings.dampingRatio;
+        _TailJoint.frequency = PlayerSettings.frequency;
+        _TailJoint.dampingRatio = PlayerSettings.dampingRatio;
     }
 
     void HandleSwinging()
     {
         Vector2 forceDirection = new Vector2(Input.GetAxis("Horizontal"), 0);
-        RigidBody.AddForce(forceDirection * TailSettings.SwingForce);
+        RigidBody.AddForce(forceDirection * PlayerSettings.SwingForce);
 
         // Gravity
-        RigidBody.AddForce(Vector2.down * TailSettings.GravityMultiplier);
+        RigidBody.AddForce(Vector2.down * PlayerSettings.GravityMultiplier);
     }
 
     void HandleTailRelease()
@@ -134,7 +134,7 @@ public class Swing : MonoBehaviour
     void ApplyReleaseJump(Vector2 releaseDirection)
     {
         Vector2 jumpDirection = RigidBody.linearVelocity.normalized;
-        float amplitude = Vector2.Dot(jumpDirection, releaseDirection) * TailSettings.JumpScalar;
+        float amplitude = Vector2.Dot(jumpDirection, releaseDirection) * PlayerSettings.JumpScalar;
         Vector2 jumpForce = jumpDirection * amplitude;
         RigidBody.AddForce(jumpForce, ForceMode2D.Impulse);
     }
