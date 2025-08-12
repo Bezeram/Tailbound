@@ -66,7 +66,7 @@ public class CameraFollow : MonoBehaviour
 
     public IEnumerator ScreenTransition(Screens newScreen)
     {
-        ScreenWipe wipe = FindObjectOfType<ScreenWipe>();
+        ScreenWipe wipe = FindFirstObjectByType<ScreenWipe>();
         if (wipe != null)
             yield return StartCoroutine(wipe.WipeIn());
 
