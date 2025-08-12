@@ -9,7 +9,7 @@ public class ScriptablePlayer : ScriptableObject
     public KeyCode UpKey = KeyCode.UpArrow;
     public KeyCode DownKey = KeyCode.DownArrow;
     public KeyCode JumpKey = KeyCode.C;
-    public KeyCode SwingKey = KeyCode.C;
+    public KeyCode AttachKey = KeyCode.C;
 
     [Header("Spring Joint")]
     public float frequency = 1.0f;

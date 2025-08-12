@@ -28,10 +28,11 @@ public class Swing : MonoBehaviour
         if (_TailJoint != null)
             HandleSwinging();
 
-        if (Input.GetKeyDown(PlayerSettings.SwingKey))
+        // Player must be in the air to attach
+        if (Input.GetKeyDown(PlayerSettings.AttachKey) && !PlayerControllerScript._grounded)
             HandleTailUse();
 
-        if (Input.GetKeyUp(PlayerSettings.SwingKey) && _TailJoint != null)
+        if (Input.GetKeyUp(PlayerSettings.AttachKey) && _TailJoint != null)
             HandleTailRelease();
     }
 

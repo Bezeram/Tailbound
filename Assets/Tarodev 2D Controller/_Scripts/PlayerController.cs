@@ -96,7 +96,7 @@ namespace TarodevController
         #region Collisions
         
         private float _frameLeftGrounded = float.MinValue;
-        private bool _grounded;
+        public bool _grounded;
 
         private void CheckCollisions()
         {
