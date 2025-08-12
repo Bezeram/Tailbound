@@ -14,29 +14,41 @@ public class Swing : MonoBehaviour
 
     [Header("Info")]
     public bool IsSwinging = false;
-    public Vector2 SwingDirection = Vector2.zero;
-    public Vector2 ReleaseDirection = Vector2.zero;
+    public Vector2 InputDirection = Vector2.zero;
 
     private SpringJoint2D _TailJoint;
     private Vector2 _TailAttachPoint;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-    }
-
     // Update is called once per frame
     void Update()
     {
+        GetInputDirection();
+
         if (_TailJoint != null)
             HandleSwinging();
+
         if (Input.GetKeyDown(PlayerSettings.SwingKey))
             HandleTailUse();
+
         if (Input.GetKeyUp(PlayerSettings.SwingKey) && _TailJoint != null)
             HandleTailRelease();
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    Vector2 GetInputDirection()
+    {
+        Vector2 InputDirection = Vector2.zero;
+        if (Input.GetKey(PlayerSettings.LeftKey))
+            InputDirection.x = -1;
+        if (Input.GetKey(PlayerSettings.RightKey))
+            InputDirection.x = 1;
+        if (Input.GetKey(PlayerSettings.DownKey))
+            InputDirection.y = -1;
+        if (Input.GetKey(PlayerSettings.UpKey))
+            InputDirection.y = 1;
+        return InputDirection.normalized;
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
     {
         if (IsSwinging)
         {
@@ -49,34 +61,43 @@ public class Swing : MonoBehaviour
 
     void HandleTailUse()
     {
-        // Find swing direction
-        SwingDirection = Vector2.zero;
-        if (Input.GetKey(KeyCode.LeftArrow))
-            SwingDirection.x = -1;
-        if (Input.GetKey(KeyCode.RightArrow))
-            SwingDirection.x = 1;
-        if (Input.GetKey(KeyCode.DownArrow))
-            SwingDirection.y = -1;
-        if (Input.GetKey(KeyCode.UpArrow))
-            SwingDirection.y = 1;
+        // Get swing direction
+        Vector2 swingDirection = InputDirection;
 
-        if (SwingDirection != Vector2.zero)
+        if (swingDirection != Vector2.zero)
         {
-            RaycastHit2D hit = Physics2D.Raycast(TailOrigin.position, SwingDirection.normalized, 
-                PlayerSettings.MaxTailLength, Attachable);
-            if (hit.collider != null)
+            // Cast for objects on attachable layer in the maximum range
+            Collider2D[] colliders = Physics2D.OverlapCircleAll
+                (TailOrigin.position, PlayerSettings.MaxTailLength, Attachable);
+
+            if (colliders.Length == 0)
+                return;
+
+            // Get the center of the colliders and
+            // draw a vector to the center of all colliders detected.
+            // Use the dot product to find the best match collider with the direction.
+            // Best match has the highest dot product value.
+            Vector2 bestColliderPosition = Vector2.zero;
+            float bestColliderScore = -2;
+            foreach (Collider2D collider in colliders)
             {
-                float distanceToTarget = Vector2.Distance(TailOrigin.position, hit.point);
+                Vector2 center = (Vector2)collider.bounds.center;
+                Vector2 direction = center - (Vector2)TailOrigin.position;
+                float score = Vector2.Dot(direction.normalized, swingDirection);
 
-                if (distanceToTarget < PlayerSettings.MinTailLength)
-                    return;
-
-                _TailAttachPoint = hit.point;
-                AttachWeb(_TailAttachPoint);
-                DrawWebLine();
-                IsSwinging = true;
-                RigidBody.linearDamping = 0.5f;
+                if (score > bestColliderScore)
+                {
+                    bestColliderScore = score;
+                    bestColliderPosition = center;
+                }
             }
+
+            // Configure the tail joint
+            _TailAttachPoint = bestColliderPosition;
+            AttachWeb(_TailAttachPoint);
+            DrawWebLine();
+            IsSwinging = true;
+            RigidBody.linearDamping = 0.5f;
         }
     }
 
@@ -109,22 +130,15 @@ public class Swing : MonoBehaviour
 
     void HandleTailRelease()
     {
-        // Find swing direction
-        ReleaseDirection = Vector2.zero;
-        if (Input.GetKey(KeyCode.LeftArrow))
-            ReleaseDirection.x = -1;
-        if (Input.GetKey(KeyCode.RightArrow))
-            ReleaseDirection.x = 1;
-        if (Input.GetKey(KeyCode.DownArrow))
-            ReleaseDirection.y = -1;
-        if (Input.GetKey(KeyCode.UpArrow))
-            ReleaseDirection.y = 1;
+        Vector2 releaseDirection = InputDirection;
 
+        // Reset the tail joint
         Destroy(_TailJoint);
         ClearTailLine();
         IsSwinging = false;
         RigidBody.linearDamping = 0f;
-        ApplyReleaseJump(ReleaseDirection);
+        // Jump boost
+        ApplyReleaseJump(releaseDirection);
 
         // Make sure the normal movement script inherits the velocity left over
         // from this script.

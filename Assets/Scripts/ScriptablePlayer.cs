@@ -24,5 +24,4 @@ public class ScriptablePlayer : ScriptableObject
 
     [Header("Attaching")]
     public float MaxTailLength = 15f;
-    public float MinTailLength = 2f;
 }
