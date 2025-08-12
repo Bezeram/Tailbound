@@ -9369,7 +9369,7 @@ LineRenderer:
   m_SortingOrder: 0
   m_Positions:
   - {x: 42, y: 0, z: 0}
-  - {x: 42, y: 17, z: 0}
+  - {x: 42, y: 16.85, z: 0}
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 1
@@ -9498,8 +9498,8 @@ LineRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Positions:
-  - {x: 42, y: 17, z: 0}
-  - {x: 0, y: 17, z: 0}
+  - {x: 42, y: 16.85, z: 0}
+  - {x: 0, y: 16.85, z: 0}
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 1
@@ -10016,7 +10016,7 @@ LineRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Positions:
-  - {x: 0, y: 17, z: 0}
+  - {x: 0, y: 16.85, z: 0}
   - {x: 0, y: 0, z: 0}
   m_Parameters:
     serializedVersion: 3
@@ -10098,7 +10098,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 097acf62af0f90c4cad883e278e35972, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  size: {x: 42, y: 17}
+  size: {x: 42, y: 16.85}
 --- !u!1 &6404434876490160180
 GameObject:
   m_ObjectHideFlags: 0

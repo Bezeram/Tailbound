@@ -1,11 +1,26 @@
-using System.Drawing;
 using UnityEngine;
+using UnityEngine.UIElements;
 
-[ExecuteAlways]
+[ExecuteInEditMode]
 public class Screens : MonoBehaviour
 {
-    private LineRenderer[] lineRenderers = new LineRenderer[4];
+    private readonly LineRenderer[] lineRenderers = new LineRenderer[4];
     public Vector2 size;
+
+    void Start()
+    {
+        bool inEditorMode = !Application.isPlaying;
+        EnsureLinesExist();
+
+        foreach (var line in lineRenderers)
+        {
+            if (line != null)
+            {
+                line.enabled = inEditorMode; // hide in play mode
+            }
+        }
+    }
+
     void OnValidate()
     {
         EnsureLinesExist();
@@ -52,10 +67,10 @@ public class Screens : MonoBehaviour
         if (lineRenderers[0] == null) return;
 
         // Local space coordinates, bottom-left is (0, 0)
-        Vector3 bottomLeft = new Vector3(0, 0, 0);
-        Vector3 bottomRight = new Vector3(size.x, 0, 0);
-        Vector3 topRight = new Vector3(size.x, size.y, 0);
-        Vector3 topLeft = new Vector3(0, size.y, 0);
+        Vector3 bottomLeft = new(0, 0, 0);
+        Vector3 bottomRight = new(size.x, 0, 0);
+        Vector3 topRight = new(size.x, size.y, 0);
+        Vector3 topLeft = new(0, size.y, 0);
 
         lineRenderers[0].SetPositions(new Vector3[] { bottomLeft, bottomRight });
         lineRenderers[1].SetPositions(new Vector3[] { bottomRight, topRight });
