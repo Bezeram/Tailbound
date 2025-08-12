@@ -6,17 +6,23 @@ using UnityEngine.Rendering.Universal;
 [ExecuteAlways]
 public class LayerHighlight2D : MonoBehaviour
 {
-    [Header("What to highlight")]
-    public LayerMask targetLayers;              // Select the layer(s) to highlight
-    public bool includeInactive = false;        // Include inactive children when sizing
-    public bool autoRefresh = true;             // Recompute every frame (Editor/Play)
+    [Header("Target objects")]
+    public LayerMask targetLayers;
+    public bool includeInactive = false;
+    public bool autoRefresh = true;
+
+    [Header("Distance-based highlight")]
+    [Tooltip("Distance is measured from this Transform (defaults to this GameObject if null).")]
+    public Transform rangeOrigin;
+    [Min(0f)] public float minRange = 0f;     // full intensity at this distance
+    [Min(0f)] public float maxRange = 20f;    // zero intensity at/after this distance
+    [Tooltip("If true, objects closer than minRange or farther than maxRange are not lit at all.")]
+    public bool hideOutsideRange = true;
 
     [Header("Light settings")]
     public Color lightColor = new Color(1f, 0.95f, 0.6f, 1f);
-    [Range(0f, 5f)] public float intensity = 0.8f;
-    [Tooltip("Soft edge for freeform shape (if supported by your URP version).")]
-    [Range(0f, 5f)] public float falloff = 1.0f;
-    [Tooltip("Z offset so the light sits slightly in front/behind its owner.")]
+    [Range(0f, 5f)] public float maxIntensity = 0.8f; // intensity at minRange
+    [Range(0f, 5f)] public float falloff = 1.0f;      // soft edge if supported by your URP
     public float zOffset = -0.1f;
 
     const string LightName = "__LayerHighlight2D__";
@@ -30,27 +36,60 @@ public class LayerHighlight2D : MonoBehaviour
         var all = FindObjectsByType<Transform>(FindObjectsSortMode.None);
         var processed = new HashSet<Transform>();
 
-        // Build/update lights for all objects on target layers (one per topmost-in-layer ancestor)
+        Vector3 origin = (rangeOrigin ? rangeOrigin : transform).position;
+        Vector2 originXY = new Vector2(origin.x, origin.y);
+
         foreach (var t in all)
         {
-            if (!IsInMask(t.gameObject.layer, targetLayers)) continue;
+            if (!IsInMask(t.gameObject.layer, targetLayers)) 
+                continue;
 
             var top = HighestAncestorInMask(t, targetLayers);
-            if (!processed.Add(top)) continue; // already handled by an ancestor
+            if (!processed.Add(top)) continue;
 
-            if (TryGetBounds2D(top, includeInactive, out var b))
-                CreateOrUpdateLight(top, b);
-            else
-                RemoveLight(top); // nothing to bound
+            if (!TryGetBounds2D(top, includeInactive, out var b))
+            {
+                RemoveLight(top);
+                continue;
+            }
+
+            // Distance from origin to the bounds (edge) in XY
+            var cp = b.ClosestPoint(new Vector3(origin.x, origin.y, b.center.z));
+            float d = Vector2.Distance(originXY, new Vector2(cp.x, cp.y));
+
+            float factor = ComputeIntensityFactor(d, minRange, maxRange, hideOutsideRange);
+
+            if (factor <= 0f && hideOutsideRange)
+            {
+                RemoveLight(top);
+                continue;
+            }
+
+            CreateOrUpdateLight(top, b, maxIntensity * Mathf.Max(0f, factor));
         }
 
-        // Clean up lights for objects that no longer qualify
+        // Cleanup: remove highlight objects from things no longer processed
         foreach (var t in all)
         {
             var child = t.Find(LightName);
             if (child && !processed.Contains(t))
                 DestroyImmediate(child.gameObject);
         }
+    }
+
+    static float ComputeIntensityFactor(float d, float minR, float maxR, bool hideOutside)
+    {
+        if (maxR <= minR + 1e-4f)
+        {
+            // Degenerate case: treat as a hard cutoff at minR
+            return (hideOutside ? (Mathf.Abs(d - minR) < 1e-4f ? 1f : 0f)
+                                : (d <= minR ? 1f : 0f));
+        }
+
+        // 1 at minRange, 0 at/after maxRange (smooth)
+        float t = 1f - Mathf.InverseLerp(minR, maxR, d);
+        if (hideOutside && (d < minR || d > maxR)) return 0f;
+        return Mathf.Clamp01(t);
     }
 
     static bool IsInMask(int layer, LayerMask mask) => (mask.value & (1 << layer)) != 0;
@@ -72,16 +111,15 @@ public class LayerHighlight2D : MonoBehaviour
         bool has = false;
         foreach (var c in cols)
         {
-            if (!includeInactive && !c.enabled) continue;
+            if (!includeInactive && (!c.enabled || !c.gameObject.activeInHierarchy)) continue;
             if (!has) { bounds = c.bounds; has = true; }
             else bounds.Encapsulate(c.bounds);
         }
         return has;
     }
 
-    void CreateOrUpdateLight(Transform owner, Bounds worldBounds)
+    void CreateOrUpdateLight(Transform owner, Bounds worldBounds, float intensity)
     {
-        // Get or create the child light
         Transform child = owner.Find(LightName);
         if (!child)
         {
@@ -93,21 +131,21 @@ public class LayerHighlight2D : MonoBehaviour
 
         var l = child.GetComponent<Light2D>();
 
-        // Position/identity
-        var center = worldBounds.center;
-        child.position = new Vector3(center.x, center.y, owner.position.z + zOffset);
+        // Position in the center of the bounds
+        var c = worldBounds.center;
+        child.position = new Vector3(c.x, c.y, owner.position.z + zOffset);
         child.rotation = Quaternion.identity;
         child.localScale = Vector3.one;
 
-        // Configure as Freeform square
+        // Square freeform shape
+        var ext = (Vector2)worldBounds.extents;
+        const float minSize = 0.05f;
+        ext.x = Mathf.Max(ext.x, minSize);
+        ext.y = Mathf.Max(ext.y, minSize);
+
         l.lightType = Light2D.LightType.Freeform;
         l.color = lightColor;
         l.intensity = intensity;
-
-        var ext = (Vector2)worldBounds.extents;
-        const float minSize = 0.05f; // avoid degenerate zero-sized shapes
-        ext.x = Mathf.Max(ext.x, minSize);
-        ext.y = Mathf.Max(ext.y, minSize);
 
         var path = new Vector3[4] {
             new Vector3(-ext.x, -ext.y, 0),
@@ -116,14 +154,7 @@ public class LayerHighlight2D : MonoBehaviour
             new Vector3(-ext.x,  ext.y, 0),
         };
 
-        // Prefer the public API; fall back to reflection for older URP versions
-        if (!TrySetShapePath(l, path))
-        {
-            // If your URP is too old/new and this fails, consider upgrading URP.
-            // (Keeping this silent so it still runs without crashing.)
-        }
-
-        // Optional: softer edge if the property exists in your URP build
+        TrySetShapePath(l, path);
         TrySetFloat(l, "shapeLightFalloffSize", falloff);
     }
 
