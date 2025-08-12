@@ -15,7 +15,7 @@ public class PlayerScreenTransition : MonoBehaviour
             CameraFollow camFollow = Camera.main.GetComponent<CameraFollow>();
             if (camFollow != null)
             {
-                StartCoroutine(camFollow.ScreenTransition(trigger.newScreen));
+                StartCoroutine(camFollow.ScreenTransition(trigger.NextScreen));
             }
         }
     }

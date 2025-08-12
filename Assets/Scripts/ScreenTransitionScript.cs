@@ -3,8 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider2D))]
 public class ScreenTransitionScript : MonoBehaviour
 {
-    public Screens newScreen; // The screen to switch to when player enters
-    public Vector2 arrowDirection = Vector2.right; // purely visual/editor helper
+    public Screens NextScreen; // The screen to switch to when player enters
+    public Vector2 ArrowDirection = Vector2.right; // purely visual/editor helper
 
     private void OnDrawGizmos()
     {
@@ -13,7 +13,7 @@ public class ScreenTransitionScript : MonoBehaviour
 
         // Draw arrow for editor clarity
         Vector3 start = transform.position;
-        Vector3 end = start + (Vector3)arrowDirection.normalized;
+        Vector3 end = start + (Vector3)ArrowDirection.normalized;
         Gizmos.DrawLine(start, end);
         Gizmos.DrawSphere(end, 0.05f);
     }
