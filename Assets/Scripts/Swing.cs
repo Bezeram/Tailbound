@@ -15,6 +15,7 @@ public class Swing : MonoBehaviour
     [Header("Info")]
     public bool IsSwinging = false;
     public Vector2 InputDirection = Vector2.zero;
+    public float AttachScore = float.MinValue;
 
     private SpringJoint2D _TailJoint;
     private Vector2 _TailAttachPoint;
@@ -36,7 +37,7 @@ public class Swing : MonoBehaviour
 
     Vector2 GetInputDirection()
     {
-        Vector2 InputDirection = Vector2.zero;
+        InputDirection = Vector2.zero;
         if (Input.GetKey(PlayerSettings.LeftKey))
             InputDirection.x = -1;
         if (Input.GetKey(PlayerSettings.RightKey))
@@ -64,41 +65,40 @@ public class Swing : MonoBehaviour
         // Get swing direction
         Vector2 swingDirection = InputDirection;
 
-        if (swingDirection != Vector2.zero)
+        // Cast for objects on attachable layer in the maximum range
+        Collider2D[] colliders = Physics2D.OverlapCircleAll
+            (TailOrigin.position, PlayerSettings.MaxTailLength, Attachable);
+
+        if (colliders.Length == 0)
+            return;
+
+        // Get the center of the colliders and
+        // draw a vector to the center of all colliders detected.
+        // Use the dot product to find the best match collider with the direction.
+        // Best match has the highest dot product value.
+        Vector2 bestColliderPosition = Vector2.zero;
+        float bestColliderScore = -2;
+        foreach (Collider2D collider in colliders)
         {
-            // Cast for objects on attachable layer in the maximum range
-            Collider2D[] colliders = Physics2D.OverlapCircleAll
-                (TailOrigin.position, PlayerSettings.MaxTailLength, Attachable);
+            Vector2 center = (Vector2)collider.bounds.center;
+            Vector2 direction = center - (Vector2)TailOrigin.position;
+            float score = Vector2.Dot(direction.normalized, swingDirection);
 
-            if (colliders.Length == 0)
-                return;
-
-            // Get the center of the colliders and
-            // draw a vector to the center of all colliders detected.
-            // Use the dot product to find the best match collider with the direction.
-            // Best match has the highest dot product value.
-            Vector2 bestColliderPosition = Vector2.zero;
-            float bestColliderScore = -2;
-            foreach (Collider2D collider in colliders)
+            if (score > bestColliderScore)
             {
-                Vector2 center = (Vector2)collider.bounds.center;
-                Vector2 direction = center - (Vector2)TailOrigin.position;
-                float score = Vector2.Dot(direction.normalized, swingDirection);
-
-                if (score > bestColliderScore)
-                {
-                    bestColliderScore = score;
-                    bestColliderPosition = center;
-                }
+                bestColliderScore = score;
+                bestColliderPosition = center;
             }
-
-            // Configure the tail joint
-            _TailAttachPoint = bestColliderPosition;
-            AttachWeb(_TailAttachPoint);
-            DrawTailLine();
-            IsSwinging = true;
-            RigidBody.linearDamping = 0.5f;
         }
+
+        AttachScore = bestColliderScore;
+
+        // Configure the tail joint
+        _TailAttachPoint = bestColliderPosition;
+        AttachWeb(_TailAttachPoint);
+        DrawTailLine();
+        IsSwinging = true;
+        RigidBody.linearDamping = 0.5f;
     }
 
     void AttachWeb(Vector2 attachPoint)
