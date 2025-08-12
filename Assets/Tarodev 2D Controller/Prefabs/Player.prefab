@@ -72,9 +72,10 @@ MonoBehaviour:
   LineRenderer: {fileID: 5567480390823644627}
   TailOrigin: {fileID: 4732904917756146319}
   PlayerControllerScript: {fileID: 1544650614272011792}
-  TailSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
+  PlayerSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
   IsSwinging: 0
   SwingDirection: {x: 0, y: 0}
+  ReleaseDirection: {x: 0, y: 0}
 --- !u!50 &1544650614272011793
 Rigidbody2D:
   serializedVersion: 5
