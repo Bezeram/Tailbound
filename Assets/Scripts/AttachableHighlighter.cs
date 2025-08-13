@@ -21,7 +21,7 @@ public class LayerHighlight2D : MonoBehaviour
 
     [Header("Light settings")]
     public Color lightColor = new Color(1f, 0.95f, 0.6f, 1f);
-    [Range(0f, 5f)] public float maxIntensity = 0.8f; // intensity at minRange
+    [Range(0f, 30f)] public float BaseIntensity = 1f; // intensity at minRange
     [Range(0f, 5f)] public float falloff = 1.0f;      // soft edge if supported by your URP
     public float zOffset = -0.1f;
 
@@ -65,7 +65,8 @@ public class LayerHighlight2D : MonoBehaviour
                 continue;
             }
 
-            CreateOrUpdateLight(top, b, maxIntensity * Mathf.Max(0f, factor));
+            float lightStrength = BaseIntensity * factor;
+            CreateOrUpdateLight(top, b, lightStrength);
         }
 
         // Cleanup: remove highlight objects from things no longer processed
