@@ -41,11 +41,15 @@ public class LayerHighlight2D : MonoBehaviour
 
         foreach (var t in all)
         {
+            if (t == null)
+                continue;
+
             if (!IsInMask(t.gameObject.layer, targetLayers)) 
                 continue;
 
             var top = HighestAncestorInMask(t, targetLayers);
-            if (!processed.Add(top)) continue;
+            if (!processed.Add(top)) 
+                continue;
 
             if (!TryGetBounds2D(top, includeInactive, out var b))
             {
@@ -72,9 +76,12 @@ public class LayerHighlight2D : MonoBehaviour
         // Cleanup: remove highlight objects from things no longer processed
         foreach (var t in all)
         {
-            var child = t.Find(LightName);
-            if (child && !processed.Contains(t))
-                DestroyImmediate(child.gameObject);
+            if (t)
+            {
+                var child = t.Find(LightName);
+                if (child != null && !processed.Contains(t))
+                    DestroyImmediate(child.gameObject);
+            }
         }
     }
 
@@ -162,7 +169,8 @@ public class LayerHighlight2D : MonoBehaviour
     void RemoveLight(Transform owner)
     {
         var t = owner.Find(LightName);
-        if (t) DestroyImmediate(t.gameObject);
+        if (t) 
+            DestroyImmediate(t.gameObject);
     }
 
     static bool TrySetShapePath(Light2D light, Vector3[] path)
