@@ -17,6 +17,7 @@ public class Swing : MonoBehaviour
     public float AttachScore = float.MinValue;
     public GameObject AttacherObject = null;
 
+    private ZiplineActivator _ZiplineActivator;
     private SpringJoint2D _TailJoint;
     private Vector2 _TailAttachPoint;
 
@@ -70,6 +71,8 @@ public class Swing : MonoBehaviour
             ClearTailLine();
             IsSwinging = false;
             RigidBody.linearDamping = 0f;
+
+            DetachFromZipline();
         }
     }
 
@@ -115,6 +118,17 @@ public class Swing : MonoBehaviour
         RigidBody.linearDamping = 0.5f;
     }
 
+    void AttachToZipline(GameObject attachmentObject)
+    {
+        // Invoke zipline activator script if it's there
+        bool isZiplineActivator = attachmentObject.TryGetComponent(out _ZiplineActivator);
+        if (isZiplineActivator)
+        {
+            _ZiplineActivator.ActivateZipline();
+            Debug.Log("[AttachTail] Zipline activated.");
+        }
+    }
+
     void AttachTail(Vector2 attachPoint, Collider2D attacherCollider)
     {
         GameObject attachmentObject = attacherCollider.gameObject;
@@ -138,6 +152,8 @@ public class Swing : MonoBehaviour
         // Adjust spring settings
         _TailJoint.frequency = PlayerSettings.frequency;
         _TailJoint.dampingRatio = PlayerSettings.dampingRatio;
+
+        AttachToZipline(attachmentObject);
     }
 
     void HandleSwinging()
@@ -149,19 +165,34 @@ public class Swing : MonoBehaviour
         RigidBody.AddForce(Vector2.down * PlayerSettings.GravityMultiplier);
     }
 
+    void DetachFromZipline()
+    {
+        if (_ZiplineActivator != null)
+        {
+            _ZiplineActivator.DeactivateZipline();
+            // Do NOT use Destroy() because that would destroy
+            // the zipline activator component.
+            _ZiplineActivator = null;  
+            Debug.Log("[AttachTail] Zipline deactivated.");
+        }
+    }
+
     void HandleTailRelease()
     {
         Vector2 releaseDirection = InputDirection;
+        IsSwinging = false;
+        RigidBody.linearDamping = 0f;
 
+        // Reset line renderer
+        ClearTailLine();
         // Reset the tail joint and attacher
         Destroy(_TailJoint);
         Destroy(AttacherObject);
-        ClearTailLine();
-        IsSwinging = false;
-        RigidBody.linearDamping = 0f;
+        // Detach from zipline if it's there
+        DetachFromZipline();
+
         // Jump boost
         ApplyReleaseJump(releaseDirection);
-
         // Make sure the normal movement script inherits the velocity left over
         // from this script.
         PlayerControllerScript.InheritVelocity(RigidBody.linearVelocity);

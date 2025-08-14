@@ -11,9 +11,15 @@ public class ZiplineActivator : MonoBehaviour
     }
 #endif
 
-    // Update is called once per frame
-    void Update()
+    // Called at the moment of attaching with the tail
+    public void ActivateZipline()
     {
-        
+        ZiplineReferenceScript.Attach();
+    }
+
+    // Called at the moment of releasing the tail
+    public void DeactivateZipline()
+    {
+        ZiplineReferenceScript.Detach();
     }
 }

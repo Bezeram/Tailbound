@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class ZipLine_Script : MonoBehaviour
 {
+    [Header("References")]
     public GameObject start_point;
     public GameObject end_point;
     public GameObject atachment_point;
@@ -9,10 +10,12 @@ public class ZipLine_Script : MonoBehaviour
     public float speed;
     public bool set_position;
 
-    private bool _is_attached;
-    private bool _is_active;
-    private bool _forward;
+    [Header("Info")]
+    public bool _is_attached;
+    public bool _is_active;
     private Vector3 direction;
+
+    private bool _forward;
 
     public void Attach()
     {
