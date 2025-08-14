@@ -12,10 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc541b3c391597a478ec5a98744fe9e0, type: 3}
   m_Name: Player Settings
   m_EditorClassIdentifier: 
-  frequency: 2.33
-  dampingRatio: 0.51
-  SwingForce: 0.14
+  LeftKey: 276
+  RightKey: 275
+  UpKey: 273
+  DownKey: 274
+  JumpKey: 99
+  AttachKey: 99
+  frequency: 2.12
+  dampingRatio: 0.529
+  SwingForce: 1.73
   JumpScalar: 7
-  GravityMultiplier: 1.47
+  GravityMultiplier: 4.54
+  JumpInheritanceFactor: 0
   MaxTailLength: 3.5
-  MinTailLength: 0.1

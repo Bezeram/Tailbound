@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: EntitiesSettings
   m_EditorClassIdentifier: 
   AccelerationForward: 20
-  AccelerationBackwards: 0.5
+  AccelerationBackwards: 5
   MaxSpeedForward: 200
-  MaxSpeedBackwards: 5
+  MaxSpeedBackwards: 7
+  DelayRetractionSeconds: 0.9
