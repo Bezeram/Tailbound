@@ -1,5 +1,4 @@
 using TarodevController;
-using UnityEditor;
 using UnityEngine;
 
 public class Swing : MonoBehaviour
@@ -16,6 +15,7 @@ public class Swing : MonoBehaviour
     public bool IsSwinging = false;
     public Vector2 InputDirection = Vector2.zero;
     public float AttachScore = float.MinValue;
+    public GameObject AttacherObject = null;
 
     private SpringJoint2D _TailJoint;
     private Vector2 _TailAttachPoint;
@@ -24,16 +24,27 @@ public class Swing : MonoBehaviour
     void Update()
     {
         GetInputDirection();
+        UpdateAttachPoint();
 
-        if (_TailJoint != null)
+        if (AttacherObject != null)
             HandleSwinging();
 
         // Player must be in the air to attach
         if (Input.GetKeyDown(PlayerSettings.AttachKey) && !PlayerControllerScript._grounded)
             HandleTailUse();
 
-        if (Input.GetKeyUp(PlayerSettings.AttachKey) && _TailJoint != null)
+        if (Input.GetKeyUp(PlayerSettings.AttachKey) && AttacherObject != null)
             HandleTailRelease();
+    }
+
+    void UpdateAttachPoint()
+    {
+        if (AttacherObject == null)
+            return;
+
+        Vector3 attacherPosition = AttacherObject.transform.position;
+        _TailJoint.connectedAnchor = new(attacherPosition.x, attacherPosition.y);
+        _TailAttachPoint = attacherPosition;
     }
 
     Vector2 GetInputDirection()
@@ -55,6 +66,7 @@ public class Swing : MonoBehaviour
         if (IsSwinging)
         {
             Destroy(_TailJoint);
+            Destroy(AttacherObject);
             ClearTailLine();
             IsSwinging = false;
             RigidBody.linearDamping = 0f;
@@ -77,6 +89,7 @@ public class Swing : MonoBehaviour
         // Use the dot product to find the best match collider with the direction.
         // Best match has the highest dot product value.
         Vector2 bestColliderPosition = Vector2.zero;
+        Collider2D bestCollider = null;
         float bestColliderScore = -2;
         foreach (Collider2D collider in colliders)
         {
@@ -88,6 +101,7 @@ public class Swing : MonoBehaviour
             {
                 bestColliderScore = score;
                 bestColliderPosition = center;
+                bestCollider = collider;
             }
         }
 
@@ -95,17 +109,24 @@ public class Swing : MonoBehaviour
 
         // Configure the tail joint
         _TailAttachPoint = bestColliderPosition;
-        AttachWeb(_TailAttachPoint);
+        AttachTail(_TailAttachPoint, bestCollider);
         DrawTailLine();
         IsSwinging = true;
         RigidBody.linearDamping = 0.5f;
     }
 
-    void AttachWeb(Vector2 attachPoint)
+    void AttachTail(Vector2 attachPoint, Collider2D attacherCollider)
     {
-        _TailJoint = gameObject.AddComponent<SpringJoint2D>();
+        GameObject attachmentObject = attacherCollider.gameObject;
 
-        // Configure spring joint
+        // Make a new Attacher game object
+        AttacherObject = new GameObject("Attacher");
+        AttacherObject.transform.position = attachPoint;
+        // Make it a child of the attachment object
+        AttacherObject.transform.SetParent(attachmentObject.transform, true);
+
+        // Add a spring joint and configure it
+        _TailJoint = gameObject.AddComponent<SpringJoint2D>();
         _TailJoint.autoConfigureDistance = false;
         _TailJoint.autoConfigureConnectedAnchor = false;
         _TailJoint.connectedAnchor = attachPoint;
@@ -132,8 +153,9 @@ public class Swing : MonoBehaviour
     {
         Vector2 releaseDirection = InputDirection;
 
-        // Reset the tail joint
+        // Reset the tail joint and attacher
         Destroy(_TailJoint);
+        Destroy(AttacherObject);
         ClearTailLine();
         IsSwinging = false;
         RigidBody.linearDamping = 0f;
@@ -169,7 +191,7 @@ public class Swing : MonoBehaviour
 
     void LateUpdate()
     {
-        if (_TailJoint != null)
+        if (AttacherObject != null)
         {
             DrawTailLine();
         }
