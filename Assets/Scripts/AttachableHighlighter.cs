@@ -96,8 +96,9 @@ public class LayerHighlight2D : MonoBehaviour
 
         // 1 at minRange, 0 at/after maxRange (smooth)
         float t = 1f - Mathf.InverseLerp(minR, maxR, d);
-        if (hideOutside && (d < minR || d > maxR)) return 0f;
-        return Mathf.Clamp01(t);
+        if (hideOutside && d > maxR) 
+            return 0f;
+        return t;
     }
 
     static bool IsInMask(int layer, LayerMask mask) => (mask.value & (1 << layer)) != 0;
