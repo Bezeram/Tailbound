@@ -21,6 +21,8 @@ public class ScriptablePlayer : ScriptableObject
     public float SwingForce = 1f;
     public float JumpScalar = 7f;
     public float GravityMultiplier = 1;
+    [Range(0.0f, 2.0f)]
+    public float JumpInheritanceFactor = 0.2f;
 
     [Header("Attaching")]
     public float MaxTailLength = 15f;

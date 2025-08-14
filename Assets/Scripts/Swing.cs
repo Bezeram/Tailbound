@@ -203,8 +203,13 @@ public class Swing : MonoBehaviour
         // Apply jump boost by scaling the direction the player released the tail.
         Vector2 jumpDirection = RigidBody.linearVelocity.normalized;
         float amplitude = Vector2.Dot(jumpDirection, releaseDirection) * PlayerSettings.JumpScalar;
+        // Add an upwards force inherited from speed.
+        // Inherited speed is disabled if played did not press upwards.
+        float speedInherited = Mathf.Abs(RigidBody.linearVelocityX) * 0.2f;
+        if (jumpDirection.y != 1)
+            speedInherited = 0;
 
-        Vector2 jumpForce = jumpDirection * amplitude;
+        Vector2 jumpForce = jumpDirection * amplitude + new Vector2(0f, speedInherited);
         RigidBody.AddForce(jumpForce, ForceMode2D.Impulse);
     }
 

@@ -56,6 +56,8 @@ MonoBehaviour:
   _stats: {fileID: 11400000, guid: 05e6a06c5af93134ab98ff12e2c27265, type: 2}
   SwingScript: {fileID: 6558970843273908572}
   LevelLoader: {fileID: 4067423233591614951, guid: f9c4ed6633928754eb69af8dd5745ed8, type: 3}
+  _frameVelocity: {x: 0, y: 0}
+  MaxSpeed: 0
   _grounded: 0
 --- !u!114 &6558970843273908572
 MonoBehaviour:
@@ -80,6 +82,7 @@ MonoBehaviour:
   IsSwinging: 0
   InputDirection: {x: 0, y: 0}
   AttachScore: -3.4028235e+38
+  AttacherObject: {fileID: 0}
 --- !u!114 &6831988449785421683
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -151,7 +154,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.5983269}
+  m_Offset: {x: 0.005566597, y: 0.70036304}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -161,7 +164,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1.2166538}
+  m_Size: {x: 0.8923969, y: 1.2797306}
   m_EdgeRadius: 0
 --- !u!50 &1544650614272011793
 Rigidbody2D:
