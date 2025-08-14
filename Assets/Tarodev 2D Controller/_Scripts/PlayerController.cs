@@ -13,15 +13,18 @@ namespace TarodevController
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
     public class PlayerController : MonoBehaviour, IPlayerController
     {
-        [Header("Input")]
+        [Header("References")]
         public ScriptableStats _stats;
         public Swing SwingScript;
         public GameObject LevelLoader;
 
+        [Header("Info")]
+        public Vector2 _frameVelocity;
+        public float MaxSpeed;
+
         private Rigidbody2D _RigidBody;
         private BoxCollider2D _col;
         private FrameInput _frameInput;
-        private Vector2 _frameVelocity;
         private bool _cachedQueryStartInColliders;
 
         #region Interface
@@ -36,6 +39,7 @@ namespace TarodevController
 
         private void Awake()
         {
+            MaxSpeed = _stats.MaxSpeed;
             _RigidBody = GetComponent<Rigidbody2D>();
             _col = GetComponent<BoxCollider2D>();
             LevelLoader = GameObject.FindGameObjectWithTag("LevelLoader");
@@ -145,11 +149,14 @@ namespace TarodevController
 
         private void HandleJump()
         {
-            if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _RigidBody.linearVelocity.y > 0) _endedJumpEarly = true;
+            if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _RigidBody.linearVelocity.y > 0) 
+                _endedJumpEarly = true;
 
-            if (!_jumpToConsume && !HasBufferedJump) return;
+            if (!_jumpToConsume && !HasBufferedJump) 
+                return;
 
-            if (_grounded || CanUseCoyote) ExecuteJump();
+            if (_grounded || CanUseCoyote) 
+                ExecuteJump();
 
             _jumpToConsume = false;
         }
