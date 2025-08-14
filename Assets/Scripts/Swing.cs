@@ -69,7 +69,6 @@ public class Swing : MonoBehaviour
         // Cast for objects on attachable layer in the maximum range
         Collider2D[] colliders = Physics2D.OverlapCircleAll
             (TailOrigin.position, PlayerSettings.MaxTailLength, Attachable);
-
         if (colliders.Length == 0)
             return;
 

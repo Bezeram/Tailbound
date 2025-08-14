@@ -8,6 +8,7 @@ public class ZipLine_Script : MonoBehaviour
     public GameObject connecting_belt;
     public float speed;
     public bool set_position;
+
     private bool _is_attached;
     private bool _is_active;
     private bool _forward;
