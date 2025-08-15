@@ -100,6 +100,7 @@ namespace TarodevController
         #region Collisions
         
         private float _frameLeftGrounded = float.MinValue;
+        private float _frameWallCollision = float.MinValue;
         public bool _grounded;
 
         private void CheckCollisions()
@@ -109,9 +110,15 @@ namespace TarodevController
             // Ground and Ceiling
             bool groundHit = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.down, _stats.GrounderDistance, _stats.SolidLayer);
             bool ceilingHit = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.up, _stats.GrounderDistance, _stats.SolidLayer);
+            // Wall collision
+            bool wallHitLeft = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.left, _stats.GrounderDistance, _stats.SolidLayer);
+            bool wallHitRight = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.right, _stats.GrounderDistance, _stats.SolidLayer);
 
-            // Hit a Ceiling
-            if (ceilingHit) _frameVelocity.y = Mathf.Min(0, _frameVelocity.y);
+            // Hit a wall
+            if (wallHitLeft || wallHitRight)
+            {
+                _frameVelocity.x -= _stats.WallDeceleration;
+            }
 
             // Landed on the Ground
             if (!_grounded && groundHit)
@@ -177,9 +184,9 @@ namespace TarodevController
 
         private void HandleDirection()
         {
-            if (_frameInput.Move.x == 0 || _RigidBody.linearVelocityX > _stats.MaxSpeed)
+            if (_frameInput.Move.x == 0)
             {
-                var deceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
+                var deceleration = _grounded ? _stats.LowSpeedGroundDeceleration : _stats.LowSpeedAirDeceleration;
                 _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
             }
             else
@@ -187,6 +194,12 @@ namespace TarodevController
                 if (_RigidBody.linearVelocityX < _stats.MaxSpeed)
                 {
                     _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, _frameInput.Move.x * _stats.MaxSpeed, _stats.Acceleration * Time.fixedDeltaTime);
+                }
+                else
+                {
+                    // Apply a weaker deceleration for high speed
+                    var deceleration = _grounded ? _stats.HighSpeedGroundDeceleration : _stats.HighSpeedAirDeceleration;
+                    _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
                 }
             }
         }
