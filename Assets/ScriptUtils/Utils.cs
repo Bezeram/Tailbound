@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public static class Utilities_Script
+public static class Utils
 {
     public static bool Compare_close_vectors(Vector3 first, Vector3 second, float error)
     {
@@ -12,4 +12,6 @@ public static class Utilities_Script
             diference_y < error && diference_y > -error &&
             diference_z < error && diference_z > -error;
     }
+
+    public static bool IsInMask(int layer, LayerMask mask) => (mask.value & (1 << layer)) != 0;
 }

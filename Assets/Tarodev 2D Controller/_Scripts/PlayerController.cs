@@ -187,6 +187,12 @@ namespace TarodevController
             Jumped?.Invoke();
         }
 
+        // Called by scripts which wish for the player to jump
+        public void Propel(Vector2 speed)
+        {
+            _frameVelocity += speed;
+        }
+
         #endregion
 
         #region Horizontal
