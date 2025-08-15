@@ -22,6 +22,7 @@ MonoBehaviour:
   dampingRatio: 0.529
   SwingForce: 5.07
   JumpScalar: 7
-  GravityMultiplier: 6.63
+  GravityMultiplier: 4.26
   JumpInheritanceFactor: 0
+  LinearDamping: 2
   MaxTailLength: 3.5

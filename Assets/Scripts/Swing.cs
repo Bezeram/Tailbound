@@ -67,20 +67,6 @@ public class Swing : MonoBehaviour
         return InputDirection.normalized;
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (IsSwinging)
-        {
-            Destroy(_TailJoint);
-            Destroy(AttacherObject);
-            ClearTailLine();
-            IsSwinging = false;
-            RigidBody.linearDamping = 0f;
-
-            DetachFromZipline();
-        }
-    }
-
     void HandleTailUse()
     {
         // Get swing direction
@@ -141,7 +127,7 @@ public class Swing : MonoBehaviour
         AttachTail(_TailAttachPoint, bestCollider);
         DrawTailLine();
         IsSwinging = true;
-        RigidBody.linearDamping = 0.5f;
+        RigidBody.linearDamping = PlayerSettings.LinearDamping;
     }
 
     void AttachToZipline(GameObject attachmentObject)
