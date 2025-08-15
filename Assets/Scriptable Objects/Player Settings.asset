@@ -20,9 +20,9 @@ MonoBehaviour:
   AttachKey: 99
   frequency: 2.12
   dampingRatio: 0.529
-  SwingForce: 5.07
+  BaseSwingForce: 4.05
   JumpScalar: 7
-  GravityMultiplier: 4.26
+  GravityMultiplier: 2.96
   JumpInheritanceFactor: 0
   LinearDamping: 2
   MaxTailLength: 3.5

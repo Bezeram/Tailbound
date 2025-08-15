@@ -167,10 +167,22 @@ public class Swing : MonoBehaviour
         AttachToZipline(attachmentObject);
     }
 
+    public Vector2 SwingDirection;
+
     void HandleSwinging()
     {
         Vector2 forceDirection = new Vector2(Input.GetAxis("Horizontal"), 0);
-        RigidBody.AddForce(forceDirection * PlayerSettings.SwingForce);
+        // Direction pointing from the attach point to the player
+        Vector2 tailPivot = new(TailOrigin.position.x, TailOrigin.position.y);
+        Vector2 swingDirection = (tailPivot - _TailAttachPoint).normalized;
+        // Swing force decreases with how high the player is
+        // in relation to the attachment point.
+        // Directly below the attach point, the swing force is max.
+        float naturalSwingForce = Mathf.Abs(Vector2.Dot(Vector2.down, swingDirection));
+        Vector2 force = naturalSwingForce * PlayerSettings.BaseSwingForce * forceDirection;
+        RigidBody.AddForce(force);
+
+        SwingDirection = swingDirection;
 
         // Gravity
         RigidBody.AddForce(Vector2.down * PlayerSettings.GravityMultiplier);

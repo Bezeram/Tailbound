@@ -18,7 +18,7 @@ public class ScriptablePlayer : ScriptableObject
     public float dampingRatio = 0.5f;
 
     [Header("Swinging")]
-    public float SwingForce = 1f;
+    public float BaseSwingForce = 1f;
     public float JumpScalar = 7f;
     public float GravityMultiplier = 1;
     [Range(0.0f, 2.0f)]
