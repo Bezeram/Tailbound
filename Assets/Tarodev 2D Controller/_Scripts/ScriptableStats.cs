@@ -23,11 +23,17 @@ namespace TarodevController
         [Tooltip("The player's capacity to gain horizontal speed")]
         public float Acceleration = 120;
 
-        [Tooltip("The pace at which the player comes to a stop")]
-        public float GroundDeceleration = 60;
+        [Tooltip("The pace at which the player comes to a stop at low speed")]
+        public float LowSpeedGroundDeceleration = 60;
+
+        [Tooltip("The pace at which the player comes to a stop at high speed")]
+        public float HighSpeedGroundDeceleration = 30;
 
         [Tooltip("Deceleration in air only after stopping input mid-air")]
-        public float AirDeceleration = 30;
+        public float LowSpeedAirDeceleration = 80;
+
+        [Tooltip("Only applies when player is moving above the walking speed cap")]
+        public float HighSpeedAirDeceleration = 20;
 
         [Tooltip("A constant downward force applied while grounded. Helps on slopes"), Range(0f, -10f)]
         public float GroundingForce = -1.5f;
