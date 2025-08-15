@@ -86,24 +86,45 @@ public class Swing : MonoBehaviour
         // Get swing direction
         Vector2 swingDirection = InputDirection;
 
+        // Local function for calculating the best collider score
+        (float, Vector2) CalculateColliderScore(Collider2D collider)
+        {
+            Vector2 center = (Vector2)collider.bounds.center;
+            float score = 0;
+            // 2 different scoring mechanisms
+            if (swingDirection == Vector2.zero)
+            {
+                // If no preference direction was chosen, pick the closest attachable.
+                // Use the closest point in reference to the player.
+                // Return negative to prefer the smallest distance,
+                // which with a negative sign becomes the biggest score.
+                score = -Vector2.Distance(TailOrigin.position, collider.ClosestPoint(TailOrigin.position));
+                return (score, center);
+            }
+
+            // Use the dot product to determine "closest arrow" to swing direction.
+            Vector2 direction = center - (Vector2)TailOrigin.position;
+            score = Vector2.Dot(direction.normalized, swingDirection);
+            return (score, center);
+        }
+
         // Cast for objects on attachable layer in the maximum range
         Collider2D[] colliders = Physics2D.OverlapCircleAll
             (TailOrigin.position, PlayerSettings.MaxTailLength, Attachable);
         if (colliders.Length == 0)
             return;
 
-        // Get the center of the colliders and
-        // draw a vector to the center of all colliders detected.
-        // Use the dot product to find the best match collider with the direction.
-        // Best match has the highest dot product value.
+        /// Choose the best collider
+        // Get the center of the colliders and draw a vector to the
+        // center of all colliders detected.
+        // Use the CalculateColliderScore() function for the score.
+        // Best match has highest score.
         Vector2 bestColliderPosition = Vector2.zero;
         Collider2D bestCollider = null;
-        float bestColliderScore = -2;
+        float bestColliderScore = float.MinValue;
         foreach (Collider2D collider in colliders)
         {
-            Vector2 center = (Vector2)collider.bounds.center;
-            Vector2 direction = center - (Vector2)TailOrigin.position;
-            float score = Vector2.Dot(direction.normalized, swingDirection);
+            (float score, Vector2 center) = CalculateColliderScore(collider);
 
             if (score > bestColliderScore)
             {
@@ -112,7 +133,7 @@ public class Swing : MonoBehaviour
                 bestCollider = collider;
             }
         }
-
+        // Info
         AttachScore = bestColliderScore;
 
         // Configure the tail joint
