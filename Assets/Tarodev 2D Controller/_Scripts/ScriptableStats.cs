@@ -35,6 +35,9 @@ namespace TarodevController
         [Tooltip("Only applies when player is moving above the walking speed cap")]
         public float HighSpeedAirDeceleration = 20;
 
+        [Tooltip("Deceleration upon hitting a wall")]
+        public float WallDeceleration = 50;
+
         [Tooltip("A constant downward force applied while grounded. Helps on slopes"), Range(0f, -10f)]
         public float GroundingForce = -1.5f;
 
