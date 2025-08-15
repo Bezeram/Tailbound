@@ -100,7 +100,6 @@ namespace TarodevController
         #region Collisions
         
         private float _frameLeftGrounded = float.MinValue;
-        private float _frameWallCollision = float.MinValue;
         public bool _grounded;
 
         private void CheckCollisions()
@@ -117,7 +116,7 @@ namespace TarodevController
             // Hit a wall
             if (wallHitLeft || wallHitRight)
             {
-                _frameVelocity.x -= _stats.WallDeceleration;
+                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, _stats.WallDeceleration * Time.fixedDeltaTime); ;
             }
 
             // Landed on the Ground
@@ -156,7 +155,7 @@ namespace TarodevController
 
         private void HandleJump()
         {
-            if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _RigidBody.linearVelocity.y > 0) 
+            if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _RigidBody.linearVelocity.y > 0)
                 _endedJumpEarly = true;
 
             if (!_jumpToConsume && !HasBufferedJump) 
@@ -174,7 +173,17 @@ namespace TarodevController
             _timeJumpWasPressed = 0;
             _bufferedJumpUsable = false;
             _coyoteUsable = false;
+
+            // After max speed, a jump boost is added proportional to sideways movement.
             _frameVelocity.y = _stats.JumpPower;
+            if (Mathf.Abs(_frameVelocity.x) > _stats.MaxSpeed)
+            {
+                // Steal speed from the horizontal component.
+                float boost = _stats.JumpInheritanceFactor * _frameVelocity.x;
+                _frameVelocity.y += boost;
+                _frameVelocity.x -= boost;
+            }
+
             Jumped?.Invoke();
         }
 

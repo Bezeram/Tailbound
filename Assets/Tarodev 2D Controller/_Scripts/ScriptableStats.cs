@@ -47,6 +47,9 @@ namespace TarodevController
         [Header("JUMP")] [Tooltip("The immediate velocity applied when jumping")]
         public float JumpPower = 36;
 
+        [Tooltip("The amount of speed inherited from horizontal movement when jumping.")]
+        public float JumpInheritanceFactor = 0.2f;
+
         [Tooltip("The maximum vertical movement speed")]
         public float MaxFallSpeed = 40;
 
