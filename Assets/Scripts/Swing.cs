@@ -130,7 +130,6 @@ public class Swing : MonoBehaviour
         if (isZiplineActivator)
         {
             _ZiplineActivator.ActivateZipline();
-            Debug.Log("[AttachTail] Zipline activated.");
         }
     }
 
@@ -178,7 +177,6 @@ public class Swing : MonoBehaviour
             // Do NOT use Destroy() because that would destroy
             // the zipline activator component.
             _ZiplineActivator = null;  
-            Debug.Log("[AttachTail] Zipline deactivated.");
         }
     }
 

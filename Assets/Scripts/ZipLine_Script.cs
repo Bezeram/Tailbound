@@ -3,7 +3,7 @@ using UnityEngine;
 public class ZipLine_Script : MonoBehaviour
 {
     [Header("References")]
-    public EntitiesSettings settings;
+    public EntitiesSettings Settings;
     public GameObject start_point;
     public GameObject end_point;
     public GameObject attachment_point;
@@ -11,28 +11,34 @@ public class ZipLine_Script : MonoBehaviour
 
     public bool set_position;
 
-    [Header("Info")]
-    public bool _is_attached;
-    public bool _is_active;
+    public enum State
+    { 
+        Idle = 0,
+        Forward,
+        IdleEnd,
+        Backward,
+    }
+    [Header("Mode")]
+    [SerializeField] private State CurrentState = State.Idle;
+    [SerializeField] private bool IsActive;
 
     private Vector3 _Direction;
     private float _Speed = 0f;
-    private bool _Forward;
     private float _TimerRetraction = 0f;
 
     public void Attach()
     {
-        _is_attached = true;
-        _is_active = true;
+        IsActive = true;
     }
 
     public void Detach()
     {
-        _is_attached = false;
+        IsActive = false;
     }
 
     void OnValidate()
     {
+        // Reposition connecting belt after moving the start and end points.
         float delta_x = start_point.transform.position.x - end_point.transform.position.x;
         float delta_y = start_point.transform.position.y - end_point.transform.position.y;
 
@@ -41,15 +47,74 @@ public class ZipLine_Script : MonoBehaviour
         connecting_belt.transform.rotation = Quaternion.Euler(0.0f, 0.0f, 180.0f / Mathf.PI * Mathf.Atan2(delta_y, delta_x));
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        _is_active = false;
-        _is_attached = false;
-        _Forward = true;
+        // Initially off
+        IsActive = false;
+        CurrentState = State.Idle;
+        // Init direction
         attachment_point.transform.position = start_point.transform.position;
         _Direction = end_point.transform.position - start_point.transform.position;
         _Direction.Normalize();
+    }
+
+    void Update()
+    {
+        switch (CurrentState)
+        {
+            case State.Idle:
+                {
+                    // Start moving if active
+                    if (IsActive)
+                    {
+                        CurrentState = State.Forward;
+                    }
+                    break;
+                }
+            case State.Forward:
+                {
+                    // Accelerate
+                    _Speed += Time.deltaTime * Settings.AccelerationForward;
+                    // Cap max speed
+                    _Speed = Mathf.Clamp(_Speed, 0f, Settings.MaxSpeedForward);
+
+                    attachment_point.transform.position += _Direction * Time.deltaTime * _Speed;
+                    // Check if the end has been reached
+                    if (AttachmentReachedAt(start_point, end_point))
+                    {
+                        CurrentState = State.IdleEnd;
+                        _Speed = 0f;
+                    }
+                }
+                break;
+            case State.IdleEnd:
+                {
+                    _TimerRetraction += Time.deltaTime;
+                    // Wait a bit before starting to retract
+                    if (_TimerRetraction > Settings.DelayRetractionSeconds)
+                    {
+                        CurrentState = State.Backward;
+                        _TimerRetraction = 0f;
+                    }
+                }
+                break;
+            case State.Backward:
+                {
+                    // Accelerate
+                    _Speed += Time.deltaTime * Settings.AccelerationBackwards;
+                    // Cap max speed
+                    _Speed = Mathf.Clamp(_Speed, 0f, Settings.MaxSpeedBackwards);
+
+                    attachment_point.transform.position -= _Direction * Time.deltaTime * _Speed;
+                    // Check if the ZipLine has returned to the beginning
+                    if (AttachmentReachedAt(end_point, start_point))
+                    {
+                        CurrentState = State.Idle;
+                        _Speed = 0f;
+                    }
+                    break;
+                }
+        }
     }
 
     bool AttachmentReachedAt(GameObject startPoint, GameObject endPoint)
@@ -63,48 +128,5 @@ public class ZipLine_Script : MonoBehaviour
         float t_z = Mathf.InverseLerp(positionStart.z, positionEnd.z, positionAttachment.z);
 
         return t_x >= 1f || t_y >= 1f || t_z >= 1f;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (!_is_active)
-            return;
-
-        if (_Forward)
-        {
-            // Accelerate
-            _Speed += Time.deltaTime * settings.AccelerationForward;
-            // Cap max speed
-            _Speed = Mathf.Clamp(_Speed, 0f, settings.MaxSpeedForward);
-
-            attachment_point.transform.position += _Direction * Time.deltaTime * _Speed;
-            if (AttachmentReachedAt(start_point, end_point))
-            {
-                _Forward = false;
-                _Speed = 0f;
-            }
-        } 
-        else
-        {
-            _TimerRetraction += Time.deltaTime;
-            if (_TimerRetraction > settings.DelayRetractionSeconds)
-            {
-                // Accelerate
-                _Speed += Time.deltaTime * settings.AccelerationBackwards;
-                // Cap max speed
-                _Speed = Mathf.Clamp(_Speed, 0f, settings.MaxSpeedBackwards);
-
-                attachment_point.transform.position -= _Direction * Time.deltaTime * _Speed;
-                if (AttachmentReachedAt(end_point, start_point))
-                {
-                    _Forward = true;
-                    _TimerRetraction = 0f;
-                    _Speed = 0f;
-                    if (!_is_attached)
-                        _is_active = false;
-                }
-            }
-        }
     }
 }

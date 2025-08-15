@@ -222,14 +222,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aedb20be77459254dbe754db3226e293, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  settings: {fileID: 11400000, guid: ef839832e845e29459b80f90a8d5271a, type: 2}
+  Settings: {fileID: 11400000, guid: ef839832e845e29459b80f90a8d5271a, type: 2}
   start_point: {fileID: 3065177819342494015}
   end_point: {fileID: 8533093450235152620}
   attachment_point: {fileID: 5418760745131823335}
   connecting_belt: {fileID: 2753958849189908232}
   set_position: 0
-  _is_attached: 0
-  _is_active: 0
+  CurrentState: 0
+  IsActive: 0
 --- !u!1 &5418760745131823335
 GameObject:
   m_ObjectHideFlags: 0
