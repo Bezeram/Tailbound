@@ -8,10 +8,17 @@ public class ZiplineAccelerated : ActivatableEntity
     [Required] public EntitiesSettings Settings;
     [ShowInInspector] private bool AttachmentAtStart = true;
 
-    private Transform StartTransform;
-    private Transform EndTransform;
-    private Transform AttachmentTransform;
-    private Transform BeltTransform;
+    private Transform _StartTransform;
+    private Transform _EndTransform;
+    private Transform _AttachmentTransform;
+    private Transform _BeltTransform;
+
+    // Audio
+    private AudioSource _AudioSource;
+    public AudioClip _ForwardAudioClip;
+    public AudioClip _ImpactAudioClip;
+    public AudioClip _RetractionAudioClip;
+    public AudioClip _ResetAudioClip;
 
     public enum State
     {
@@ -27,19 +34,19 @@ public class ZiplineAccelerated : ActivatableEntity
     void ReattachBelt()
     {
         // Reposition connecting belt after moving the start and end points.
-        float delta_x = StartTransform.position.x - EndTransform.position.x;
-        float delta_y = StartTransform.position.y - EndTransform.position.y;
+        float delta_x = _StartTransform.position.x - _EndTransform.position.x;
+        float delta_y = _StartTransform.position.y - _EndTransform.position.y;
 
         // Reposition attachment
         if (AttachmentAtStart)
         {
-            AttachmentTransform.position = StartTransform.position;
+            _AttachmentTransform.position = _StartTransform.position;
         }
 
         // Retransform belt
-        BeltTransform.position = (StartTransform.position + EndTransform.position) / 2.0f;
-        BeltTransform.localScale = new Vector3(Vector3.Distance(StartTransform.position, EndTransform.position) * 0.20f, 1.0f, 1.0f);
-        BeltTransform.rotation = Quaternion.Euler(0.0f, 0.0f, 180.0f / Mathf.PI * Mathf.Atan2(delta_y, delta_x));
+        _BeltTransform.position = (_StartTransform.position + _EndTransform.position) / 2.0f;
+        _BeltTransform.localScale = new Vector3(Vector3.Distance(_StartTransform.position, _EndTransform.position) * 0.20f, 1.0f, 1.0f);
+        _BeltTransform.rotation = Quaternion.Euler(0.0f, 0.0f, 180.0f / Mathf.PI * Mathf.Atan2(delta_y, delta_x));
     }
 
     // Where the ZipLine is in between the StartPoint and EndPoint
@@ -50,10 +57,24 @@ public class ZiplineAccelerated : ActivatableEntity
     void Awake()
     {
         // Init referenced transforms
-        StartTransform = transform.Find("StartPoint");
-        EndTransform = transform.Find("EndPoint");
-        AttachmentTransform = transform.Find("Attachment");
-        BeltTransform = transform.Find("Belt");
+        if (_StartTransform == null)
+            _StartTransform = transform.Find("StartPoint");
+        if (_EndTransform == null)
+            _EndTransform = transform.Find("EndPoint");
+        if (_AttachmentTransform == null)
+            _AttachmentTransform = transform.Find("Attachment");
+        if (_BeltTransform == null)
+            _BeltTransform = transform.Find("Belt");
+        if (_AudioSource == null)
+        {
+            _AudioSource = GetComponent<AudioSource>();
+            _AudioSource.volume = 0.8f;
+        }
+    }
+
+    void OnValidate()
+    {
+        Awake();
     }
 
     public override void ReceiveActivation()
@@ -72,8 +93,8 @@ public class ZiplineAccelerated : ActivatableEntity
         IsActive = false;
         CurrentState = State.Idle;
         // Init direction
-        AttachmentTransform.transform.position = StartTransform.transform.position;
-        _Direction = EndTransform.transform.position - StartTransform.transform.position;
+        _AttachmentTransform.transform.position = _StartTransform.transform.position;
+        _Direction = _EndTransform.transform.position - _StartTransform.transform.position;
         _Direction.Normalize();
     }
 
@@ -95,6 +116,10 @@ public class ZiplineAccelerated : ActivatableEntity
                     if (IsActive)
                     {
                         CurrentState = State.Forward;
+                        // Play sound
+                        _AudioSource.clip = _ForwardAudioClip;
+                        _AudioSource.loop = false;
+                        _AudioSource.Play();
                     }
                     break;
                 }
@@ -105,12 +130,16 @@ public class ZiplineAccelerated : ActivatableEntity
                     // Cap max speed
                     _Speed = Mathf.Clamp(_Speed, 0f, Settings.MaxSpeedForward);
 
-                    AttachmentTransform.position += _Direction * Time.deltaTime * _Speed;
+                    _AttachmentTransform.position += _Direction * Time.deltaTime * _Speed;
                     // Check if the end has been reached
-                    if (AttachmentReachedAt(StartTransform, EndTransform))
+                    if (AttachmentReachedAt(_StartTransform, _EndTransform))
                     {
                         CurrentState = State.IdleEnd;
                         _Speed = 0f;
+                        // Play sound
+                        _AudioSource.clip = _ImpactAudioClip;
+                        _AudioSource.loop = false;
+                        _AudioSource.Play();
                     }
                 }
                 break;
@@ -122,6 +151,10 @@ public class ZiplineAccelerated : ActivatableEntity
                     {
                         CurrentState = State.Backward;
                         _TimerRetraction = 0f;
+                        // Play sound
+                        _AudioSource.clip = _RetractionAudioClip;
+                        _AudioSource.loop = true;
+                        _AudioSource.Play();
                     }
                 }
                 break;
@@ -132,12 +165,16 @@ public class ZiplineAccelerated : ActivatableEntity
                     // Cap max speed
                     _Speed = Mathf.Clamp(_Speed, 0f, Settings.MaxSpeedBackwards);
 
-                    AttachmentTransform.transform.position -= _Direction * Time.deltaTime * _Speed;
+                    _AttachmentTransform.transform.position -= _Direction * Time.deltaTime * _Speed;
                     // Check if the ZipLine has returned to the beginning
-                    if (AttachmentReachedAt(EndTransform, StartTransform))
+                    if (AttachmentReachedAt(_EndTransform, _StartTransform))
                     {
                         CurrentState = State.Idle;
                         _Speed = 0f;
+                        // Play sound
+                        _AudioSource.clip = _ResetAudioClip;
+                        _AudioSource.loop = false;
+                        _AudioSource.Play();
                     }
                     break;
                 }
@@ -147,7 +184,7 @@ public class ZiplineAccelerated : ActivatableEntity
     bool AttachmentReachedAt(Transform startPoint, Transform endPoint)
     {
         Vector3 positionStart = startPoint.transform.position;
-        Vector3 positionAttachment = AttachmentTransform.transform.position;
+        Vector3 positionAttachment = _AttachmentTransform.transform.position;
         Vector3 positionEnd = endPoint.transform.position;
 
         float t_x = Mathf.InverseLerp(positionStart.x, positionEnd.x, positionAttachment.x);

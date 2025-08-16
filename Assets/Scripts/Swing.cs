@@ -1,9 +1,10 @@
+using Sirenix.OdinInspector;
 using TarodevController;
 using UnityEngine;
 
 public class Swing : MonoBehaviour
 {
-    [Header("References")]
+    [TitleGroup("References")]
     public LayerMask Attachable;
     public Rigidbody2D RigidBody;
     public LineRenderer LineRenderer;
@@ -11,20 +12,21 @@ public class Swing : MonoBehaviour
     public PlayerController PlayerControllerScript;
     public ScriptablePlayer PlayerSettings;
 
-    [Header("Info")]
-    public bool IsSwinging = false;
-    public Vector2 InputDirection = Vector2.zero;
-    public float AttachScore = float.MinValue;
-    public GameObject AttacherObject = null;
+    [TitleGroup("Info")]
+    [ReadOnly, ShowInInspector] public bool IsSwinging = false;
+    [ReadOnly, ShowInInspector] private Vector2 InputDirection = Vector2.zero;
+    [ReadOnly, ShowInInspector] private float AttachScore = float.MinValue;
 
-    public Vector2 _JumpDirection;
-    public float _Amplitude;
-    public float _SpeedInherited;
-    public Vector2 _JumpForce;
+    [ReadOnly, ShowInInspector] private Vector2 _JumpDirection;
+    [ReadOnly, ShowInInspector] private float _Amplitude;
+    [ReadOnly, ShowInInspector] private float _SpeedInherited;
+    [ReadOnly, ShowInInspector] private Vector2 _JumpForce;
+    [ReadOnly, ShowInInspector] private Vector2 SwingDirection;
 
     private ZiplineActivator _ZiplineActivator;
     private SpringJoint2D _TailJoint;
     private Vector2 _TailAttachPoint;
+    private GameObject _AttacherObject = null;
 
     // Update is called once per frame
     void Update()
@@ -32,23 +34,23 @@ public class Swing : MonoBehaviour
         GetInputDirection();
         UpdateAttachPoint();
 
-        if (AttacherObject != null)
+        if (_AttacherObject != null)
             HandleSwinging();
 
         // Player must be in the air to attach
         if (Input.GetKeyDown(PlayerSettings.AttachKey) && !PlayerControllerScript._grounded)
             HandleTailUse();
 
-        if (Input.GetKeyUp(PlayerSettings.AttachKey) && AttacherObject != null)
+        if (Input.GetKeyUp(PlayerSettings.AttachKey) && _AttacherObject != null)
             HandleTailRelease();
     }
 
     void UpdateAttachPoint()
     {
-        if (AttacherObject == null)
+        if (_AttacherObject == null)
             return;
 
-        Vector3 attacherPosition = AttacherObject.transform.position;
+        Vector3 attacherPosition = _AttacherObject.transform.position;
         _TailJoint.connectedAnchor = new(attacherPosition.x, attacherPosition.y);
         _TailAttachPoint = attacherPosition;
     }
@@ -145,10 +147,10 @@ public class Swing : MonoBehaviour
         GameObject attachmentObject = attacherCollider.gameObject;
 
         // Make a new Attacher game object
-        AttacherObject = new GameObject("Attacher");
-        AttacherObject.transform.position = attachPoint;
+        _AttacherObject = new GameObject("Attacher");
+        _AttacherObject.transform.position = attachPoint;
         // Make it a child of the attachment object
-        AttacherObject.transform.SetParent(attachmentObject.transform, true);
+        _AttacherObject.transform.SetParent(attachmentObject.transform, true);
 
         // Add a spring joint and configure it
         _TailJoint = gameObject.AddComponent<SpringJoint2D>();
@@ -167,7 +169,6 @@ public class Swing : MonoBehaviour
         AttachToZipline(attachmentObject);
     }
 
-    public Vector2 SwingDirection;
 
     void HandleSwinging()
     {
@@ -209,7 +210,7 @@ public class Swing : MonoBehaviour
         ClearTailLine();
         // Reset the tail joint and attacher
         Destroy(_TailJoint);
-        Destroy(AttacherObject);
+        Destroy(_AttacherObject);
         // Detach from zipline if it's there
         DetachFromZipline();
 
@@ -256,7 +257,7 @@ public class Swing : MonoBehaviour
 
     void LateUpdate()
     {
-        if (AttacherObject != null)
+        if (_AttacherObject != null)
         {
             DrawTailLine();
         }
