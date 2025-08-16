@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 386586538530495629}
   - component: {fileID: 9108282485170058274}
   m_Layer: 6
-  m_Name: Connectingbelt
+  m_Name: Belt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -26,8 +26,8 @@ Transform:
   m_GameObject: {fileID: 2753958849189908232}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 1, w: -0.00000004371139}
-  m_LocalPosition: {x: -0.00000047683716, y: 0, z: 0}
-  m_LocalScale: {x: 1.5999999, y: 1, z: 1}
+  m_LocalPosition: {x: 1.84, y: 0, z: 0}
+  m_LocalScale: {x: 0.864, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3471523962317756936}
@@ -113,7 +113,7 @@ Transform:
   m_GameObject: {fileID: 3065177819342494015}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4, y: 0, z: 0}
+  m_LocalPosition: {x: -0.32, y: 0, z: 0}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -183,9 +183,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3471523962317756936}
-  - component: {fileID: 4258008601800167461}
+  - component: {fileID: 7580468122412464427}
   m_Layer: 6
-  m_Name: ZipLine
+  m_Name: ZiplineTimed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -200,7 +200,7 @@ Transform:
   m_GameObject: {fileID: 4608288645020052648}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.369126, y: 7.0810466, z: 0.008797536}
+  m_LocalPosition: {x: 0, y: 0, z: 0.008797536}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -210,7 +210,7 @@ Transform:
   - {fileID: 386586538530495629}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4258008601800167461
+--- !u!114 &7580468122412464427
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -219,17 +219,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 4608288645020052648}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ed93652c1bda990449b68ecb3d1f61a4, type: 3}
+  m_Script: {fileID: 11500000, guid: 03f93828dc953944ba823e8e712db073, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Settings: {fileID: 11400000, guid: ef839832e845e29459b80f90a8d5271a, type: 2}
-  start_point: {fileID: 3065177819342494015}
-  end_point: {fileID: 8533093450235152620}
-  attachment_point: {fileID: 5418760745131823335}
-  connecting_belt: {fileID: 2753958849189908232}
-  set_position: 0
-  CurrentState: 0
-  IsActive: 0
+  StartTransform: {fileID: 1667839235624106571}
+  EndTransform: {fileID: 6586368654650963647}
+  AttachmentTransform: {fileID: 3762576635693202706}
+  BeltTransform: {fileID: 386586538530495629}
 --- !u!1 &5418760745131823335
 GameObject:
   m_ObjectHideFlags: 0
@@ -243,7 +240,7 @@ GameObject:
   - component: {fileID: 7738109544394386482}
   - component: {fileID: 4458527091224046155}
   m_Layer: 8
-  m_Name: AttachmentObject
+  m_Name: Attachment
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -258,7 +255,7 @@ Transform:
   m_GameObject: {fileID: 5418760745131823335}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4, y: 0, z: 0}
+  m_LocalPosition: {x: -1.52, y: -1.18, z: 0}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.99116}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -377,7 +374,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a77768f08c4abbf47a081ab35ec28c58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ZiplineReferenceScript: {fileID: 4258008601800167461}
+  Zipline: {fileID: 7580468122412464427}
 --- !u!1 &8533093450235152620
 GameObject:
   m_ObjectHideFlags: 0

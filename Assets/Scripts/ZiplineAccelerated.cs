@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Zipline : MonoBehaviour
+public class ZiplineAccelerated : ActivatableEntity
 {
     [Header("References")]
     public EntitiesSettings Settings;
@@ -26,12 +26,12 @@ public class Zipline : MonoBehaviour
     private float _Speed = 0f;
     private float _TimerRetraction = 0f;
 
-    public void Attach()
+    public override void ReceiveActivation()
     {
         IsActive = true;
     }
 
-    public void Detach()
+    public override void ReceiveDeactivation()
     {
         IsActive = false;
     }
@@ -129,4 +129,5 @@ public class Zipline : MonoBehaviour
 
         return t_x >= 1f || t_y >= 1f || t_z >= 1f;
     }
+
 }

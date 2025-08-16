@@ -1,26 +1,26 @@
 using UnityEngine;
 
-public class ZiplineActivator : MonoBehaviour
+public class ZiplineActivator : MonoBehaviour, IEntityActivator
 {
-    public Zipline ZiplineReferenceScript;
+    [SerializeField] private ActivatableEntity Zipline;
 
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (ZiplineReferenceScript == null) 
+        if (Zipline == null) 
             Debug.LogWarning("Please assign a Zipline reference to the Zipline Activator script.", this);
     }
 #endif
 
     // Called at the moment of attaching with the tail
-    public void ActivateZipline()
+    public void SendActivation()
     {
-        ZiplineReferenceScript.Attach();
+        Zipline.ReceiveActivation();
     }
 
     // Called at the moment of releasing the tail
-    public void DeactivateZipline()
+    public void SendDeactivation()
     {
-        ZiplineReferenceScript.Detach();
+        Zipline.ReceiveDeactivation();
     }
 }

@@ -136,7 +136,7 @@ public class Swing : MonoBehaviour
         bool isZiplineActivator = attachmentObject.TryGetComponent(out _ZiplineActivator);
         if (isZiplineActivator)
         {
-            _ZiplineActivator.ActivateZipline();
+            _ZiplineActivator.SendActivation();
         }
     }
 
@@ -192,10 +192,10 @@ public class Swing : MonoBehaviour
     {
         if (_ZiplineActivator != null)
         {
-            _ZiplineActivator.DeactivateZipline();
+            _ZiplineActivator.SendDeactivation();
             // Do NOT use Destroy() because that would destroy
             // the zipline activator component.
-            _ZiplineActivator = null;  
+            _ZiplineActivator = null;
         }
     }
 
