@@ -2,24 +2,24 @@ using UnityEngine;
 
 public class ZiplineActivator : MonoBehaviour
 {
-    public ZipLine_Script ZiplineReference;
+    public ZipLine_Script ZiplineReferenceScript;
 
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (ZiplineReference == null) Debug.LogWarning("Please assign the ZipLine object to ZipLine Reference slot.", this);
+        if (ZiplineReferenceScript == null) Debug.LogWarning("Please assign a ScriptableStats asset to the Player Controller's Stats slot", this);
     }
 #endif
 
     // Called at the moment of attaching with the tail
     public void ActivateZipline()
     {
-        ZiplineReference.Attach();
+        ZiplineReferenceScript.Attach();
     }
 
     // Called at the moment of releasing the tail
     public void DeactivateZipline()
     {
-        ZiplineReference.Detach();
+        ZiplineReferenceScript.Detach();
     }
 }

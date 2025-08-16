@@ -9,10 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 386586538530495629}
-  - component: {fileID: 2629944737592866800}
   - component: {fileID: 9108282485170058274}
   m_Layer: 6
-  m_Name: ConnectingBelt
+  m_Name: Connectingbelt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27,25 +26,12 @@ Transform:
   m_GameObject: {fileID: 2753958849189908232}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 1, w: -0.00000004371139}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 1, z: 1}
+  m_LocalPosition: {x: -0.00000047683716, y: 0, z: 0}
+  m_LocalScale: {x: 1.5999999, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3471523962317756936}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2629944737592866800
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2753958849189908232}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1c1faf6b7feee44d890d523caeb574e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetZipline: {fileID: 4258008601800167461}
 --- !u!212 &9108282485170058274
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -110,7 +96,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1667839235624106571}
-  - component: {fileID: 1283694615944741558}
   - component: {fileID: 6497605055563469316}
   m_Layer: 6
   m_Name: StartPoint
@@ -128,25 +113,12 @@ Transform:
   m_GameObject: {fileID: 3065177819342494015}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5, y: 0, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 1}
+  m_LocalPosition: {x: -4, y: 0, z: 0}
+  m_LocalScale: {x: 0.3, y: 0.3, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3471523962317756936}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1283694615944741558
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3065177819342494015}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1c1faf6b7feee44d890d523caeb574e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetZipline: {fileID: 4258008601800167461}
 --- !u!212 &6497605055563469316
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -228,14 +200,14 @@ Transform:
   m_GameObject: {fileID: 4608288645020052648}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.008797536}
+  m_LocalPosition: {x: 4.369126, y: 7.0810466, z: 0.008797536}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1667839235624106571}
   - {fileID: 6586368654650963647}
-  - {fileID: 386586538530495629}
   - {fileID: 3762576635693202706}
+  - {fileID: 386586538530495629}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4258008601800167461
@@ -250,13 +222,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aedb20be77459254dbe754db3226e293, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  StartPoint: {x: -5, y: 0}
-  EndPoint: {x: 5, y: 0}
   Settings: {fileID: 11400000, guid: ef839832e845e29459b80f90a8d5271a, type: 2}
-  StartPointTransform: {fileID: 1667839235624106571}
-  EndPointTransform: {fileID: 6586368654650963647}
-  AttachmentTransform: {fileID: 3762576635693202706}
-  BeltTransform: {fileID: 386586538530495629}
+  start_point: {fileID: 3065177819342494015}
+  end_point: {fileID: 8533093450235152620}
+  attachment_point: {fileID: 5418760745131823335}
+  connecting_belt: {fileID: 2753958849189908232}
+  set_position: 0
   CurrentState: 0
   IsActive: 0
 --- !u!1 &5418760745131823335
@@ -270,9 +241,8 @@ GameObject:
   - component: {fileID: 3762576635693202706}
   - component: {fileID: 3728678924176522689}
   - component: {fileID: 7738109544394386482}
-  - component: {fileID: 811888408011721449}
   m_Layer: 8
-  m_Name: Attachment
+  m_Name: AttachmentObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -286,9 +256,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5418760745131823335}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5, y: 0, z: 0}
-  m_LocalScale: {x: 0.75, y: 0.75, z: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4, y: 0, z: 0}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.99116}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3471523962317756936}
@@ -394,19 +364,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.63, y: 1.51}
   m_EdgeRadius: 0
---- !u!114 &811888408011721449
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5418760745131823335}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a77768f08c4abbf47a081ab35ec28c58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ZiplineReference: {fileID: 4258008601800167461}
 --- !u!1 &8533093450235152620
 GameObject:
   m_ObjectHideFlags: 0
@@ -416,7 +373,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6586368654650963647}
-  - component: {fileID: 2497144180841940405}
   - component: {fileID: 2262604249184580731}
   m_Layer: 6
   m_Name: EndPoint
@@ -434,25 +390,12 @@ Transform:
   m_GameObject: {fileID: 8533093450235152620}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5, y: 0, z: 0}
+  m_LocalPosition: {x: 4, y: 0, z: 0}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3471523962317756936}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2497144180841940405
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8533093450235152620}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1c1faf6b7feee44d890d523caeb574e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetZipline: {fileID: 4258008601800167461}
 --- !u!212 &2262604249184580731
 SpriteRenderer:
   m_ObjectHideFlags: 0
