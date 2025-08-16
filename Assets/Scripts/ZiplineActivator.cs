@@ -7,7 +7,8 @@ public class ZiplineActivator : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (ZiplineReferenceScript == null) Debug.LogWarning("Please assign a ScriptableStats asset to the Player Controller's Stats slot", this);
+        if (ZiplineReferenceScript == null) 
+            Debug.LogWarning("Please assign a Zipline reference to the Zipline Activator script.", this);
     }
 #endif
 
