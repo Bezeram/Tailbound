@@ -1,30 +1,60 @@
+using Sirenix.OdinInspector;
 using UnityEngine;
 
+[ExecuteAlways]
 public class ZiplineAccelerated : ActivatableEntity
 {
-    [Header("References")]
-    public EntitiesSettings Settings;
-    public GameObject start_point;
-    public GameObject end_point;
-    public GameObject attachment_point;
-    public GameObject connecting_belt;
+    [TitleGroup("References")]
+    [Required] public EntitiesSettings Settings;
+    [ShowInInspector] private bool AttachmentAtStart = true;
 
-    public bool set_position;
+    private Transform StartTransform;
+    private Transform EndTransform;
+    private Transform AttachmentTransform;
+    private Transform BeltTransform;
 
     public enum State
-    { 
+    {
         Idle = 0,
         Forward,
         IdleEnd,
         Backward,
     }
-    [Header("Mode")]
-    [SerializeField] private State CurrentState = State.Idle;
-    [SerializeField] private bool IsActive;
 
-    private Vector3 _Direction;
+    [TitleGroup("Info")]
+    [ReadOnly, ShowInInspector] private State CurrentState = State.Idle;
+    [ReadOnly, ShowInInspector] private bool IsActive;
+    void ReattachBelt()
+    {
+        // Reposition connecting belt after moving the start and end points.
+        float delta_x = StartTransform.position.x - EndTransform.position.x;
+        float delta_y = StartTransform.position.y - EndTransform.position.y;
+
+        // Reposition attachment
+        if (AttachmentAtStart)
+        {
+            AttachmentTransform.position = StartTransform.position;
+        }
+
+        // Retransform belt
+        BeltTransform.position = (StartTransform.position + EndTransform.position) / 2.0f;
+        BeltTransform.localScale = new Vector3(Vector3.Distance(StartTransform.position, EndTransform.position) * 0.20f, 1.0f, 1.0f);
+        BeltTransform.rotation = Quaternion.Euler(0.0f, 0.0f, 180.0f / Mathf.PI * Mathf.Atan2(delta_y, delta_x));
+    }
+
+    // Where the ZipLine is in between the StartPoint and EndPoint
     private float _Speed = 0f;
+    private Vector3 _Direction = Vector2.zero;
     private float _TimerRetraction = 0f;
+
+    void Awake()
+    {
+        // Init referenced transforms
+        StartTransform = transform.Find("StartPoint");
+        EndTransform = transform.Find("EndPoint");
+        AttachmentTransform = transform.Find("Attachment");
+        BeltTransform = transform.Find("Belt");
+    }
 
     public override void ReceiveActivation()
     {
@@ -36,30 +66,27 @@ public class ZiplineAccelerated : ActivatableEntity
         IsActive = false;
     }
 
-    void OnValidate()
-    {
-        // Reposition connecting belt after moving the start and end points.
-        float delta_x = start_point.transform.position.x - end_point.transform.position.x;
-        float delta_y = start_point.transform.position.y - end_point.transform.position.y;
-
-        connecting_belt.transform.position = (start_point.transform.position + end_point.transform.position) / 2.0f;
-        connecting_belt.transform.localScale = new Vector3(Vector3.Distance(start_point.transform.position, end_point.transform.position) * 0.20f, 1.0f, 1.0f);
-        connecting_belt.transform.rotation = Quaternion.Euler(0.0f, 0.0f, 180.0f / Mathf.PI * Mathf.Atan2(delta_y, delta_x));
-    }
-
     void Start()
     {
         // Initially off
         IsActive = false;
         CurrentState = State.Idle;
         // Init direction
-        attachment_point.transform.position = start_point.transform.position;
-        _Direction = end_point.transform.position - start_point.transform.position;
+        AttachmentTransform.transform.position = StartTransform.transform.position;
+        _Direction = EndTransform.transform.position - StartTransform.transform.position;
         _Direction.Normalize();
     }
 
     void Update()
     {
+        // Only run in Editor Mode
+        if (!Application.isPlaying)
+        {
+            // Reattach belt
+            ReattachBelt();
+            return;
+        }
+
         switch (CurrentState)
         {
             case State.Idle:
@@ -78,9 +105,9 @@ public class ZiplineAccelerated : ActivatableEntity
                     // Cap max speed
                     _Speed = Mathf.Clamp(_Speed, 0f, Settings.MaxSpeedForward);
 
-                    attachment_point.transform.position += _Direction * Time.deltaTime * _Speed;
+                    AttachmentTransform.position += _Direction * Time.deltaTime * _Speed;
                     // Check if the end has been reached
-                    if (AttachmentReachedAt(start_point, end_point))
+                    if (AttachmentReachedAt(StartTransform, EndTransform))
                     {
                         CurrentState = State.IdleEnd;
                         _Speed = 0f;
@@ -105,9 +132,9 @@ public class ZiplineAccelerated : ActivatableEntity
                     // Cap max speed
                     _Speed = Mathf.Clamp(_Speed, 0f, Settings.MaxSpeedBackwards);
 
-                    attachment_point.transform.position -= _Direction * Time.deltaTime * _Speed;
+                    AttachmentTransform.transform.position -= _Direction * Time.deltaTime * _Speed;
                     // Check if the ZipLine has returned to the beginning
-                    if (AttachmentReachedAt(end_point, start_point))
+                    if (AttachmentReachedAt(EndTransform, StartTransform))
                     {
                         CurrentState = State.Idle;
                         _Speed = 0f;
@@ -117,10 +144,10 @@ public class ZiplineAccelerated : ActivatableEntity
         }
     }
 
-    bool AttachmentReachedAt(GameObject startPoint, GameObject endPoint)
+    bool AttachmentReachedAt(Transform startPoint, Transform endPoint)
     {
         Vector3 positionStart = startPoint.transform.position;
-        Vector3 positionAttachment = attachment_point.transform.position;
+        Vector3 positionAttachment = AttachmentTransform.transform.position;
         Vector3 positionEnd = endPoint.transform.position;
 
         float t_x = Mathf.InverseLerp(positionStart.x, positionEnd.x, positionAttachment.x);
