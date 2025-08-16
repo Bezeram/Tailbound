@@ -6,10 +6,12 @@ public class ZiplineTimed : ActivatableEntity
 {
     [TitleGroup("References")]
     [Required] public EntitiesSettings Settings;
-    [Required] public Transform StartTransform;
-    [Required] public Transform EndTransform;
-    [Required] public Transform AttachmentTransform;
-    [Required] public Transform BeltTransform;
+    [ShowInInspector] private bool AttachmentAtStart = true;
+
+    private Transform StartTransform;
+    private Transform EndTransform;
+    private Transform AttachmentTransform;
+    private Transform BeltTransform;
 
     public enum State
     { 
@@ -20,36 +22,40 @@ public class ZiplineTimed : ActivatableEntity
     }
 
     [TitleGroup("Info")]
-    [Tooltip("Tracks the current state of the ZipLine.")]
-    [ReadOnly, ShowInInspector]
-    private State CurrentState = State.Idle;
+    [ReadOnly, ShowInInspector] private State CurrentState = State.Idle;
+    [ReadOnly, ShowInInspector] private bool IsActive;
 
-    [Tooltip("The ZipLine is activated automatically by attaching or via a collision platform.")]
-    [ReadOnly, ShowInInspector]
-    private bool IsActive;
-
-    //[TitleGroup("Adjust")]
-    //[Button(ButtonSizes.Medium)]
-    //[SerializeField]
     void ReattachBelt()
     {
-        Debug.Log("Start: " + StartTransform.position);
-        Debug.Log("End: " + EndTransform.position);
-        
         // Reposition connecting belt after moving the start and end points.
         float delta_x = StartTransform.position.x - EndTransform.position.x;
         float delta_y = StartTransform.position.y - EndTransform.position.y;
 
+        // Reposition attachment
+        if (AttachmentAtStart)
+        {
+            AttachmentTransform.position = StartTransform.position;
+        }
+
+        // Retransform belt
         BeltTransform.position = (StartTransform.position + EndTransform.position) / 2.0f;
         BeltTransform.localScale = new Vector3(Vector3.Distance(StartTransform.position, EndTransform.position) * 0.20f, 1.0f, 1.0f);
         BeltTransform.rotation = Quaternion.Euler(0.0f, 0.0f, 180.0f / Mathf.PI * Mathf.Atan2(delta_y, delta_x));
     }
 
-    private Vector3 _Direction;
     // Where the ZipLine is in between the StartPoint and EndPoint
     private float _TimerForward = 0f;
     private float _TimerBeforeRetraction = 0f;
     private float _TimerBackward = 0f;
+
+    void Awake()
+    {
+        // Init referenced transforms
+        StartTransform = transform.Find("StartPoint");
+        EndTransform = transform.Find("EndPoint");
+        AttachmentTransform = transform.Find("Attachment");
+        BeltTransform = transform.Find("Belt");
+    }
 
     public override void ReceiveActivation()
     {
@@ -61,15 +67,6 @@ public class ZiplineTimed : ActivatableEntity
         IsActive = false;
     }
 
-    // Called when moving the start and end points using the
-    // inspector variables StartPoint and EndPoint
-    //void OnValidate()
-    //{
-    //    Debug.Log("validate");
-
-    //    ReattachBelt();
-    //}
-
     void Start()
     {
         // Initially off
@@ -77,8 +74,6 @@ public class ZiplineTimed : ActivatableEntity
         CurrentState = State.Idle;
         // Init direction
         AttachmentTransform.position = StartTransform.position;
-        _Direction = EndTransform.position - StartTransform.position;
-        _Direction.Normalize();
     }
 
     void Update()
