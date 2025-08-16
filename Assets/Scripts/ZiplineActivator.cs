@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class ZiplineActivator : MonoBehaviour
 {
-    public ZipLine_Script ZiplineReferenceScript;
+    public Zipline ZiplineReferenceScript;
 
 #if UNITY_EDITOR
     private void OnValidate()

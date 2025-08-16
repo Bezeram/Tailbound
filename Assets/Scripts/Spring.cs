@@ -1,7 +1,7 @@
 using TarodevController;
 using UnityEngine;
 
-public class Spring_Script : MonoBehaviour
+public class Spring : MonoBehaviour
 {
     [Header("Input")]
     public float Speed = 50f;

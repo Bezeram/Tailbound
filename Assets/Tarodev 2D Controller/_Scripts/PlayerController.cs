@@ -242,7 +242,7 @@ namespace TarodevController
         public void Die()
         {
             //play death animation
-            LevelLoader.GetComponent<LevelLoader_Script>().Reload_level();
+            LevelLoader.GetComponent<LevelLoader>().Reload_level();
         }
 
         private void ApplyMovement() => _RigidBody.linearVelocity = _frameVelocity;

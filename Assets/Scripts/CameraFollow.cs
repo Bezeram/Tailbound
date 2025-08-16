@@ -62,7 +62,7 @@ public class CameraFollow : MonoBehaviour
         return cameraPosition / ppu;
     }
 
-    public LevelLoader_Script levelLoader; // Reference your LevelLoader script here
+    public LevelLoader levelLoader; // Reference your LevelLoader script here
 
     public IEnumerator ScreenTransition(Screens newScreen)
     {

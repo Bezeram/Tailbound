@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ZipLine_Script : MonoBehaviour
+public class Zipline : MonoBehaviour
 {
     [Header("References")]
     public EntitiesSettings Settings;

@@ -1,7 +1,7 @@
 using UnityEngine;
 using TarodevController;
 
-public class Spike_Script : MonoBehaviour
+public class Spike : MonoBehaviour
 {
     private void OnCollisionEnter2D(Collision2D collision)
     {

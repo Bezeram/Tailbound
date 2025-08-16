@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Checkpoint_Script : MonoBehaviour
+public class Checkpoint : MonoBehaviour
 {
     public static Vector3 current_checkpoint_position;
 
