@@ -80,9 +80,6 @@ MonoBehaviour:
   PlayerControllerScript: {fileID: 478934572882729278}
   PlayerSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
   IsSwinging: 0
-  InputDirection: {x: 0, y: 0}
-  AttachScore: -3.4028235e+38
-  AttacherObject: {fileID: 0}
 --- !u!114 &6831988449785421683
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10072,7 +10069,7 @@ GameObject:
   - component: {fileID: 2969068311962969430}
   - component: {fileID: 2969068311962969768}
   - component: {fileID: 2969068311962969431}
-  m_Layer: 7
+  m_Layer: 9
   m_Name: Visual
   m_TagString: Untagged
   m_Icon: {fileID: 0}

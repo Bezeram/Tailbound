@@ -189,7 +189,7 @@ namespace TarodevController
         // Called by Spring.cs
         public void SpringJump(Vector2 speed)
         {
-            _endedJumpEarly = false;
+            _endedJumpEarly = true;
             _timeJumpWasPressed = 0;
             _bufferedJumpUsable = false;
             _coyoteUsable = false;
@@ -209,19 +209,26 @@ namespace TarodevController
             {
                 var deceleration = _grounded ? _stats.LowSpeedGroundDeceleration : _stats.LowSpeedAirDeceleration;
                 _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
+                return;
+            }
+
+            if (Mathf.Abs(_frameVelocity.x) < _stats.MaxSpeed)
+            {
+                // Low speed regime
+                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, _frameInput.Move.x * _stats.MaxSpeed, _stats.Acceleration * Time.fixedDeltaTime);
             }
             else
             {
-                if (_RigidBody.linearVelocityX < _stats.MaxSpeed)
+                // High speed regime
+                // If player hits a wall and holds in opposite direction stop all movement.
+                if (_frameInput.Move.x * _frameVelocity.x < 0 && Mathf.Abs(_RigidBody.linearVelocityX) < 0.01)
                 {
-                    _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, _frameInput.Move.x * _stats.MaxSpeed, _stats.Acceleration * Time.fixedDeltaTime);
+                    _frameVelocity.x = 0;
                 }
-                else
-                {
-                    // Apply a weaker deceleration for high speed
-                    var deceleration = _grounded ? _stats.HighSpeedGroundDeceleration : _stats.HighSpeedAirDeceleration;
-                    _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
-                }
+
+                // Apply a weaker deceleration for high speed.
+                var deceleration = _grounded ? _stats.HighSpeedGroundDeceleration : _stats.HighSpeedAirDeceleration;
+                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
             }
         }
 

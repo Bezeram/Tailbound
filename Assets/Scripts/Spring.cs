@@ -6,27 +6,39 @@ public class Spring : MonoBehaviour
 {
     public enum DirectionSpring
     { 
-        Up,
-        Left,
-        Right,
+        Up = 0,
+        Left = 1,
+        Right = -1,
     }
 
     [TitleGroup("Input")]
-    public Vector2 SpeedUpwards = new(0f, 40f);
-    public Vector2 SpeedSideways = new(40f, 20f);
-    public Vector2 Speed;
     public DirectionSpring Direction = DirectionSpring.Up;
+    [SerializeField] private EntitiesSettings Settings;
 
     private PlayerController playerController;
     private Animator Animator;
     private AudioSource AudioSource;
 
-    void OnTriggerEnter2D(Collider2D collision)
+    Vector2 GetSpeed()
+    {
+        return Direction switch
+        {
+            DirectionSpring.Up => Settings.Spring.SpeedUp,
+            DirectionSpring.Left => Vector2.Scale(Settings.Spring.SpeedSideways, new(-1, 1)),// Left x component is negative.
+            DirectionSpring.Right => Settings.Spring.SpeedSideways,
+            _ => Vector2.zero,
+        };
+    }
+
+    void OnTriggerStay2D(Collider2D collision)
     {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Player"))
         {
             playerController = collision.gameObject.GetComponent<PlayerController>();
-            playerController.SpringJump(Speed);
+            // Choose speed depending on spring direction
+            Vector2 propelSpeed = GetSpeed();
+            playerController.SpringJump(propelSpeed);
+
             // Trigger animation
             Animator.SetTrigger("Extend");
             AudioSource.Play();
@@ -36,17 +48,11 @@ public class Spring : MonoBehaviour
     void OnValidate()
     {
         Animator = GetComponent<Animator>();
-        AudioSource = GetComponent<AudioSource>();
+        AudioSource = transform.GetChild(0).GetComponent<AudioSource>();
 
-        // Choose a speed value depending on the spring direction
-        switch (Direction)
-        {
-        case DirectionSpring.Left:
-                break;
-        case DirectionSpring.Up:
-                break;
-        case DirectionSpring.Right:
-                break;
-        }
+        // Rotate depending on the spring direction.
+        // Use the enum's values.
+        float angle = (int)Direction * 90;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 }
