@@ -1,19 +1,36 @@
+using Sirenix.OdinInspector;
 using TarodevController;
 using UnityEngine;
 
 public class Spring : MonoBehaviour
 {
-    [Header("Input")]
-    public float Speed = 50f;
+    public enum DirectionSpring
+    { 
+        Upwards,
+        Left,
+        Right,
+    }
+
+    [TitleGroup("Input")]
+    public Vector2 Speed = new(50f, 30f);
+    public DirectionSpring Direction = DirectionSpring.Upwards;
 
     private PlayerController playerController;
+    private Animator Animator;
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Player"))
         {
             playerController = collision.gameObject.GetComponent<PlayerController>();
-            playerController.Propel(new(0f, Speed));
+            playerController.SpringJump(Speed);
+            // Trigger animation
+            Animator.SetTrigger("Extend");
         }
+    }
+
+    void OnValidate()
+    {
+        Animator = GetComponent<Animator>();
     }
 }

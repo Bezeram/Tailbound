@@ -47,7 +47,7 @@ namespace TarodevController
             _cachedQueryStartInColliders = Physics2D.queriesStartInColliders;
         }
 
-        private void Update()
+        void Update()
         {
             if (SwingScript.IsSwinging)
                 return;
@@ -56,7 +56,7 @@ namespace TarodevController
             GatherInput();
         }
 
-		private void FixedUpdate()
+		void FixedUpdate()
 		{
             if (SwingScript.IsSwinging)
                 return;
@@ -75,7 +75,7 @@ namespace TarodevController
             _frameVelocity = velocity;
         }
 
-		private void GatherInput()
+		void GatherInput()
         {
             _frameInput = new FrameInput
             {
@@ -141,7 +141,6 @@ namespace TarodevController
 
         #endregion
 
-
         #region Jumping
 
         private bool _jumpToConsume;
@@ -187,10 +186,17 @@ namespace TarodevController
             Jumped?.Invoke();
         }
 
-        // Called by scripts which wish for the player to jump
-        public void Propel(Vector2 speed)
+        // Called by Spring.cs
+        public void SpringJump(Vector2 speed)
         {
-            _frameVelocity += speed;
+            _endedJumpEarly = false;
+            _timeJumpWasPressed = 0;
+            _bufferedJumpUsable = false;
+            _coyoteUsable = false;
+
+            _frameVelocity = speed;
+
+            Jumped?.Invoke();
         }
 
         #endregion

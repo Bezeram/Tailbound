@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c5abda45d4e8e64f91ce22ef476bc23, type: 3}
   m_Name: Zipline Settings
   m_EditorClassIdentifier: 
-  DelayResetSeconds: 1
+  DelayResetSeconds: 0.7
   DelayRetractionSeconds: 0.9
   TimeForwardSeconds: 0.65
   TimeBackwardSeconds: 3

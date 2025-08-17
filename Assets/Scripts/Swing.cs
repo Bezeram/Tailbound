@@ -240,7 +240,6 @@ public class Swing : MonoBehaviour
         _Amplitude = amplitude;
         _SpeedInherited = speedInherited;
         _JumpForce = jumpForce;
-
     }
 
     void DrawTailLine()
