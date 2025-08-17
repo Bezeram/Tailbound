@@ -5,7 +5,7 @@ using UnityEngine;
 public class ZiplineAccelerated : ActivatableEntity
 {
     [TitleGroup("References")]
-    [Required] public ZiplineSettings Settings;
+    [Required] public EntitiesSettings Settings;
     [ShowInInspector] private bool AttachmentAtStart = true;
 
     private Transform _StartTransform;
@@ -73,7 +73,7 @@ public class ZiplineAccelerated : ActivatableEntity
         }
 
         // By default, the Zipline is ready to start the moment it is instantiated.
-        _TimerReset = 2 * Settings.DelayResetSeconds;
+        _TimerReset = 2 * Settings.Zipline.DelayResetSeconds;
     }
 
     void OnValidate()
@@ -119,7 +119,7 @@ public class ZiplineAccelerated : ActivatableEntity
                     _TimerReset += Time.deltaTime;
 
                     // Start moving if active
-                    if (IsActive && _TimerReset > Settings.DelayResetSeconds)
+                    if (IsActive && _TimerReset > Settings.Zipline.DelayResetSeconds)
                     {
                         CurrentState = State.Forward;
                         // Play sound
@@ -132,9 +132,9 @@ public class ZiplineAccelerated : ActivatableEntity
             case State.Forward:
                 {
                     // Accelerate
-                    _Speed += Time.deltaTime * Settings.AccelerationForward;
+                    _Speed += Time.deltaTime * Settings.Zipline.AccelerationForward;
                     // Cap max speed
-                    _Speed = Mathf.Clamp(_Speed, 0f, Settings.MaxSpeedForward);
+                    _Speed = Mathf.Clamp(_Speed, 0f, Settings.Zipline.MaxSpeedForward);
 
                     _AttachmentTransform.position += _Direction * Time.deltaTime * _Speed;
                     // Check if the end has been reached
@@ -153,7 +153,7 @@ public class ZiplineAccelerated : ActivatableEntity
                 {
                     _TimerRetraction += Time.deltaTime;
                     // Wait a bit before starting to retract
-                    if (_TimerRetraction > Settings.DelayRetractionSeconds)
+                    if (_TimerRetraction > Settings.Zipline.DelayRetractionSeconds)
                     {
                         CurrentState = State.Backward;
                         _TimerRetraction = 0f;
@@ -167,9 +167,9 @@ public class ZiplineAccelerated : ActivatableEntity
             case State.Backward:
                 {
                     // Accelerate
-                    _Speed += Time.deltaTime * Settings.AccelerationBackwards;
+                    _Speed += Time.deltaTime * Settings.Zipline.AccelerationBackwards;
                     // Cap max speed
-                    _Speed = Mathf.Clamp(_Speed, 0f, Settings.MaxSpeedBackwards);
+                    _Speed = Mathf.Clamp(_Speed, 0f, Settings.Zipline.MaxSpeedBackwards);
 
                     _AttachmentTransform.transform.position -= _Direction * Time.deltaTime * _Speed;
                     // Check if the ZipLine has returned to the beginning

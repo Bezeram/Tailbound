@@ -223,7 +223,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03f93828dc953944ba823e8e712db073, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Settings: {fileID: 11400000, guid: ef839832e845e29459b80f90a8d5271a, type: 2}
+  Settings: {fileID: 11400000, guid: 1be4a7fad735b9d4eb99e14765328192, type: 2}
   _ForwardAudioClip: {fileID: 8300000, guid: f8b138f9554f1054da65aa5a97049ac6, type: 3}
   _ImpactAudioClip: {fileID: 8300000, guid: aad1fc2451304aa4c97e77b3446920a9, type: 3}
   _RetractionAudioClip: {fileID: 8300000, guid: 498ca2057320d9e448c0cf3f77c0b5a8, type: 3}
