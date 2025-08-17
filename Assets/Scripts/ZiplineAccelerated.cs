@@ -5,7 +5,7 @@ using UnityEngine;
 public class ZiplineAccelerated : ActivatableEntity
 {
     [TitleGroup("References")]
-    [Required] public EntitiesSettings Settings;
+    [Required] public ZiplineSettings Settings;
     [ShowInInspector] private bool AttachmentAtStart = true;
 
     private Transform _StartTransform;
@@ -53,6 +53,7 @@ public class ZiplineAccelerated : ActivatableEntity
     private float _Speed = 0f;
     private Vector3 _Direction = Vector2.zero;
     private float _TimerRetraction = 0f;
+    private float _TimerReset = 0f;
 
     void Awake()
     {
@@ -70,6 +71,9 @@ public class ZiplineAccelerated : ActivatableEntity
             _AudioSource = GetComponent<AudioSource>();
             _AudioSource.volume = 0.8f;
         }
+
+        // By default, the Zipline is ready to start the moment it is instantiated.
+        _TimerReset = 2 * Settings.DelayResetSeconds;
     }
 
     void OnValidate()
@@ -112,8 +116,10 @@ public class ZiplineAccelerated : ActivatableEntity
         {
             case State.Idle:
                 {
+                    _TimerReset += Time.deltaTime;
+
                     // Start moving if active
-                    if (IsActive)
+                    if (IsActive && _TimerReset > Settings.DelayResetSeconds)
                     {
                         CurrentState = State.Forward;
                         // Play sound
@@ -171,6 +177,7 @@ public class ZiplineAccelerated : ActivatableEntity
                     {
                         CurrentState = State.Idle;
                         _Speed = 0f;
+                        _TimerReset = 0f;
                         // Play sound
                         _AudioSource.clip = _ResetAudioClip;
                         _AudioSource.loop = false;

@@ -1,9 +1,14 @@
+using Sirenix.OdinInspector;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "EntitiesSettings", menuName = "Scriptable Objects/EntitiesSettings")]
-public class EntitiesSettings : ScriptableObject
+[CreateAssetMenu(fileName = "ZiplineSettings", menuName = "Scriptable Objects/ZiplineSettings")]
+public class ZiplineSettings : ScriptableObject
 {
-    [Header("Zipline - Timed")]
+    [TitleGroup("Common")]
+    [Tooltip("Time it takes for Zipline to reset in order to start")]
+    public float DelayResetSeconds = 1f;
+
+    [TitleGroup("Timed")]
     [Tooltip("Delay before starting retraction")]
     public float DelayRetractionSeconds = 1f;
     [Tooltip("Time it takes for ZipLine to reach the end point")]
@@ -11,7 +16,7 @@ public class EntitiesSettings : ScriptableObject
     [Tooltip("Time it takes for ZipLine to retract to the start point")]
     public float TimeBackwardSeconds = 5f;
 
-    [Header("Zipline - Acceleration")]
+    [TitleGroup("Acceleration")]
     public float AccelerationForward = 20f;
     public float AccelerationBackwards = 0.5f;
     public float MaxSpeedForward = 200f;
