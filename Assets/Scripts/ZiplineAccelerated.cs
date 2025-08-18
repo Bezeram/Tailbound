@@ -68,7 +68,7 @@ public class ZiplineAccelerated : ActivatableEntity
             _BeltTransform = transform.Find("Belt");
         if (_AudioSource == null)
         {
-            _AudioSource = GetComponent<AudioSource>();
+            _AudioSource = _AttachmentTransform.GetChild(0).GetComponent<AudioSource>();
             _AudioSource.volume = 0.8f;
         }
 
