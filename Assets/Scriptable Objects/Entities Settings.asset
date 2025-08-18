@@ -16,8 +16,11 @@ MonoBehaviour:
     DelayResetSeconds: 1
     DelayRetractionSeconds: 1
     TimeForwardSeconds: 1
-    TimeBackwardSeconds: 5
+    TimeBackwardSeconds: 3
     AccelerationForward: 20
-    AccelerationBackwards: 0.5
+    AccelerationBackwards: 7
     MaxSpeedForward: 200
-    MaxSpeedBackwards: 5
+    MaxSpeedBackwards: 10
+  Spring:
+    SpeedUp: {x: 0, y: 45}
+    SpeedSideways: {x: 25, y: 35}
