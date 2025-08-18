@@ -37,7 +37,7 @@ public class Spring : MonoBehaviour
             playerController = collision.gameObject.GetComponent<PlayerController>();
             // Choose speed depending on spring direction
             Vector2 propelSpeed = GetSpeed();
-            playerController.SpringJump(propelSpeed);
+            playerController.ExecuteSpringJump(propelSpeed);
 
             // Trigger animation
             Animator.SetTrigger("Extend");

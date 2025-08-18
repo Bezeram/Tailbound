@@ -21,8 +21,6 @@ public class ScriptablePlayer : ScriptableObject
     public float BaseSwingForce = 1f;
     public float JumpScalar = 7f;
     public float GravityMultiplier = 1;
-    [Range(0.0f, 2.0f)]
-    public float JumpInheritanceFactor = 0.2f;
     public float LinearDamping = 1f;
 
     [Header("Attaching")]

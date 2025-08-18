@@ -24,16 +24,10 @@ namespace TarodevController
         public float Acceleration = 120;
 
         [Tooltip("The pace at which the player comes to a stop at low speed")]
-        public float LowSpeedGroundDeceleration = 60;
-
-        [Tooltip("The pace at which the player comes to a stop at high speed")]
-        public float HighSpeedGroundDeceleration = 30;
+        public float GroundDeceleration = 60;
 
         [Tooltip("Deceleration in air only after stopping input mid-air")]
-        public float LowSpeedAirDeceleration = 80;
-
-        [Tooltip("Only applies when player is moving above the walking speed cap")]
-        public float HighSpeedAirDeceleration = 20;
+        public float AirDeceleration = 80;
 
         [Tooltip("Deceleration upon hitting a wall")]
         public float WallDeceleration = 50;

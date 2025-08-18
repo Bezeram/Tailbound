@@ -187,7 +187,7 @@ namespace TarodevController
         }
 
         // Called by Spring.cs
-        public void SpringJump(Vector2 speed)
+        public void ExecuteSpringJump(Vector2 speed)
         {
             _endedJumpEarly = true;
             _timeJumpWasPressed = 0;
@@ -205,31 +205,21 @@ namespace TarodevController
 
         private void HandleDirection()
         {
-            if (_frameInput.Move.x == 0)
-            {
-                var deceleration = _grounded ? _stats.LowSpeedGroundDeceleration : _stats.LowSpeedAirDeceleration;
-                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
-                return;
-            }
+            // Constant deceleration
+            var deceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
+            _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
 
-            if (Mathf.Abs(_frameVelocity.x) < _stats.MaxSpeed)
-            {
-                // Low speed regime
-                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, _frameInput.Move.x * _stats.MaxSpeed, _stats.Acceleration * Time.fixedDeltaTime);
-            }
-            else
+            if (Mathf.Abs(_frameVelocity.x) > _stats.MaxSpeed)
             {
                 // High speed regime
                 // If player hits a wall and holds in opposite direction stop all movement.
-                if (_frameInput.Move.x * _frameVelocity.x < 0 && Mathf.Abs(_RigidBody.linearVelocityX) < 0.01)
+                if (_frameInput.Move.x * _frameVelocity.x <= 0 && Mathf.Abs(_RigidBody.linearVelocityX) < 0.01)
                 {
                     _frameVelocity.x = 0;
                 }
-
-                // Apply a weaker deceleration for high speed.
-                var deceleration = _grounded ? _stats.HighSpeedGroundDeceleration : _stats.HighSpeedAirDeceleration;
-                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
             }
+
+            _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, _frameInput.Move.x * _stats.MaxSpeed, _stats.Acceleration * Time.fixedDeltaTime);
         }
 
         #endregion
