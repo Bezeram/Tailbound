@@ -159,7 +159,7 @@ public class ZiplineTimed : ActivatableEntity
                     _TimerBeforeRetraction += Time.deltaTime;
 
                     // Wait a bit before starting to retract
-                    if (_TimerBeforeRetraction > Settings.Zipline.DelayResetSeconds)
+                    if (_TimerBeforeRetraction > Settings.Zipline.DelayRetractionSeconds)
                     {
                         CurrentState = State.Backward;
                         _TimerBackward = 0f;
@@ -176,7 +176,7 @@ public class ZiplineTimed : ActivatableEntity
                     _TimerBackward += Time.deltaTime;
 
                     // Backwards movement remains linear.
-                    float progress = _TimerBackward / Settings.Zipline.DelayResetSeconds;
+                    float progress = _TimerBackward / Settings.Zipline.TimeBackwardSeconds;
                     // Use easing function for better flow.
                     progress = Utils.EaseInQuad(progress);
                     // Lerp in-between the start and end point.

@@ -11,10 +11,10 @@ public class EntitiesSettings : ScriptableObject
         [BoxGroup("Common")]
         [Tooltip("Time it takes for Zipline to reset in order to start")]
         public float DelayResetSeconds = 1f;
-    
-        [BoxGroup("Timed")]
+        [BoxGroup("Common")]
         [Tooltip("Delay before starting retraction")]
         public float DelayRetractionSeconds = 1f;
+    
         [BoxGroup("Timed")]
         [Tooltip("Time it takes for ZipLine to reach the end point")]
         public float TimeForwardSeconds = 1f;
