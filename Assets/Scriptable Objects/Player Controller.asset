@@ -24,8 +24,8 @@ MonoBehaviour:
   NeutralDecelerationFactor: 0.5
   GroundDeceleration: 5
   AirDeceleration: 15
-  HighspeedGroundDeceleration: 60
-  HighspeedAirDeceleration: 60
+  HighspeedGroundDeceleration: 20
+  HighspeedAirDeceleration: 40
   WallDeceleration: 20
   GroundingForce: -1.5
   GrounderDistance: 0.05
