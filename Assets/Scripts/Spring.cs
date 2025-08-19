@@ -35,6 +35,7 @@ public class Spring : MonoBehaviour
         if (collision.gameObject.layer == LayerMask.NameToLayer("Player"))
         {
             playerController = collision.gameObject.GetComponent<PlayerController>();
+
             // Choose speed depending on spring direction
             Vector2 propelSpeed = GetSpeed();
             playerController.ExecuteSpringJump(propelSpeed);

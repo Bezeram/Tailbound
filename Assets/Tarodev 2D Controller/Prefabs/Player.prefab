@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 402571126760465352}
   - component: {fileID: 8725437685713544755}
-  m_Layer: 7
+  m_Layer: 10
   m_Name: ClimbHitbox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
