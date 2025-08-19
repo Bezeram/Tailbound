@@ -165,9 +165,10 @@ namespace TarodevController
                 _frameVelocity.y = direction * PlayerSettings.ClimbSpeed;
                 _Stamina -= PlayerSettings.StaminaClimbingCost * Time.fixedDeltaTime;
             }
-            else
-                _frameVelocity.y = 0;
 
+            // "Climbing gravity"
+            _frameVelocity.y = Mathf.MoveTowards(_frameVelocity.y, 0, PlayerSettings.ClimbGravity * Time.fixedDeltaTime);
+            
             if (_Stamina <= 0)
                 _IsClimbing = false;
         }
@@ -278,15 +279,12 @@ namespace TarodevController
 
         bool IsFacingAwayFromWall()
         {
-            int inputDirection;
-            if (_frameInput.Move.x == 0)
-                inputDirection = 0;
-            else
-                inputDirection = (int)Mathf.Sign(_frameInput.Move.x);
+            return _FacingLeft != _IsClimbingLeft;
+        }
 
-            return inputDirection != 0 && 
-                (inputDirection == -1 && !_IsClimbingLeft) ||
-                (inputDirection == 1 && _IsClimbingLeft);
+        bool IsFacingTowardWall()
+        {
+            return _FacingLeft == _IsClimbingLeft;
         }
 
         void HandleJump()
@@ -302,6 +300,9 @@ namespace TarodevController
 
             if (_IsClimbing && IsFacingAwayFromWall())
                 ExecuteWallJump();
+
+            if (_IsClimbing && IsFacingTowardWall())
+                ExecuteClimbJump();
 
             _jumpToConsume = false;
         }
@@ -336,6 +337,19 @@ namespace TarodevController
 
             Vector2 direction = new(_IsClimbingLeft ? 1 : -1, 1);
             _frameVelocity = direction * PlayerSettings.WallJumpPower;
+
+            Jumped?.Invoke();
+        }
+
+        void ExecuteClimbJump()
+        {
+            _endedJumpEarly = true;
+            _timeJumpWasPressed = 0;
+            _bufferedJumpUsable = false;
+            _coyoteUsable = false;
+
+            _Stamina -= PlayerSettings.ClimbJumpStaminaCost;
+            _frameVelocity.y = PlayerSettings.ClimbJumpPower;
 
             Jumped?.Invoke();
         }
@@ -398,7 +412,8 @@ namespace TarodevController
             else
             {
                 var inAirGravity = _stats.FallAcceleration;
-                if (_endedJumpEarly && _frameVelocity.y > 0) inAirGravity *= _stats.JumpEndEarlyGravityModifier;
+                if (_endedJumpEarly && _frameVelocity.y > 0) 
+                    inAirGravity *= _stats.JumpEndEarlyGravityModifier;
                 _frameVelocity.y = Mathf.MoveTowards(_frameVelocity.y, -_stats.MaxFallSpeed, inAirGravity * Time.fixedDeltaTime);
             }
         }

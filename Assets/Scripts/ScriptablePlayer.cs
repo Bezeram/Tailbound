@@ -27,13 +27,16 @@ public class ScriptablePlayer : ScriptableObject
     public float LinearDamping = 1f;
 
     [TitleGroup("CLIMBING")]
-    public float StaminaTotal = 35f;
-    public float StaminaIdleCost = 4f;
-    public float StaminaClimbingCost = 2f;
-    public float StaminaJumpCost = 6f;
-    public float ClimbSpeed = 2f;
-    public Vector2 WallJumpPower = new(4f, 18f);
-    public float SpeedCapToClimb = 10f;
+    [BoxGroup("CLIMBING/Speed")] public float ClimbSpeed = 2f;
+    [BoxGroup("CLIMBING/Speed")] public float SpeedCapToClimb = 10f;
+    [BoxGroup("CLIMBING/Speed")] public float ClimbGravity = 5f;
+    [BoxGroup("CLIMBING/Stamina")] public float StaminaTotal = 35f;
+    [BoxGroup("CLIMBING/Stamina")] public float StaminaIdleCost = 4f;
+    [BoxGroup("CLIMBING/Stamina")] public float StaminaClimbingCost = 2f;
+    [BoxGroup("CLIMBING/Stamina")] public float ClimbJumpStaminaCost = 6f;
+    [BoxGroup("CLIMBING/Jump")] public Vector2 WallJumpPower = new(4f, 18f);
+    [BoxGroup("CLIMBING/Jump")] public float ClimbJumpPower = 18f;
+    [BoxGroup("CLIMBING/Jump")] public Vector2 LedgeBoost = new(2f, 2f);
+    [BoxGroup("CLIMBING/Wall Detection")]
     public float AdjacentWallDistance = 0.1f;
-    public Vector2 LedgeBoost = new(2f, 2f);
 }
