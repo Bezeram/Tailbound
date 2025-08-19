@@ -276,11 +276,11 @@ namespace TarodevController
 
         #region Jumping
 
-        private bool _jumpToConsume;
-        private bool _bufferedJumpUsable;
-        private bool _endedJumpEarly;
-        private bool _coyoteUsable;
-        private float _timeJumpWasPressed;
+        private bool _jumpToConsume = false;
+        private bool _bufferedJumpUsable = false;
+        private bool _endedJumpEarly = false;
+        private bool _coyoteUsable = true;
+        private float _timeJumpWasPressed = float.MinValue;
 
         private bool HasBufferedJump => _bufferedJumpUsable && _time < _timeJumpWasPressed + _stats.JumpBuffer;
         private bool CanUseCoyote => _coyoteUsable && !_grounded && _time < _frameLeftGrounded + _stats.CoyoteTime;
@@ -324,7 +324,7 @@ namespace TarodevController
 
             // After max speed, a jump boost is added proportional to sideways movement.
             _frameVelocity.y = _stats.JumpPower;
-            if (Mathf.Abs(_frameVelocity.x) > _stats.MaxSpeed)
+            if (Mathf.Abs(_frameVelocity.x) > _stats.WalkingSpeedCap)
             {
                 // Steal speed from the horizontal component.
                 float boost = _stats.JumpInheritanceFactor * _frameVelocity.x;
@@ -382,7 +382,7 @@ namespace TarodevController
         public float MaxSpeedErrorMargin = 1.5f;
         public float NeutralDecelerationFactor = 2f;
 
-        private void HandleDirection()
+        void HandleDirection()
         {
             if (FrameInput.x != 0)
                 _FacingLeft = FrameInput.x < 0;
@@ -391,8 +391,8 @@ namespace TarodevController
                 return;
 
             // Constant deceleration
-            float deceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
-            _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
+            float constantDeceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
+            _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, constantDeceleration * Time.fixedDeltaTime);
 
             if (FrameInput.x == 0)
             {
@@ -401,15 +401,19 @@ namespace TarodevController
                 float neutralDeceleration = _stats.Acceleration / NeutralDecelerationFactor;
                 _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, neutralDeceleration * Time.fixedDeltaTime);
             }
+            else
+            {
+                // Apply acceleration
+                _frameVelocity.x += FrameInput.x * _stats.Acceleration * Time.fixedDeltaTime;
+            }
 
+            // The walking speed is capped.
+            // To get past it, another means of acceleration must be used.
+            // Basically checking if we are within the speed cap + one acceleration update step.
             float errorMargin = _stats.Acceleration * Time.fixedDeltaTime * MaxSpeedErrorMargin;
-            if (Mathf.Abs(_frameVelocity.x) > _stats.MaxSpeed + errorMargin)
+            if (Mathf.Abs(_frameVelocity.x) > _stats.WalkingSpeedCap + errorMargin)
             {
                 // High speed regime
-                // Accumulate acceleration
-                if (FrameInput.x != 0)
-                    _frameVelocity.x = FrameInput.x * _stats.Acceleration * Time.fixedDeltaTime;
-
                 // If player hits a wall and holds in opposite direction stop all movement.
                 if (_frameInput.Move.x * _frameVelocity.x <= 0 && Mathf.Abs(_RigidBody.linearVelocityX) < 0.01)
                 {
@@ -419,11 +423,7 @@ namespace TarodevController
             else
             {
                 // Low speed regime
-                // Set acceleration
-                if (FrameInput.x != 0)
-                    _frameVelocity.x += FrameInput.x * _stats.Acceleration * Time.fixedDeltaTime;
-
-                _frameVelocity.x = Mathf.Clamp(_frameVelocity.x, -_stats.MaxSpeed, _stats.MaxSpeed);
+                _frameVelocity.x = Mathf.Clamp(_frameVelocity.x, -_stats.WalkingSpeedCap, _stats.WalkingSpeedCap);
             }
         }
 

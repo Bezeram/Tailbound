@@ -18,7 +18,7 @@ namespace TarodevController
         public float HorizontalDeadZoneThreshold = 0.1f;
 
         [Header("MOVEMENT")] [Tooltip("The top horizontal movement speed")]
-        public float MaxSpeed = 14;
+        public float WalkingSpeedCap = 14;
 
         [Tooltip("The player's capacity to gain horizontal speed")]
         public float Acceleration = 120;

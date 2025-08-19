@@ -26,7 +26,7 @@ public class GameSettings : MonoBehaviour
 
     void HandleInput()
     {
-        if (Input.GetKeyDown(KeyCode.C))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             TogglePause();
         }
@@ -34,16 +34,6 @@ public class GameSettings : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E))
         {
             UsingTimeScale1 = !UsingTimeScale1;
-        }
-
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            CurrentTimeScale += 0.25f;
-        }
-
-        if (Input.GetKeyDown(KeyCode.S))
-        {
-            CurrentTimeScale -= 0.25f;
         }
     }
 

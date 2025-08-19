@@ -35,6 +35,7 @@ public class ScriptablePlayer : ScriptableObject
     [BoxGroup("CLIMBING/Stamina")] public float StaminaClimbingCost = 2f;
     [BoxGroup("CLIMBING/Stamina")] public float ClimbJumpStaminaCost = 6f;
     [BoxGroup("CLIMBING/Jump")] public Vector2 WallJumpPower = new(4f, 18f);
+    [BoxGroup("CLIMBING/Jump")] public Vector2 NeutralWallJumpPower = new(4f, 18f);
     [BoxGroup("CLIMBING/Jump")] public float ClimbJumpPower = 18f;
     [BoxGroup("CLIMBING/Jump")] public Vector2 LedgeBoost = new(2f, 2f);
     [BoxGroup("CLIMBING/Wall Detection")]
