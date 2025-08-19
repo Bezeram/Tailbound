@@ -20,10 +20,12 @@ MonoBehaviour:
   HorizontalDeadZoneThreshold: 0.1
   WalkingSpeedCap: 8.4
   Acceleration: 30
+  MaxSpeedErrorMargin: 1.5
+  NeutralDecelerationFactor: 0.5
   GroundDeceleration: 5
+  AirDeceleration: 5
   HighspeedGroundDeceleration: 60
   HighspeedAirDeceleration: 60
-  AirDeceleration: 5
   WallDeceleration: 20
   GroundingForce: -1.5
   GrounderDistance: 0.05

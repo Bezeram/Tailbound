@@ -27,14 +27,15 @@ MonoBehaviour:
   GravityMultiplier: 2.96
   LinearDamping: 2
   ClimbSpeed: 3
-  SpeedCapToClimb: 5
+  SpeedCapToClimb: 3
   ClimbGravity: 50
+  SpeedCapLedgeJump: 5
   StaminaTotal: 35
-  StaminaIdleCost: 4
+  StaminaConstantCost: 4
   StaminaClimbingCost: 2
   ClimbJumpStaminaCost: 6
   WallJumpPower: {x: 10, y: 14}
   NeutralWallJumpPower: {x: 4, y: 18}
-  ClimbJumpPower: 10
+  ClimbJumpPower: 23
   LedgeBoost: {x: 1, y: 15}
   AdjacentWallDistance: 0.15

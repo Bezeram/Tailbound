@@ -344,7 +344,7 @@ namespace TarodevController
             _bufferedJumpUsable = false;
             _coyoteUsable = false;
 
-            Vector2 direction = new(_IsClimbingLeft ? 1 : -1, 1);
+            Vector2 direction = new(IsAdjacentToWallLeft ? 1 : -1, 1);
             _frameVelocity = direction * PlayerSettings.WallJumpPower;
 
             Jumped?.Invoke();
@@ -431,8 +431,8 @@ namespace TarodevController
                 // Low speed regime
                 // Apply walking speed cap.
                 // If player hits a wall and holds in opposite direction stop all movement.
-                if (_frameInput.Move.x * _frameVelocity.x < 0)
-                    _frameVelocity.x = 0;
+                //if (_frameInput.Move.x * _frameVelocity.x < 0)
+                //    _frameVelocity.x = 0;
 
                 _frameVelocity.x = Mathf.Clamp(_frameVelocity.x, -_stats.WalkingSpeedCap, _stats.WalkingSpeedCap);
             }
