@@ -30,7 +30,8 @@ MonoBehaviour:
   StaminaIdleCost: 4
   StaminaClimbingCost: 2
   StaminaJumpCost: 6
-  ClimbSpeed: 2
-  WallJumpPower: {x: 4, y: 18}
+  ClimbSpeed: 3
+  WallJumpPower: {x: 10, y: 14}
   SpeedCapToClimb: 10
-  AdjacentWallDistance: 0.2
+  AdjacentWallDistance: 0.15
+  LedgeBoost: {x: 1, y: 15}
