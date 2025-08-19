@@ -18,9 +18,11 @@ MonoBehaviour:
   SnapInput: 1
   VerticalDeadZoneThreshold: 0.3
   HorizontalDeadZoneThreshold: 0.1
-  MaxSpeed: 8.4
+  WalkingSpeedCap: 8.4
   Acceleration: 30
   GroundDeceleration: 5
+  HighspeedGroundDeceleration: 60
+  HighspeedAirDeceleration: 60
   AirDeceleration: 5
   WallDeceleration: 20
   GroundingForce: -1.5

@@ -414,6 +414,11 @@ namespace TarodevController
             if (Mathf.Abs(_frameVelocity.x) > _stats.WalkingSpeedCap + errorMargin)
             {
                 // High speed regime
+                // Apply heavy deceleration
+                // Constant deceleration
+                float highspeedDeceleration = _grounded ? _stats.HighspeedGroundDeceleration : _stats.HighspeedAirDeceleration;
+                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, highspeedDeceleration * Time.fixedDeltaTime);
+
                 // If player hits a wall and holds in opposite direction stop all movement.
                 if (_frameInput.Move.x * _frameVelocity.x <= 0 && Mathf.Abs(_RigidBody.linearVelocityX) < 0.01)
                 {
@@ -423,6 +428,7 @@ namespace TarodevController
             else
             {
                 // Low speed regime
+                // Apply walking speed cap.
                 _frameVelocity.x = Mathf.Clamp(_frameVelocity.x, -_stats.WalkingSpeedCap, _stats.WalkingSpeedCap);
             }
         }
