@@ -32,6 +32,7 @@ namespace TarodevController
 
         private Rigidbody2D _RigidBody;
         private BoxCollider2D _col;
+        private BoxCollider2D _ClimbingCollider;
         private FrameInput _frameInput;
         private bool _cachedQueryStartInColliders;
 
@@ -50,6 +51,7 @@ namespace TarodevController
         {
             _RigidBody = GetComponent<Rigidbody2D>();
             _col = GetComponent<BoxCollider2D>();
+            _ClimbingCollider = transform.Find("ClimbHitbox").GetComponent<BoxCollider2D>();
             LevelLoader = GameObject.FindGameObjectWithTag("LevelLoader");
 
             _cachedQueryStartInColliders = Physics2D.queriesStartInColliders;
@@ -176,6 +178,13 @@ namespace TarodevController
 
         void CheckCollisions()
         {
+            // Use the dedicated collider.
+            bool IsWallAdjacent(Vector2 direction)
+            {
+                return Physics2D.BoxCast(_ClimbingCollider.bounds.center, _ClimbingCollider.size, 0,
+                    direction, PlayerSettings.AdjacentWallDistance, _stats.SolidLayer);
+            }
+
             Physics2D.queriesStartInColliders = false;
 
             // Ground and Ceiling
@@ -185,8 +194,8 @@ namespace TarodevController
             bool hitWallLeft = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.left, _stats.GrounderDistance, _stats.SolidLayer);
             bool hitWallRight = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.right, _stats.GrounderDistance, _stats.SolidLayer);
             // Check for adjacent wall (climbing)
-            bool adjacentWallLeft = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.left, PlayerSettings.AdjacentWallDistance, _stats.SolidLayer);
-            bool adjacentWallRight = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.right, PlayerSettings.AdjacentWallDistance, _stats.SolidLayer);
+            bool adjacentWallLeft = IsWallAdjacent(Vector2.left);
+            bool adjacentWallRight = IsWallAdjacent(Vector2.right);
 
             // Info
             AdjacentWallLeft = adjacentWallLeft;
@@ -238,6 +247,13 @@ namespace TarodevController
                 {
                     // No walls adjacent => stop climbing
                     _IsClimbing = false;
+
+                    // Apply small boost when reaching the top of a ledge.
+                    if (FrameInput.y > 0)
+                    {
+                        Vector2 direction = new(_FacingLeft ? -1 : 1, 1);
+                        _frameVelocity = direction * PlayerSettings.LedgeBoost;
+                    }
                 }
             }
 
@@ -315,7 +331,8 @@ namespace TarodevController
             _bufferedJumpUsable = false;
             _coyoteUsable = false;
 
-            _frameVelocity = PlayerSettings.WallJumpPower;
+            Vector2 direction = new(_IsClimbingLeft ? 1 : -1, 1);
+            _frameVelocity = direction * PlayerSettings.WallJumpPower;
 
             Jumped?.Invoke();
         }
