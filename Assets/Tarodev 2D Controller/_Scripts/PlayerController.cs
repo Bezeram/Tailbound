@@ -24,11 +24,13 @@ namespace TarodevController
         [TitleGroup("Info")]
         [ReadOnly, ShowInInspector, SerializeField] private Vector2 _frameVelocity;
         [ReadOnly, ShowInInspector, SerializeField] private float _Stamina;
-        [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbing = false;
         [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbingLeft = false;
         [ReadOnly, ShowInInspector, SerializeField] private bool IsAdjacentToWallLeft = false;
         [ReadOnly, ShowInInspector, SerializeField] private bool IsAdjacentToWallRight = false;
         [ReadOnly, ShowInInspector, SerializeField] private bool _FacingLeft = false;
+        [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbing = false;
+
+        public bool IsClimbing => _IsClimbing;
 
         private Rigidbody2D _RigidBody;
         private BoxCollider2D _col;
@@ -178,7 +180,9 @@ namespace TarodevController
         #region Collisions
 
         private float _frameLeftGrounded = float.MinValue;
-        [ReadOnly] public bool _grounded;
+        [ReadOnly] private bool _grounded;
+
+        public bool IsGrounded => _grounded;
 
         void CheckCollisions()
         {
@@ -230,7 +234,11 @@ namespace TarodevController
             if (hitWallLeft || hitWallRight)
             {
                 // Apply deceleration
-                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, _stats.WallDeceleration * Time.fixedDeltaTime);
+                if (!_IsClimbing)
+                {
+                    Debug.Log("wall deceleration");
+                    _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, _stats.WallDeceleration * Time.fixedDeltaTime);
+                }
             }
 
             // Check for climbing
@@ -371,6 +379,9 @@ namespace TarodevController
 
         #region Horizontal
 
+        public float MaxSpeedErrorMargin = 1.5f;
+        public float NeutralDecelerationFactor = 2f;
+
         private void HandleDirection()
         {
             if (FrameInput.x != 0)
@@ -380,20 +391,40 @@ namespace TarodevController
                 return;
 
             // Constant deceleration
-            var deceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
+            float deceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
             _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
 
-            if (Mathf.Abs(_frameVelocity.x) > _stats.MaxSpeed)
+            if (FrameInput.x == 0)
+            {
+                // With the stick neutral, apply a smaller deceleration
+                // than if you
+                float neutralDeceleration = _stats.Acceleration / NeutralDecelerationFactor;
+                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, neutralDeceleration * Time.fixedDeltaTime);
+            }
+
+            float errorMargin = _stats.Acceleration * Time.fixedDeltaTime * MaxSpeedErrorMargin;
+            if (Mathf.Abs(_frameVelocity.x) > _stats.MaxSpeed + errorMargin)
             {
                 // High speed regime
+                // Accumulate acceleration
+                if (FrameInput.x != 0)
+                    _frameVelocity.x = FrameInput.x * _stats.Acceleration * Time.fixedDeltaTime;
+
                 // If player hits a wall and holds in opposite direction stop all movement.
                 if (_frameInput.Move.x * _frameVelocity.x <= 0 && Mathf.Abs(_RigidBody.linearVelocityX) < 0.01)
                 {
                     _frameVelocity.x = 0;
                 }
             }
+            else
+            {
+                // Low speed regime
+                // Set acceleration
+                if (FrameInput.x != 0)
+                    _frameVelocity.x += FrameInput.x * _stats.Acceleration * Time.fixedDeltaTime;
 
-            _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, _frameInput.Move.x * _stats.MaxSpeed, _stats.Acceleration * Time.fixedDeltaTime);
+                _frameVelocity.x = Mathf.Clamp(_frameVelocity.x, -_stats.MaxSpeed, _stats.MaxSpeed);
+            }
         }
 
         #endregion
