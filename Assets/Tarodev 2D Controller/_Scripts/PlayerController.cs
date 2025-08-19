@@ -131,12 +131,13 @@ namespace TarodevController
         
         void TriggerClimb()
         {
-
             // Reset speed
             _frameVelocity = Vector2.zero;
-            // Position player adjacent to wall
+            // Stick player close to wall
             float x = transform.position.x;
-            float newX = Mathf.Floor(x) - _FractionalDistanceFromWall * Mathf.Sign(x);
+            int direction = _FacingLeft ? 1 : -1;
+            float roundedX = _FacingLeft ? Mathf.Floor(x) : Mathf.Ceil(x);
+            float newX = roundedX + direction * _FractionalDistanceFromWall;
             transform.position = new(newX, transform.position.y, transform.position.z);
 
             // Leave the ground
