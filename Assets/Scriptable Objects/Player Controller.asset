@@ -23,7 +23,7 @@ MonoBehaviour:
   MaxSpeedErrorMargin: 1.5
   NeutralDecelerationFactor: 0.5
   GroundDeceleration: 5
-  AirDeceleration: 5
+  AirDeceleration: 15
   HighspeedGroundDeceleration: 60
   HighspeedAirDeceleration: 60
   WallDeceleration: 20
