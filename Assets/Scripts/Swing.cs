@@ -163,8 +163,8 @@ public class Swing : MonoBehaviour
         _TailJoint.enableCollision = true;
 
         // Adjust spring settings
-        _TailJoint.frequency = PlayerSettings.frequency;
-        _TailJoint.dampingRatio = PlayerSettings.dampingRatio;
+        _TailJoint.frequency = PlayerSettings.Frequency;
+        _TailJoint.dampingRatio = PlayerSettings.DampingRatio;
 
         AttachToZipline(attachmentObject);
     }

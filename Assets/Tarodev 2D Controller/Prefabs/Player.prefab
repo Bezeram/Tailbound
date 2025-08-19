@@ -54,10 +54,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _stats: {fileID: 11400000, guid: 05e6a06c5af93134ab98ff12e2c27265, type: 2}
+  PlayerSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
   SwingScript: {fileID: 6558970843273908572}
   LevelLoader: {fileID: 4067423233591614951, guid: f9c4ed6633928754eb69af8dd5745ed8, type: 3}
-  _frameVelocity: {x: 0, y: 0}
-  MaxSpeed: 0
   _grounded: 0
 --- !u!114 &6558970843273908572
 MonoBehaviour:

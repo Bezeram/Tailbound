@@ -1,4 +1,6 @@
+using Sirenix.OdinInspector;
 using System;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace TarodevController
@@ -13,14 +15,17 @@ namespace TarodevController
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
     public class PlayerController : MonoBehaviour, IPlayerController
     {
-        [Header("References")]
+        [TitleGroup("References")]
         public ScriptableStats _stats;
+        public ScriptablePlayer PlayerSettings;
         public Swing SwingScript;
         public GameObject LevelLoader;
 
-        [Header("Info")]
-        public Vector2 _frameVelocity;
-        public float MaxSpeed;
+        [TitleGroup("Info")]
+        [ReadOnly, ShowInInspector] private Vector2 _frameVelocity;
+        [ReadOnly, ShowInInspector] private float _Stamina;
+        [ReadOnly, ShowInInspector] private bool _IsClimbing = false;
+        [ReadOnly, ShowInInspector] private bool _IsClimbingLeft = false;
 
         private Rigidbody2D _RigidBody;
         private BoxCollider2D _col;
@@ -31,15 +36,15 @@ namespace TarodevController
 
         public Vector2 FrameInput => _frameInput.Move;
         public event Action<bool, float> GroundedChanged;
+        public event Action Climbed;
         public event Action Jumped;
 
         #endregion
 
         private float _time;
 
-        private void Awake()
+        void Awake()
         {
-            MaxSpeed = _stats.MaxSpeed;
             _RigidBody = GetComponent<Rigidbody2D>();
             _col = GetComponent<BoxCollider2D>();
             LevelLoader = GameObject.FindGameObjectWithTag("LevelLoader");
@@ -63,6 +68,7 @@ namespace TarodevController
 
 			CheckCollisions();
 
+            HandleClimbing();
 			HandleJump();
 			HandleDirection();
 			HandleGravity();
@@ -79,8 +85,9 @@ namespace TarodevController
         {
             _frameInput = new FrameInput
             {
-                JumpDown = Input.GetButtonDown("Jump") || Input.GetKeyDown(KeyCode.C),
-                JumpHeld = Input.GetButton("Jump") || Input.GetKey(KeyCode.C),
+                JumpDown = Input.GetButtonDown("Jump") || Input.GetKeyDown(PlayerSettings.JumpKey),
+                JumpHeld = Input.GetButton("Jump") || Input.GetKey(PlayerSettings.JumpKey),
+                ClimbHeld = Input.GetKey(PlayerSettings.ClimbKey),
                 Move = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"))
             };
 
@@ -97,12 +104,66 @@ namespace TarodevController
             }
         }
 
-        #region Collisions
+        #region Climbing
         
-        private float _frameLeftGrounded = float.MinValue;
-        public bool _grounded;
+        // Check if the player can climb.
+        bool CanClimb(bool hitWallLeft, bool hitWallRight)
+        {
+            if (!_frameInput.ClimbHeld)
+                return false;
+            // Cannot climb on a wall if the player is moving upwards too fast.
+            if (_frameVelocity.y > PlayerSettings.SpeedCapToClimb)
+                return false;
 
-        private void CheckCollisions()
+            // Check if player is facing towards wall.
+            if (_frameInput.Move.x != 0)
+            {
+                bool facingLeft = _frameInput.Move.x < 0;
+                return (facingLeft && hitWallLeft) || (!facingLeft && hitWallRight);
+            }
+
+            return false;
+        }
+
+        void TriggerClimb()
+        {
+            // Reset speed
+            bool facingLeft = _frameInput.Move.x < 0;
+            _frameVelocity = Vector2.zero;
+
+            // Left the ground
+            _grounded = false;
+
+            _IsClimbingLeft = facingLeft;
+            _IsClimbing = true;
+            Climbed?.Invoke();
+        }
+
+        void HandleClimbing()
+        {
+            if (!_IsClimbing)
+                return;
+
+            _Stamina -= PlayerSettings.StaminaIdleCost;
+            // Check for climbing
+            if (_frameInput.Move.y != 0)
+            {
+                int direction = (_frameInput.Move.y > 0) ? 1 : -1;
+                _frameVelocity.y = direction * PlayerSettings.ClimbSpeed;
+                _Stamina -= PlayerSettings.StaminaClimbingCost;
+            }
+            else
+                _frameVelocity.y = 0;
+        }
+
+        #endregion
+
+        #region Collisions
+
+        private float _frameLeftGrounded = float.MinValue;
+        [ReadOnly] public bool _grounded;
+
+        void CheckCollisions()
         {
             Physics2D.queriesStartInColliders = false;
 
@@ -110,18 +171,16 @@ namespace TarodevController
             bool groundHit = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.down, _stats.GrounderDistance, _stats.SolidLayer);
             bool ceilingHit = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.up, _stats.GrounderDistance, _stats.SolidLayer);
             // Wall collision
-            bool wallHitLeft = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.left, _stats.GrounderDistance, _stats.SolidLayer);
-            bool wallHitRight = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.right, _stats.GrounderDistance, _stats.SolidLayer);
-
-            // Hit a wall
-            if (wallHitLeft || wallHitRight)
-            {
-                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, _stats.WallDeceleration * Time.fixedDeltaTime); ;
-            }
+            bool hitWallLeft = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.left, _stats.GrounderDistance, _stats.SolidLayer);
+            bool hitWallRight = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.right, _stats.GrounderDistance, _stats.SolidLayer);
 
             // Landed on the Ground
             if (!_grounded && groundHit)
             {
+                // Climbing
+                _IsClimbing = false;
+                _Stamina = PlayerSettings.StaminaTotal;
+
                 _grounded = true;
                 _coyoteUsable = true;
                 _bufferedJumpUsable = true;
@@ -132,8 +191,24 @@ namespace TarodevController
             else if (_grounded && !groundHit)
             {
                 _grounded = false;
+                _IsClimbing = false;
                 _frameLeftGrounded = _time;
                 GroundedChanged?.Invoke(false, 0);
+            }
+
+            // Hit a wall
+            if (hitWallLeft || hitWallRight)
+            {
+                // Apply deceleration
+                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, _stats.WallDeceleration * Time.fixedDeltaTime); ;
+
+                // Check if the player can climb.
+                // Must be holding towards the wall.
+                // Cannot climb on a wall if the player is moving upwards too fast.
+                if (CanClimb(hitWallLeft, hitWallRight))
+                {
+                    TriggerClimb();
+                }
             }
 
             Physics2D.queriesStartInColliders = _cachedQueryStartInColliders;
@@ -152,7 +227,20 @@ namespace TarodevController
         private bool HasBufferedJump => _bufferedJumpUsable && _time < _timeJumpWasPressed + _stats.JumpBuffer;
         private bool CanUseCoyote => _coyoteUsable && !_grounded && _time < _frameLeftGrounded + _stats.CoyoteTime;
 
-        private void HandleJump()
+        bool IsFacingAwayFromWall()
+        {
+            int inputDirection;
+            if (_frameInput.Move.x == 0)
+                inputDirection = 0;
+            else
+                inputDirection = (int)Mathf.Sign(_frameInput.Move.x);
+
+            return inputDirection != 0 && 
+                (inputDirection == -1 && !_IsClimbingLeft) ||
+                (inputDirection == 1 && _IsClimbingLeft);
+        }
+
+        void HandleJump()
         {
             if (!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && _RigidBody.linearVelocity.y > 0)
                 _endedJumpEarly = true;
@@ -163,10 +251,13 @@ namespace TarodevController
             if (_grounded || CanUseCoyote) 
                 ExecuteJump();
 
+            if (_IsClimbing && IsFacingAwayFromWall())
+                ExecuteWallJump();
+
             _jumpToConsume = false;
         }
 
-        private void ExecuteJump()
+        void ExecuteJump()
         {
             _endedJumpEarly = false;
             _timeJumpWasPressed = 0;
@@ -182,6 +273,19 @@ namespace TarodevController
                 _frameVelocity.y += boost;
                 _frameVelocity.x -= boost;
             }
+
+            Jumped?.Invoke();
+        }
+
+        void ExecuteWallJump()
+        {
+            _IsClimbing = false;
+            _endedJumpEarly = false;
+            _timeJumpWasPressed = 0;
+            _bufferedJumpUsable = false;
+            _coyoteUsable = false;
+
+            _frameVelocity = PlayerSettings.WallJumpPower;
 
             Jumped?.Invoke();
         }
@@ -205,6 +309,9 @@ namespace TarodevController
 
         private void HandleDirection()
         {
+            if (_IsClimbing)
+                return;
+
             // Constant deceleration
             var deceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
             _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, deceleration * Time.fixedDeltaTime);
@@ -226,8 +333,11 @@ namespace TarodevController
 
         #region Gravity
 
-        private void HandleGravity()
+        void HandleGravity()
         {
+            if (_IsClimbing)
+                return;
+
             if (_grounded && _frameVelocity.y <= 0f)
             {
                 _frameVelocity.y = _stats.GroundingForce;
@@ -262,6 +372,7 @@ namespace TarodevController
     {
         public bool JumpDown;
         public bool JumpHeld;
+        public bool ClimbHeld;
         public Vector2 Move;
     }
 
