@@ -22,14 +22,14 @@ public class LevelLoader : MonoBehaviour
     {
         transition.SetTrigger("Restart");
 
-        yield return new WaitForSeconds(2);
+        yield return new WaitForSeconds(1);
 
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     IEnumerator ReloadLevelNoTransition()
     {
-        yield return new WaitForSeconds(2);
+        yield return new WaitForSeconds(1);
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 

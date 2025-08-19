@@ -26,6 +26,7 @@ namespace TarodevController
         private BoxCollider2D _col;
         private FrameInput _frameInput;
         private bool _cachedQueryStartInColliders;
+        private bool is_dead;
 
         #region Interface
 
@@ -43,6 +44,7 @@ namespace TarodevController
             _RigidBody = GetComponent<Rigidbody2D>();
             _col = GetComponent<BoxCollider2D>();
             LevelLoader = GameObject.FindGameObjectWithTag("LevelLoader");
+            is_dead = false;
 
             _cachedQueryStartInColliders = Physics2D.queriesStartInColliders;
         }
@@ -50,6 +52,9 @@ namespace TarodevController
         void Update()
         {
             if (SwingScript.IsSwinging)
+                return;
+
+            if (is_dead)
                 return;
 
             _time += Time.deltaTime;
@@ -61,7 +66,10 @@ namespace TarodevController
             if (SwingScript.IsSwinging)
                 return;
 
-			CheckCollisions();
+            if (is_dead)
+                return;
+
+            CheckCollisions();
 
 			HandleJump();
 			HandleDirection();
@@ -245,6 +253,10 @@ namespace TarodevController
         public void Die()
         {
             //play death animation
+            is_dead = true;
+            _frameVelocity.x = 0;
+            _frameVelocity.y = 0;
+            _RigidBody.linearVelocity = _frameVelocity;
             LevelLoader.GetComponent<LevelLoader>().Reload_level();
         }
 

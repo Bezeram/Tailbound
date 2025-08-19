@@ -15108,7 +15108,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8081574894185001056, guid: da4c79e4b42898f41bd6b16fe212b184, type: 3}
   m_PrefabInstance: {fileID: 983070751}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &1009967410
+--- !u!43 &1012790179
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -24784,7 +24784,7 @@ MonoBehaviour:
     rid: 5338670195106644042
   m_ShadowCastingSource: 2
   m_ShadowMesh:
-    m_Mesh: {fileID: 1009967410}
+    m_Mesh: {fileID: 1012790179}
     m_LocalBounds:
       m_Center: {x: 18.5, y: -2.5, z: 0}
       m_Extent: {x: 60.5, y: 9.5, z: 0}
@@ -32529,7 +32529,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -32670,6 +32670,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1544650614272011804, guid: 88097b566ad1fdd489d7ee77465b57aa, type: 3}
       propertyPath: m_Name
+      value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 1544650614272011804, guid: 88097b566ad1fdd489d7ee77465b57aa, type: 3}
+      propertyPath: m_TagString
       value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 2969068313154050967, guid: 88097b566ad1fdd489d7ee77465b57aa, type: 3}
