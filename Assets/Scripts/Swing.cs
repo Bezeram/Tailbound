@@ -9,7 +9,7 @@ public class Swing : MonoBehaviour
     public Rigidbody2D RigidBody;
     public LineRenderer LineRenderer;
     public Transform TailOrigin;
-    public PlayerController PlayerControllerScript;
+    public PlayerController PlayerController;
     public ScriptablePlayer PlayerSettings;
 
     [TitleGroup("Info")]
@@ -28,7 +28,6 @@ public class Swing : MonoBehaviour
     private Vector2 _TailAttachPoint;
     private GameObject _AttacherObject = null;
 
-    // Update is called once per frame
     void Update()
     {
         GetInputDirection();
@@ -38,7 +37,8 @@ public class Swing : MonoBehaviour
             HandleSwinging();
 
         // Player must be in the air to attach
-        if (Input.GetKeyDown(PlayerSettings.AttachKey) && !PlayerControllerScript._grounded)
+        bool inAir = !PlayerController.IsGrounded && !PlayerController.IsClimbing;
+        if (Input.GetKeyDown(PlayerSettings.AttachKey) && inAir)
             HandleTailUse();
 
         if (Input.GetKeyUp(PlayerSettings.AttachKey) && _AttacherObject != null)
@@ -163,8 +163,8 @@ public class Swing : MonoBehaviour
         _TailJoint.enableCollision = true;
 
         // Adjust spring settings
-        _TailJoint.frequency = PlayerSettings.frequency;
-        _TailJoint.dampingRatio = PlayerSettings.dampingRatio;
+        _TailJoint.frequency = PlayerSettings.Frequency;
+        _TailJoint.dampingRatio = PlayerSettings.DampingRatio;
 
         AttachToZipline(attachmentObject);
     }
@@ -218,7 +218,7 @@ public class Swing : MonoBehaviour
         ApplyReleaseJump(releaseDirection);
         // Make sure the normal movement script inherits the velocity left over
         // from this script.
-        PlayerControllerScript.InheritVelocity(RigidBody.linearVelocity);
+        PlayerController.InheritVelocity(RigidBody.linearVelocity);
     }
 
     void ApplyReleaseJump(Vector2 releaseDirection)

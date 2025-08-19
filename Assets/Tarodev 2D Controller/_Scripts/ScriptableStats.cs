@@ -8,7 +8,9 @@ namespace TarodevController
         [Header("LAYERS")] [Tooltip("Set this to the solid layer")]
         public LayerMask SolidLayer;
 
-        [Header("INPUT")] [Tooltip("Makes all Input snap to an integer. Prevents gamepads from walking slowly. Recommended value is true to ensure gamepad/keybaord parity.")]
+        [Header("INPUT")] 
+        [Tooltip("Makes all Input snap to an integer. Prevents gamepads from walking slowly. " +
+            "Recommended value is true to ensure gamepad/keyboard parity.")]
         public bool SnapInput = true;
 
         [Tooltip("Minimum input required before you mount a ladder or climb a ledge. Avoids unwanted climbing using controllers"), Range(0.01f, 0.99f)]
@@ -18,16 +20,28 @@ namespace TarodevController
         public float HorizontalDeadZoneThreshold = 0.1f;
 
         [Header("MOVEMENT")] [Tooltip("The top horizontal movement speed")]
-        public float MaxSpeed = 14;
+        public float WalkingSpeedCap = 14;
 
         [Tooltip("The player's capacity to gain horizontal speed")]
         public float Acceleration = 120;
+
+        [Tooltip("Safety margin for not allowing the walking speed cap to be passed by walking.")]
+        public float MaxSpeedErrorMargin = 1.5f;
+
+        [Tooltip("Deceleration applied with neutral controls as a dividor of Acceleration.")]
+        public float NeutralDecelerationFactor = 1.2f;
 
         [Tooltip("The pace at which the player comes to a stop at low speed")]
         public float GroundDeceleration = 60;
 
         [Tooltip("Deceleration in air only after stopping input mid-air")]
         public float AirDeceleration = 80;
+
+        [Tooltip("Only applies when player is above the walking speed cap.")]
+        public float HighspeedGroundDeceleration = 60;
+
+        [Tooltip("Only applies when player is above the walking speed cap.")]
+        public float HighspeedAirDeceleration = 120;
 
         [Tooltip("Deceleration upon hitting a wall")]
         public float WallDeceleration = 50;
