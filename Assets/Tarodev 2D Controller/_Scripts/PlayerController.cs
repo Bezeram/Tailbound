@@ -26,6 +26,9 @@ namespace TarodevController
         [ReadOnly, ShowInInspector, SerializeField] private float _Stamina;
         [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbing = false;
         [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbingLeft = false;
+        [ReadOnly, ShowInInspector, SerializeField] private bool AdjacentWallLeft = false;
+        [ReadOnly, ShowInInspector, SerializeField] private bool AdjacentWallRight = false;
+        [ReadOnly, ShowInInspector, SerializeField] private bool _FacingLeft = false;
 
         private Rigidbody2D _RigidBody;
         private BoxCollider2D _col;
@@ -109,20 +112,15 @@ namespace TarodevController
         // Check if the player can climb.
         bool CanClimb(bool hitWallLeft, bool hitWallRight)
         {
-            if (!_frameInput.ClimbHeld)
+            // Prevent climbing while pressing down to avoid funny behaviour.
+            if (!_frameInput.ClimbHeld || FrameInput.y < 0)
                 return false;
             // Cannot climb on a wall if the player is moving upwards too fast.
             if (_frameVelocity.y > PlayerSettings.SpeedCapToClimb)
                 return false;
 
             // Check if player is facing towards wall.
-            if (_frameInput.Move.x != 0)
-            {
-                bool facingLeft = _frameInput.Move.x < 0;
-                return (facingLeft && hitWallLeft) || (!facingLeft && hitWallRight);
-            }
-
-            return false;
+            return (_FacingLeft && hitWallLeft) || (!_FacingLeft && hitWallRight);
         }
 
         void TriggerClimb()
@@ -142,7 +140,6 @@ namespace TarodevController
 
             _IsClimbingLeft = facingLeft;
             _IsClimbing = true;
-            Debug.Log("[TriggerClimb] Triggered climb");
             Climbed?.Invoke();
         }
 
@@ -184,6 +181,13 @@ namespace TarodevController
             // Wall collision
             bool hitWallLeft = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.left, _stats.GrounderDistance, _stats.SolidLayer);
             bool hitWallRight = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.right, _stats.GrounderDistance, _stats.SolidLayer);
+            // Check for adjacent wall (climbing)
+            bool adjacentWallLeft = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.left, PlayerSettings.AdjacentWallDistance, _stats.SolidLayer);
+            bool adjacentWallRight = Physics2D.BoxCast(_col.bounds.center, _col.size, 0, Vector2.right, PlayerSettings.AdjacentWallDistance, _stats.SolidLayer);
+
+            // Info
+            AdjacentWallLeft = adjacentWallLeft;
+            AdjacentWallRight = adjacentWallRight;
 
             // Landed on the Ground
             if (!_grounded && groundHit)
@@ -191,7 +195,6 @@ namespace TarodevController
                 // Climbing
                 _IsClimbing = false;
                 _Stamina = PlayerSettings.StaminaTotal;
-                Debug.Log("Landed on ground.");
 
                 _grounded = true;
                 _coyoteUsable = true;
@@ -208,12 +211,15 @@ namespace TarodevController
                 GroundedChanged?.Invoke(false, 0);
             }
 
-            // Check for climbing
-            if (hitWallLeft || hitWallRight && !_IsClimbing)
+            if (hitWallLeft || hitWallRight)
             {
                 // Apply deceleration
-                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, _stats.WallDeceleration * Time.fixedDeltaTime); ;
+                _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, _stats.WallDeceleration * Time.fixedDeltaTime);
+            }
 
+            // Check for climbing
+            if (adjacentWallLeft || adjacentWallRight && !_IsClimbing)
+            {
                 // Check if the player can climb.
                 // Must be holding towards the wall.
                 // Cannot climb on a wall if the player is moving upwards too fast.
@@ -321,6 +327,9 @@ namespace TarodevController
 
         private void HandleDirection()
         {
+            if (FrameInput.x != 0)
+                _FacingLeft = FrameInput.x < 0;
+
             if (_IsClimbing)
                 return;
 

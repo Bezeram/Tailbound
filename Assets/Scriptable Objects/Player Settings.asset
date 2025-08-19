@@ -16,12 +16,21 @@ MonoBehaviour:
   RightKey: 275
   UpKey: 273
   DownKey: 274
-  JumpKey: 99
-  AttachKey: 99
-  frequency: 5
-  dampingRatio: 0.529
+  JumpKey: 120
+  AttachKey: 120
+  ClimbKey: 122
+  Frequency: 5
+  MaxTailLength: 3.5
+  DampingRatio: 0.5
   BaseSwingForce: 4.05
   JumpScalar: 7
   GravityMultiplier: 2.96
   LinearDamping: 2
-  MaxTailLength: 3.5
+  StaminaTotal: 35
+  StaminaIdleCost: 4
+  StaminaClimbingCost: 2
+  StaminaJumpCost: 6
+  ClimbSpeed: 2
+  WallJumpPower: {x: 4, y: 18}
+  SpeedCapToClimb: 10
+  AdjacentWallDistance: 0.2

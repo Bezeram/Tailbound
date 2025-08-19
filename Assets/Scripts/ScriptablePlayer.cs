@@ -34,4 +34,5 @@ public class ScriptablePlayer : ScriptableObject
     public float ClimbSpeed = 2f;
     public Vector2 WallJumpPower = new(4f, 18f);
     public float SpeedCapToClimb = 10f;
+    public float AdjacentWallDistance = 0.1f;
 }
