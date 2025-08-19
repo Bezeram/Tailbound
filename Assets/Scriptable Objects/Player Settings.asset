@@ -36,5 +36,5 @@ MonoBehaviour:
   ClimbJumpStaminaCost: 6
   WallJumpPower: {x: 10, y: 14.5}
   ClimbJumpPower: 23
-  LedgeBoost: {x: 1, y: 15}
+  LedgeBoost: {x: 10, y: 15}
   AdjacentWallDistance: 0.15
