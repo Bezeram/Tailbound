@@ -306,11 +306,13 @@ namespace TarodevController
             if (_grounded || CanUseCoyote) 
                 ExecuteJump();
 
-            if (IsAdjacentToWallLeft || IsAdjacentToWallRight)
-                ExecuteWallJump();
-
+            // A wall jump happens a player is close enough to a wall and:
+            // 1. Player is facing away from the wall
+            // 2. Player is facing toward wall, but is not climbing
             if (_IsClimbing && IsFacingTowardWall())
                 ExecuteClimbJump();
+            else if (IsAdjacentToWallLeft || IsAdjacentToWallRight)
+                ExecuteWallJump();
 
             _jumpToConsume = false;
         }
