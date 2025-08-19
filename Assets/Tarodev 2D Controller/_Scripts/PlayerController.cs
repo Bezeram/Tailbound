@@ -110,7 +110,7 @@ namespace TarodevController
         #region Climbing
         
         // Check if the player can climb.
-        bool CanClimb(bool hitWallLeft, bool hitWallRight)
+        bool CanClimb(bool adjacentWallLeft, bool adjacentWallRight)
         {
             // Prevent climbing while pressing down to avoid funny behaviour.
             if (!_frameInput.ClimbHeld || FrameInput.y < 0)
@@ -120,14 +120,17 @@ namespace TarodevController
                 return false;
 
             // Check if player is facing towards wall.
-            return (_FacingLeft && hitWallLeft) || (!_FacingLeft && hitWallRight);
+            return (_FacingLeft && adjacentWallLeft) || (!_FacingLeft && adjacentWallRight);
         }
 
         void TriggerClimb()
         {
             // Reset speed
-            bool facingLeft = _frameInput.Move.x < 0;
             _frameVelocity = Vector2.zero;
+            // Position player adjacent to wall
+            float x = transform.position.x;
+            float newX = Mathf.Floor(x) - 0.5f * Mathf.Sign(x);
+            transform.position = new(newX, transform.position.y, transform.position.z);
 
             // Leave the ground
             if (_grounded)
@@ -138,7 +141,7 @@ namespace TarodevController
             }
             _grounded = false;
 
-            _IsClimbingLeft = facingLeft;
+            _IsClimbingLeft = _FacingLeft;
             _IsClimbing = true;
             Climbed?.Invoke();
         }
@@ -223,7 +226,7 @@ namespace TarodevController
                 // Check if the player can climb.
                 // Must be holding towards the wall.
                 // Cannot climb on a wall if the player is moving upwards too fast.
-                if (CanClimb(hitWallLeft, hitWallRight))
+                if (CanClimb(adjacentWallLeft, adjacentWallRight))
                 {
                     TriggerClimb();
                 }
