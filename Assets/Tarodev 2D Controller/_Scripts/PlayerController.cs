@@ -26,8 +26,8 @@ namespace TarodevController
         [ReadOnly, ShowInInspector, SerializeField] private float _Stamina;
         [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbing = false;
         [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbingLeft = false;
-        [ReadOnly, ShowInInspector, SerializeField] private bool AdjacentWallLeft = false;
-        [ReadOnly, ShowInInspector, SerializeField] private bool AdjacentWallRight = false;
+        [ReadOnly, ShowInInspector, SerializeField] private bool IsAdjacentToWallLeft = false;
+        [ReadOnly, ShowInInspector, SerializeField] private bool IsAdjacentToWallRight = false;
         [ReadOnly, ShowInInspector, SerializeField] private bool _FacingLeft = false;
 
         private Rigidbody2D _RigidBody;
@@ -202,8 +202,8 @@ namespace TarodevController
             bool adjacentWallRight = IsWallAdjacent(Vector2.right);
 
             // Info
-            AdjacentWallLeft = adjacentWallLeft;
-            AdjacentWallRight = adjacentWallRight;
+            IsAdjacentToWallLeft = adjacentWallLeft;
+            IsAdjacentToWallRight = adjacentWallRight;
 
             // Landed on the Ground
             if (!_grounded && groundHit)
@@ -298,7 +298,7 @@ namespace TarodevController
             if (_grounded || CanUseCoyote) 
                 ExecuteJump();
 
-            if (_IsClimbing && IsFacingAwayFromWall())
+            if (IsAdjacentToWallLeft || IsAdjacentToWallRight)
                 ExecuteWallJump();
 
             if (_IsClimbing && IsFacingTowardWall())
