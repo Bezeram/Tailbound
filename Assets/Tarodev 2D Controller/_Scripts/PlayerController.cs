@@ -221,14 +221,23 @@ namespace TarodevController
             }
 
             // Check for climbing
-            if (adjacentWallLeft || adjacentWallRight && !_IsClimbing)
+            if (adjacentWallLeft || adjacentWallRight)
             {
-                // Check if the player can climb.
-                // Must be holding towards the wall.
-                // Cannot climb on a wall if the player is moving upwards too fast.
-                if (CanClimb(adjacentWallLeft, adjacentWallRight))
+                if (!_IsClimbing)
                 {
-                    TriggerClimb();
+                    // Check if the player can climb.
+                    // Must be holding towards the wall.
+                    // Cannot climb on a wall if the player is moving upwards too fast.
+                    if (CanClimb(adjacentWallLeft, adjacentWallRight))
+                        TriggerClimb();
+                }
+            }
+            else
+            {
+                if (_IsClimbing)
+                {
+                    // No walls adjacent => stop climbing
+                    _IsClimbing = false;
                 }
             }
 
