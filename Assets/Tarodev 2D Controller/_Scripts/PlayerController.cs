@@ -127,13 +127,16 @@ namespace TarodevController
             return hasStamina && correctInputs && correctVelocity && facingWall;
         }
 
+        private const float _FractionalDistanceFromWall = 0.456f;
+        
         void TriggerClimb()
         {
+
             // Reset speed
             _frameVelocity = Vector2.zero;
             // Position player adjacent to wall
             float x = transform.position.x;
-            float newX = Mathf.Floor(x) - 0.5f * Mathf.Sign(x);
+            float newX = Mathf.Floor(x) - _FractionalDistanceFromWall * Mathf.Sign(x);
             transform.position = new(newX, transform.position.y, transform.position.z);
 
             // Leave the ground
@@ -152,14 +155,14 @@ namespace TarodevController
 
         void HandleClimbing()
         {
-            // If the player stops holding climb
-            // after initiating it stop.
             if (_IsClimbing && !_frameInput.ClimbHeld)
                 _IsClimbing = false;
+
             if (!_IsClimbing)
                 return;
 
-            _Stamina -= PlayerSettings.StaminaIdleCost * Time.fixedDeltaTime;
+            // Update stamina
+            _Stamina -= PlayerSettings.StaminaConstantCost * Time.fixedDeltaTime;
             // Check for climbing
             if (_frameInput.Move.y != 0)
             {
@@ -167,10 +170,11 @@ namespace TarodevController
                 _frameVelocity.y = direction * PlayerSettings.ClimbSpeed;
                 _Stamina -= PlayerSettings.StaminaClimbingCost * Time.fixedDeltaTime;
             }
+            else
+            {
+                _frameVelocity.y = 0;
+            }
 
-            // "Climbing gravity"
-            _frameVelocity.y = Mathf.MoveTowards(_frameVelocity.y, 0, PlayerSettings.ClimbGravity * Time.fixedDeltaTime);
-            
             if (_Stamina <= 0)
                 _IsClimbing = false;
         }
@@ -231,14 +235,12 @@ namespace TarodevController
                 GroundedChanged?.Invoke(false, 0);
             }
 
+            // Check for wall collision
             if (hitWallLeft || hitWallRight)
             {
                 // Apply deceleration
                 if (!_IsClimbing)
-                {
-                    Debug.Log("wall deceleration");
                     _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, _stats.WallDeceleration * Time.fixedDeltaTime);
-                }
             }
 
             // Check for climbing
@@ -261,8 +263,9 @@ namespace TarodevController
                     _IsClimbing = false;
 
                     // Apply small boost when reaching the top of a ledge.
-                    if (FrameInput.y > 0)
+                    if (FrameInput.y > 0 && _frameVelocity.y < PlayerSettings.SpeedCapLedgeJump)
                     {
+                        Debug.Log("Applied ledge jump");
                         Vector2 direction = new(_FacingLeft ? -1 : 1, 1);
                         _frameVelocity = direction * PlayerSettings.LedgeBoost;
                     }
@@ -285,11 +288,6 @@ namespace TarodevController
         private bool HasBufferedJump => _bufferedJumpUsable && _time < _timeJumpWasPressed + _stats.JumpBuffer;
         private bool CanUseCoyote => _coyoteUsable && !_grounded && _time < _frameLeftGrounded + _stats.CoyoteTime;
 
-        bool IsFacingAwayFromWall()
-        {
-            return _FacingLeft != _IsClimbingLeft;
-        }
-
         bool IsFacingTowardWall()
         {
             return _FacingLeft == _IsClimbingLeft;
@@ -303,15 +301,16 @@ namespace TarodevController
             if (!_jumpToConsume && !HasBufferedJump) 
                 return;
 
-            if (_grounded || CanUseCoyote) 
-                ExecuteJump();
-
+            // A normal jump is made on the ground.
+            // A climb jump happens only while climbing.
             // A wall jump happens a player is close enough to a wall and:
             // 1. Player is facing away from the wall
             // 2. Player is facing toward wall, but is not climbing
-            if (_IsClimbing && IsFacingTowardWall())
+            if (_grounded || CanUseCoyote) 
+                ExecuteJump();
+            else if (_IsClimbing && IsFacingTowardWall())
                 ExecuteClimbJump();
-            else if (IsAdjacentToWallLeft || IsAdjacentToWallRight)
+            else if (!_grounded && IsAdjacentToWallLeft || IsAdjacentToWallRight)
                 ExecuteWallJump();
 
             _jumpToConsume = false;
@@ -353,6 +352,7 @@ namespace TarodevController
 
         void ExecuteClimbJump()
         {
+            _IsClimbing = false;
             _endedJumpEarly = true;
             _timeJumpWasPressed = 0;
             _bufferedJumpUsable = false;
@@ -380,10 +380,7 @@ namespace TarodevController
         #endregion
 
         #region Horizontal
-
-        public float MaxSpeedErrorMargin = 1.5f;
-        public float NeutralDecelerationFactor = 2f;
-
+        
         void HandleDirection()
         {
             if (FrameInput.x != 0)
@@ -396,11 +393,12 @@ namespace TarodevController
             float constantDeceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
             _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, constantDeceleration * Time.fixedDeltaTime);
 
+            /// Apply Input movement
             if (FrameInput.x == 0)
             {
                 // With the stick neutral, apply a smaller deceleration
                 // than if you
-                float neutralDeceleration = _stats.Acceleration / NeutralDecelerationFactor;
+                float neutralDeceleration = _stats.Acceleration / _stats.NeutralDecelerationFactor;
                 _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, neutralDeceleration * Time.fixedDeltaTime);
             }
             else
@@ -409,10 +407,11 @@ namespace TarodevController
                 _frameVelocity.x += FrameInput.x * _stats.Acceleration * Time.fixedDeltaTime;
             }
 
+            /// Adjustment dependent on speed value
             // The walking speed is capped.
             // To get past it, another means of acceleration must be used.
             // Basically checking if we are within the speed cap + one acceleration update step.
-            float errorMargin = _stats.Acceleration * Time.fixedDeltaTime * MaxSpeedErrorMargin;
+            float errorMargin = _stats.Acceleration * Time.fixedDeltaTime * _stats.MaxSpeedErrorMargin;
             if (Mathf.Abs(_frameVelocity.x) > _stats.WalkingSpeedCap + errorMargin)
             {
                 // High speed regime
@@ -431,6 +430,10 @@ namespace TarodevController
             {
                 // Low speed regime
                 // Apply walking speed cap.
+                // If player hits a wall and holds in opposite direction stop all movement.
+                if (_frameInput.Move.x * _frameVelocity.x < 0)
+                    _frameVelocity.x = 0;
+
                 _frameVelocity.x = Mathf.Clamp(_frameVelocity.x, -_stats.WalkingSpeedCap, _stats.WalkingSpeedCap);
             }
         }

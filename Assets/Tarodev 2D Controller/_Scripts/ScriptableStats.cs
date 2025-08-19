@@ -25,17 +25,23 @@ namespace TarodevController
         [Tooltip("The player's capacity to gain horizontal speed")]
         public float Acceleration = 120;
 
+        [Tooltip("Safety margin for not allowing the walking speed cap to be passed by walking.")]
+        public float MaxSpeedErrorMargin = 1.5f;
+
+        [Tooltip("Deceleration applied with neutral controls as a dividor of Acceleration.")]
+        public float NeutralDecelerationFactor = 1.2f;
+
         [Tooltip("The pace at which the player comes to a stop at low speed")]
         public float GroundDeceleration = 60;
+
+        [Tooltip("Deceleration in air only after stopping input mid-air")]
+        public float AirDeceleration = 80;
 
         [Tooltip("Only applies when player is above the walking speed cap.")]
         public float HighspeedGroundDeceleration = 60;
 
         [Tooltip("Only applies when player is above the walking speed cap.")]
         public float HighspeedAirDeceleration = 120;
-
-        [Tooltip("Deceleration in air only after stopping input mid-air")]
-        public float AirDeceleration = 80;
 
         [Tooltip("Deceleration upon hitting a wall")]
         public float WallDeceleration = 50;
