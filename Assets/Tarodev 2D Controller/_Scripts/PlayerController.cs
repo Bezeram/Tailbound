@@ -22,10 +22,10 @@ namespace TarodevController
         public GameObject LevelLoader;
 
         [TitleGroup("Info")]
-        [ReadOnly, ShowInInspector] private Vector2 _frameVelocity;
-        [ReadOnly, ShowInInspector] private float _Stamina;
-        [ReadOnly, ShowInInspector] private bool _IsClimbing = false;
-        [ReadOnly, ShowInInspector] private bool _IsClimbingLeft = false;
+        [ReadOnly, ShowInInspector, SerializeField] private Vector2 _frameVelocity;
+        [ReadOnly, ShowInInspector, SerializeField] private float _Stamina;
+        [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbing = false;
+        [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbingLeft = false;
 
         private Rigidbody2D _RigidBody;
         private BoxCollider2D _col;
@@ -131,26 +131,37 @@ namespace TarodevController
             bool facingLeft = _frameInput.Move.x < 0;
             _frameVelocity = Vector2.zero;
 
-            // Left the ground
+            // Leave the ground
+            if (_grounded)
+            {
+                // To prevent the player from immediately touching the ground
+                // in the climb state, elevate the player a bit.
+                transform.position += _stats.GrounderDistance * 1.2f * Vector3.up;
+            }
             _grounded = false;
 
             _IsClimbingLeft = facingLeft;
             _IsClimbing = true;
+            Debug.Log("[TriggerClimb] Triggered climb");
             Climbed?.Invoke();
         }
 
         void HandleClimbing()
         {
+            // If the player stops holding climb
+            // after initiating it stop.
+            if (_IsClimbing && !_frameInput.ClimbHeld)
+                _IsClimbing = false;
             if (!_IsClimbing)
                 return;
 
-            _Stamina -= PlayerSettings.StaminaIdleCost;
+            _Stamina -= PlayerSettings.StaminaIdleCost * Time.fixedDeltaTime;
             // Check for climbing
             if (_frameInput.Move.y != 0)
             {
                 int direction = (_frameInput.Move.y > 0) ? 1 : -1;
                 _frameVelocity.y = direction * PlayerSettings.ClimbSpeed;
-                _Stamina -= PlayerSettings.StaminaClimbingCost;
+                _Stamina -= PlayerSettings.StaminaClimbingCost * Time.fixedDeltaTime;
             }
             else
                 _frameVelocity.y = 0;
@@ -180,6 +191,7 @@ namespace TarodevController
                 // Climbing
                 _IsClimbing = false;
                 _Stamina = PlayerSettings.StaminaTotal;
+                Debug.Log("Landed on ground.");
 
                 _grounded = true;
                 _coyoteUsable = true;
@@ -196,8 +208,8 @@ namespace TarodevController
                 GroundedChanged?.Invoke(false, 0);
             }
 
-            // Hit a wall
-            if (hitWallLeft || hitWallRight)
+            // Check for climbing
+            if (hitWallLeft || hitWallRight && !_IsClimbing)
             {
                 // Apply deceleration
                 _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, _stats.WallDeceleration * Time.fixedDeltaTime); ;
