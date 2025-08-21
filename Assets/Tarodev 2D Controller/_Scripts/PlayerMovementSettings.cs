@@ -3,7 +3,7 @@ using UnityEngine;
 namespace TarodevController
 {
     [CreateAssetMenu]
-    public class ScriptableStats : ScriptableObject
+    public class PlayerMovementSettings : ScriptableObject
     {
         [Header("LAYERS")] [Tooltip("Set this to the solid layer")]
         public LayerMask SolidLayer;

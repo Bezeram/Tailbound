@@ -1,8 +1,8 @@
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "ScriptablePlayer", menuName = "Scriptable Objects/ScriptablePlayer")]
-public class ScriptablePlayer : ScriptableObject
+[CreateAssetMenu(fileName = "Player Abilities Settings", menuName = "Scriptable Objects/Player Abilities Settings")]
+public class PlayerAbilitiesSettings : ScriptableObject
 {
     [TitleGroup("CONTROLS")]
     public KeyCode LeftKey = KeyCode.LeftArrow;

@@ -1,6 +1,7 @@
 using Sirenix.OdinInspector;
 using TarodevController;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class Swing : MonoBehaviour
 {
@@ -10,7 +11,7 @@ public class Swing : MonoBehaviour
     public LineRenderer LineRenderer;
     public Transform TailOrigin;
     public PlayerController PlayerController;
-    public ScriptablePlayer PlayerSettings;
+    [FormerlySerializedAs("PlayerSettings")] public PlayerAbilitiesSettings playerAbilitiesSettingsSettings;
 
     [TitleGroup("Info")]
     [ReadOnly, ShowInInspector] public bool IsSwinging = false;
@@ -38,10 +39,10 @@ public class Swing : MonoBehaviour
 
         // Player must be in the air to attach
         bool inAir = !PlayerController.IsGrounded && !PlayerController.IsClimbing;
-        if (Input.GetKeyDown(PlayerSettings.AttachKey) && inAir)
+        if (Input.GetKeyDown(playerAbilitiesSettingsSettings.AttachKey) && inAir)
             HandleTailUse();
 
-        if (Input.GetKeyUp(PlayerSettings.AttachKey) && _AttacherObject != null)
+        if (Input.GetKeyUp(playerAbilitiesSettingsSettings.AttachKey) && _AttacherObject != null)
             HandleTailRelease();
     }
 
@@ -58,13 +59,13 @@ public class Swing : MonoBehaviour
     void GetInputDirection()
     {
         InputDirection = Vector2.zero;
-        if (Input.GetKey(PlayerSettings.LeftKey))
+        if (Input.GetKey(playerAbilitiesSettingsSettings.LeftKey))
             InputDirection.x = -1;
-        if (Input.GetKey(PlayerSettings.RightKey))
+        if (Input.GetKey(playerAbilitiesSettingsSettings.RightKey))
             InputDirection.x = 1;
-        if (Input.GetKey(PlayerSettings.DownKey))
+        if (Input.GetKey(playerAbilitiesSettingsSettings.DownKey))
             InputDirection.y = -1;
-        if (Input.GetKey(PlayerSettings.UpKey))
+        if (Input.GetKey(playerAbilitiesSettingsSettings.UpKey))
             InputDirection.y = 1;
     }
 
@@ -97,7 +98,7 @@ public class Swing : MonoBehaviour
 
         // Cast for objects on attachable layer in the maximum range
         Collider2D[] colliders = Physics2D.OverlapCircleAll
-            (TailOrigin.position, PlayerSettings.MaxTailLength, Attachable);
+            (TailOrigin.position, playerAbilitiesSettingsSettings.MaxTailLength, Attachable);
         if (colliders.Length == 0)
             return;
 
@@ -128,7 +129,7 @@ public class Swing : MonoBehaviour
         AttachTail(_TailAttachPoint, bestCollider);
         DrawTailLine();
         IsSwinging = true;
-        RigidBody.linearDamping = PlayerSettings.LinearDamping;
+        RigidBody.linearDamping = playerAbilitiesSettingsSettings.LinearDamping;
     }
 
     void AttachToZipline(GameObject attachmentObject)
@@ -162,8 +163,8 @@ public class Swing : MonoBehaviour
         _TailJoint.enableCollision = true;
 
         // Adjust spring settings
-        _TailJoint.frequency = PlayerSettings.Frequency;
-        _TailJoint.dampingRatio = PlayerSettings.DampingRatio;
+        _TailJoint.frequency = playerAbilitiesSettingsSettings.Frequency;
+        _TailJoint.dampingRatio = playerAbilitiesSettingsSettings.DampingRatio;
 
         AttachToZipline(attachmentObject);
     }
@@ -179,13 +180,13 @@ public class Swing : MonoBehaviour
         // in relation to the attachment point.
         // Directly below the attach point, the swing force is max.
         float naturalSwingForce = Mathf.Abs(Vector2.Dot(Vector2.down, swingDirection));
-        Vector2 force = naturalSwingForce * PlayerSettings.BaseSwingForce * forceDirection;
+        Vector2 force = naturalSwingForce * playerAbilitiesSettingsSettings.BaseSwingForce * forceDirection;
         RigidBody.AddForce(force);
 
         SwingDirection = swingDirection;
 
         // Gravity
-        RigidBody.AddForce(Vector2.down * PlayerSettings.GravityMultiplier);
+        RigidBody.AddForce(Vector2.down * playerAbilitiesSettingsSettings.GravityMultiplier);
     }
 
     void DetachFromZipline()
@@ -223,7 +224,7 @@ public class Swing : MonoBehaviour
     void ApplyReleaseJump(Vector2 releaseDirection)
     {
         // Apply jump boost by scaling the direction the player released the tail.
-        Vector2 jumpForce = releaseDirection * PlayerSettings.JumpScalar;
+        Vector2 jumpForce = releaseDirection * playerAbilitiesSettingsSettings.JumpScalar;
         RigidBody.linearVelocity += jumpForce;
 
         // Print info

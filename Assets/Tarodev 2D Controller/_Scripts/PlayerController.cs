@@ -1,6 +1,7 @@
 using Sirenix.OdinInspector;
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace TarodevController
 {
@@ -15,8 +16,8 @@ namespace TarodevController
     public class PlayerController : MonoBehaviour, IPlayerController
     {
         [TitleGroup("References")]
-        public ScriptableStats _stats;
-        public ScriptablePlayer PlayerSettings;
+        public PlayerMovementSettings _stats;
+        [FormerlySerializedAs("PlayerSettings")] public PlayerAbilitiesSettings playerAbilitiesSettingsSettings;
         public Swing SwingScript;
         public GameObject LevelLoader;
 
@@ -99,9 +100,9 @@ namespace TarodevController
         {
             _frameInput = new FrameInput
             {
-                JumpDown = Input.GetButtonDown("Jump") || Input.GetKeyDown(PlayerSettings.JumpKey),
-                JumpHeld = Input.GetButton("Jump") || Input.GetKey(PlayerSettings.JumpKey),
-                ClimbHeld = Input.GetKey(PlayerSettings.ClimbKey),
+                JumpDown = Input.GetButtonDown("Jump") || Input.GetKeyDown(playerAbilitiesSettingsSettings.JumpKey),
+                JumpHeld = Input.GetButton("Jump") || Input.GetKey(playerAbilitiesSettingsSettings.JumpKey),
+                ClimbHeld = Input.GetKey(playerAbilitiesSettingsSettings.ClimbKey),
                 Move = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"))
             };
 
@@ -127,7 +128,7 @@ namespace TarodevController
             // Prevent climbing while pressing down to avoid funny behaviour.
             bool correctInputs = _frameInput.ClimbHeld && FrameInput.y >= 0;
             // Cannot climb on a wall if the player is moving upwards too fast.
-            bool correctVelocity = _frameVelocity.y < PlayerSettings.SpeedCapToClimb;
+            bool correctVelocity = _frameVelocity.y < playerAbilitiesSettingsSettings.SpeedCapToClimb;
             // Check if player is facing towards wall.
             bool facingWall = (_FacingLeft && adjacentWallLeft) || (!_FacingLeft && adjacentWallRight);
             
@@ -170,13 +171,13 @@ namespace TarodevController
                 return;
 
             // Update stamina
-            _Stamina -= PlayerSettings.StaminaConstantCost * Time.fixedDeltaTime;
+            _Stamina -= playerAbilitiesSettingsSettings.StaminaConstantCost * Time.fixedDeltaTime;
             // Check for climbing
             if (_frameInput.Move.y != 0)
             {
                 int direction = (_frameInput.Move.y > 0) ? 1 : -1;
-                _frameVelocity.y = direction * PlayerSettings.ClimbSpeed;
-                _Stamina -= PlayerSettings.StaminaClimbingCost * Time.fixedDeltaTime;
+                _frameVelocity.y = direction * playerAbilitiesSettingsSettings.ClimbSpeed;
+                _Stamina -= playerAbilitiesSettingsSettings.StaminaClimbingCost * Time.fixedDeltaTime;
             }
             else
             {
@@ -202,7 +203,7 @@ namespace TarodevController
             bool IsWallAdjacent(Vector2 direction)
             {
                 return Physics2D.BoxCast(_ClimbingCollider.bounds.center, _ClimbingCollider.size, 0,
-                    direction, PlayerSettings.AdjacentWallDistance, _stats.SolidLayer);
+                    direction, playerAbilitiesSettingsSettings.AdjacentWallDistance, _stats.SolidLayer);
             }
 
             Physics2D.queriesStartInColliders = false;
@@ -226,7 +227,7 @@ namespace TarodevController
             {
                 // Climbing
                 _IsClimbing = false;
-                _Stamina = PlayerSettings.StaminaTotal;
+                _Stamina = playerAbilitiesSettingsSettings.StaminaTotal;
 
                 _grounded = true;
                 _coyoteUsable = true;
@@ -271,11 +272,11 @@ namespace TarodevController
                     _IsClimbing = false;
 
                     // Apply small boost when reaching the top of a ledge.
-                    if (FrameInput.y > 0 && _frameVelocity.y < PlayerSettings.SpeedCapLedgeJump)
+                    if (FrameInput.y > 0 && _frameVelocity.y < playerAbilitiesSettingsSettings.SpeedCapLedgeJump)
                     {
                         Debug.Log("Applied ledge jump");
                         Vector2 direction = new(_FacingLeft ? -1 : 1, 1);
-                        _frameVelocity = direction * PlayerSettings.LedgeBoost;
+                        _frameVelocity = direction * playerAbilitiesSettingsSettings.LedgeBoost;
                     }
                 }
             }
@@ -353,7 +354,7 @@ namespace TarodevController
             _coyoteUsable = false;
 
             Vector2 direction = new(IsAdjacentToWallLeft ? 1 : -1, 1);
-            _frameVelocity = direction * PlayerSettings.WallJumpPower;
+            _frameVelocity = direction * playerAbilitiesSettingsSettings.WallJumpPower;
 
             Jumped?.Invoke();
         }
@@ -366,8 +367,8 @@ namespace TarodevController
             _bufferedJumpUsable = false;
             _coyoteUsable = false;
 
-            _Stamina -= PlayerSettings.ClimbJumpStaminaCost;
-            _frameVelocity.y = PlayerSettings.ClimbJumpPower;
+            _Stamina -= playerAbilitiesSettingsSettings.ClimbJumpStaminaCost;
+            _frameVelocity.y = playerAbilitiesSettingsSettings.ClimbJumpPower;
 
             Jumped?.Invoke();
         }
