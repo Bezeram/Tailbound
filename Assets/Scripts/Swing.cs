@@ -55,7 +55,7 @@ public class Swing : MonoBehaviour
         _TailAttachPoint = attacherPosition;
     }
 
-    Vector2 GetInputDirection()
+    void GetInputDirection()
     {
         InputDirection = Vector2.zero;
         if (Input.GetKey(PlayerSettings.LeftKey))
@@ -66,7 +66,6 @@ public class Swing : MonoBehaviour
             InputDirection.y = -1;
         if (Input.GetKey(PlayerSettings.UpKey))
             InputDirection.y = 1;
-        return InputDirection.normalized;
     }
 
     void HandleTailUse()
@@ -102,7 +101,7 @@ public class Swing : MonoBehaviour
         if (colliders.Length == 0)
             return;
 
-        /// Choose the best collider
+        // Choose the best collider
         // Get the center of the colliders and draw a vector to the
         // center of all colliders detected.
         // Use the CalculateColliderScore() function for the score.
