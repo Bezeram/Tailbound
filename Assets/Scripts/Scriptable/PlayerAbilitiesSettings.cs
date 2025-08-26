@@ -35,6 +35,9 @@ public class PlayerAbilitiesSettings : ScriptableObject
     [BoxGroup("CLIMBING/Stamina")] public float StaminaConstantCost = 4f;
     [BoxGroup("CLIMBING/Stamina")] public float StaminaClimbingCost = 2f;
     [BoxGroup("CLIMBING/Stamina")] public float ClimbJumpStaminaCost = 6f;
+    [BoxGroup("CLIMBING/Stamina/Loss Highlight")] public float StaminaThreshold = 5f;
+    [BoxGroup("CLIMBING/Stamina/Loss Highlight")] public float StaminaFlashPeriod = 0.2f;
+    [BoxGroup("CLIMBING/Stamina/Loss Highlight")] public Color StaminaHighlightColor = Color.red;
     [InfoBox("Note: values are meant to be absolute. Direction is chosen at runtime.")]
     [BoxGroup("CLIMBING/Jump")] public Vector2 WallJumpPower = new(4f, 18f);
     [BoxGroup("CLIMBING/Jump")] public float ClimbJumpPower = 18f;

@@ -34,6 +34,9 @@ MonoBehaviour:
   StaminaConstantCost: 4
   StaminaClimbingCost: 2
   ClimbJumpStaminaCost: 6
+  StaminaThreshold: 5
+  StaminaFlashPeriod: 0.1
+  StaminaHighlightColor: {r: 0.76862746, g: 0.18431127, b: 0.81960785, a: 1}
   WallJumpPower: {x: 10, y: 14.5}
   ClimbJumpPower: 23
   LedgeBoost: {x: 10, y: 15}
