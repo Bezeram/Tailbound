@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace TarodevController
 {
@@ -28,8 +29,11 @@ namespace TarodevController
         [Tooltip("Safety margin for not allowing the walking speed cap to be passed by walking.")]
         public float MaxSpeedErrorMargin = 1.5f;
 
-        [Tooltip("Deceleration applied with neutral controls as a dividor of Acceleration.")]
-        public float NeutralDecelerationFactor = 1.2f;
+        [FormerlySerializedAs("NeutralGroundDecelerationFactor")] [Tooltip("Deceleration applied with neutral controls as a dividor of Acceleration.")]
+        public float NeutralGroundDeceleration = 60f;
+        
+        [FormerlySerializedAs("NeutralAirDecelerationFactor")] [Tooltip("Deceleration applied with neutral controls as a dividor of Acceleration.")]
+        public float NeutralAirDeceleration = 20f;
 
         [Tooltip("The pace at which the player comes to a stop at low speed")]
         public float GroundDeceleration = 60;

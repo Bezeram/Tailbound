@@ -21,7 +21,8 @@ MonoBehaviour:
   WalkingSpeedCap: 8.4
   Acceleration: 30
   MaxSpeedErrorMargin: 1.5
-  NeutralDecelerationFactor: 0.5
+  NeutralGroundDeceleration: 45
+  NeutralAirDeceleration: 20.6
   GroundDeceleration: 5
   AirDeceleration: 15
   HighspeedGroundDeceleration: 40

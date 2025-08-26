@@ -275,7 +275,6 @@ namespace TarodevController
                     // Apply small boost when reaching the top of a ledge.
                     if (FrameInput.y > 0 && _frameVelocity.y < playerAbilitiesSettingsSettings.SpeedCapLedgeJump)
                     {
-                        Debug.Log("Applied ledge jump");
                         Vector2 direction = new(_FacingLeft ? -1 : 1, 1);
                         _frameVelocity = direction * playerAbilitiesSettingsSettings.LedgeBoost;
                     }
@@ -383,6 +382,7 @@ namespace TarodevController
             _coyoteUsable = false;
 
             _frameVelocity = speed;
+            ApplyMovement();
 
             Jumped?.Invoke();
         }
@@ -403,12 +403,12 @@ namespace TarodevController
             float constantDeceleration = _grounded ? _stats.GroundDeceleration : _stats.AirDeceleration;
             _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, constantDeceleration * Time.fixedDeltaTime);
 
-            /// Apply Input movement
+            // Apply Input movement
             if (FrameInput.x == 0)
             {
-                // With the stick neutral, apply a smaller deceleration
-                // than if you
-                float neutralDeceleration = _stats.Acceleration / _stats.NeutralDecelerationFactor;
+                // With the stick neutral, apply a deceleration.
+                // Deceleration varies if the player is on the ground or in the air.
+                float neutralDeceleration = _grounded ? _stats.NeutralGroundDeceleration : _stats.NeutralAirDeceleration;
                 _frameVelocity.x = Mathf.MoveTowards(_frameVelocity.x, 0, neutralDeceleration * Time.fixedDeltaTime);
             }
             else
@@ -417,7 +417,7 @@ namespace TarodevController
                 _frameVelocity.x += FrameInput.x * _stats.Acceleration * Time.fixedDeltaTime;
             }
 
-            /// Adjustment dependent on speed value
+            // Adjustment dependent on speed value
             // The walking speed is capped.
             // To get past it, another means of acceleration must be used.
             // Basically checking if we are within the speed cap + one acceleration update step.

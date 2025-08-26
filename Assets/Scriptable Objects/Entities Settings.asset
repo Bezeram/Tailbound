@@ -23,4 +23,4 @@ MonoBehaviour:
     MaxSpeedBackwards: 10
   Spring:
     SpeedUp: {x: 0, y: 45}
-    SpeedSideways: {x: 25, y: 35}
+    SpeedSideways: {x: 25.47, y: 35}
