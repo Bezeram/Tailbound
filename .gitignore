@@ -31,6 +31,9 @@
 .vscode/
 .idea/
 
+# pdb files
+*pdb*
+
 # Gradle cache directory
 .gradle/
 
