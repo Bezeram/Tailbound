@@ -71,7 +71,7 @@ public class ZiplineTimed : ActivatableEntity
         if (_AudioSource == null)
         {
             _AudioSource = _AttachmentTransform.GetChild(0).GetComponent<AudioSource>();
-            _AudioSource.volume = 0.8f;
+            _AudioSource.volume = 0.3f;
         }
 
         // By default, the Zipline is ready to start the moment it is instantiated.
