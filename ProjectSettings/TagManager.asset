@@ -9,6 +9,7 @@ TagManager:
   - Screen
   - ZiplineActivator
   - ClimbHitbox
+  - Start
   layers:
   - Default
   - TransparentFX

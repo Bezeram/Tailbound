@@ -54,6 +54,7 @@ namespace TarodevController
         {
             _RigidBody = GetComponent<Rigidbody2D>();
             _col = GetComponent<BoxCollider2D>();
+            _RigidBody.transform.position = Checkpoint.current_checkpoint_position; 
             _ClimbingCollider = transform.Find("ClimbHitbox").GetComponent<BoxCollider2D>();
             LevelLoader = GameObject.FindGameObjectWithTag("LevelLoader");
             is_dead = false;
