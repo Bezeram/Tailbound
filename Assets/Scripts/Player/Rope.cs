@@ -1,131 +1,159 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class Rope : MonoBehaviour
 {
+    private readonly List<RopeSegment> _RopeSegments = new();
+    [SerializeField] [Range(1, 50)] private int _SegmentsCount = 35;
+    [SerializeField] private float _LineWidth = 0.1f;
+    [SerializeField] Vector2 _ForceGravity = new(0f, -1.5f);
 
-    private LineRenderer lineRenderer;
-    private List<RopeSegment> ropeSegments = new List<RopeSegment>();
-    [SerializeField] private float ropeSegLen = 0.25f;
-    [SerializeField] private int segmentsCount = 35;
-    [SerializeField] private float lineWidth = 0.1f;
-    [SerializeField] Vector2 forceGravity = new (0f, -1.5f);
+    [TitleGroup("Input")] public float Length = 3.5f;
+    [TitleGroup("Info"), ReadOnly, SerializeField] public Vector2 EndSegment;
+    [TitleGroup("Info"), ReadOnly, SerializeField] private float _RopeSegLen;
+    [TitleGroup("Info"), ReadOnly, Required, SerializeField] private LineRenderer _LineRenderer;
+    [TitleGroup("Info"), ReadOnly, Required, SerializeField] private bool _Enabled;
+
+    private Transform _AttachTransform;
+
+    public bool Enable() => _Enabled = true; 
+    public bool Disable() => _Enabled = false; 
+    public bool Toggle() => _Enabled = !_Enabled;
+
+    void Reset(Vector2 direction)
+    {
+        Vector2 startPoint;
+        if (_AttachTransform != null)
+            startPoint = _AttachTransform.position;
+        else
+            startPoint = transform.position;
+        
+        _RopeSegLen = Length / _SegmentsCount;
+        
+        Vector2 currentPoint = startPoint;
+        for (int i = 0; i < _SegmentsCount; i++)
+        {
+            _RopeSegments.Add(new RopeSegment(currentPoint));
+            currentPoint += direction * _RopeSegLen;
+        }
+    }
+
+    public void Reset(Transform attachTransform, Vector2 direction, float length)
+    {
+        Length = length;
+        _AttachTransform = attachTransform;
+        
+        Reset(direction);
+    }
 
     void OnValidate()
     {
-        lineRenderer = GetComponent<LineRenderer>();
+        _LineRenderer = GetComponent<LineRenderer>();
+        Reset(Vector2.zero);
     }
 
-    // Use this for initialization
-    void Start()
+    void LateUpdate()
     {
-        Vector3 ropeStartPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-        for (int i = 0; i < segmentsCount; i++)
-        {
-            this.ropeSegments.Add(new RopeSegment(ropeStartPoint));
-            ropeStartPoint.y -= ropeSegLen;
-        }
+        if (!_Enabled)
+            return;
+        DrawRope();
     }
 
-    // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-        this.DrawRope();
+        if (!_Enabled)
+            return;
+        Simulate();
     }
 
-    private void FixedUpdate()
-    {
-        this.Simulate();
-    }
-
-    private void Simulate()
+    void Simulate()
     {
         // SIMULATION
-        for (int i = 1; i < this.segmentsCount; i++)
+        for (int i = 1; i < _SegmentsCount; i++)
         {
-            RopeSegment firstSegment = this.ropeSegments[i];
-            Vector2 velocity = firstSegment.posNow - firstSegment.posOld;
-            firstSegment.posOld = firstSegment.posNow;
-            firstSegment.posNow += velocity;
-            firstSegment.posNow += forceGravity * Time.fixedDeltaTime;
-            this.ropeSegments[i] = firstSegment;
+            RopeSegment firstSegment = _RopeSegments[i];
+            Vector2 velocity = firstSegment.PosNow - firstSegment.PosOld;
+            firstSegment.PosOld = firstSegment.PosNow;
+            firstSegment.PosNow += velocity;
+            firstSegment.PosNow += _ForceGravity * Time.fixedDeltaTime;
+            _RopeSegments[i] = firstSegment;
         }
 
-        //CONSTRAINTS
+        // CONSTRAINTS
         for (int i = 0; i < 50; i++)
-        {
-            this.ApplyConstraint();
-        }
+            ApplyConstraint();
+        
+        // Info
+        EndSegment = _RopeSegments[_SegmentsCount - 1].PosNow;
     }
 
-    private void ApplyConstraint()
+    void ApplyConstraint()
     {
-        //Constrant to Mouse
-        RopeSegment firstSegment = this.ropeSegments[0];
-        firstSegment.posNow = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        this.ropeSegments[0] = firstSegment;
-
-        for (int i = 0; i < this.segmentsCount - 1; i++)
+        // Constraint to given attacher
+        RopeSegment firstSegment = _RopeSegments[0];
+        firstSegment.PosNow = _AttachTransform?.position ?? new Vector2(0, 0);
+        _RopeSegments[0] = firstSegment;
+        
+        for (int i = 0; i < _SegmentsCount - 1; i++)
         {
-            RopeSegment firstSeg = this.ropeSegments[i];
-            RopeSegment secondSeg = this.ropeSegments[i + 1];
+            RopeSegment firstSeg = _RopeSegments[i];
+            RopeSegment secondSeg = _RopeSegments[i + 1];
 
-            float dist = (firstSeg.posNow - secondSeg.posNow).magnitude;
-            float error = Mathf.Abs(dist - this.ropeSegLen);
+            float dist = (firstSeg.PosNow - secondSeg.PosNow).magnitude;
+            float error = Mathf.Abs(dist - _RopeSegLen);
             Vector2 changeDir = Vector2.zero;
 
-            if (dist > ropeSegLen)
+            if (dist > _RopeSegLen)
             {
-                changeDir = (firstSeg.posNow - secondSeg.posNow).normalized;
-            } else if (dist < ropeSegLen)
+                changeDir = (firstSeg.PosNow - secondSeg.PosNow).normalized;
+            } else if (dist < _RopeSegLen)
             {
-                changeDir = (secondSeg.posNow - firstSeg.posNow).normalized;
+                changeDir = (secondSeg.PosNow - firstSeg.PosNow).normalized;
             }
 
             Vector2 changeAmount = changeDir * error;
             if (i != 0)
             {
-                firstSeg.posNow -= changeAmount * 0.5f;
-                this.ropeSegments[i] = firstSeg;
-                secondSeg.posNow += changeAmount * 0.5f;
-                this.ropeSegments[i + 1] = secondSeg;
+                firstSeg.PosNow -= changeAmount * 0.5f;
+                _RopeSegments[i] = firstSeg;
+                secondSeg.PosNow += changeAmount * 0.5f;
+                _RopeSegments[i + 1] = secondSeg;
             }
             else
             {
-                secondSeg.posNow += changeAmount;
-                this.ropeSegments[i + 1] = secondSeg;
+                secondSeg.PosNow += changeAmount;
+                _RopeSegments[i + 1] = secondSeg;
             }
         }
     }
-
-    private void DrawRope()
+    
+    // TODO: add interpolation
+    void DrawRope()
     {
-        float lineWidth = this.lineWidth;
-        lineRenderer.startWidth = lineWidth;
-        lineRenderer.endWidth = lineWidth;
+        float lineWidth = _LineWidth;
+        _LineRenderer.startWidth = lineWidth;
+        _LineRenderer.endWidth = lineWidth;
 
-        Vector3[] ropePositions = new Vector3[this.segmentsCount];
-        for (int i = 0; i < this.segmentsCount; i++)
+        Vector3[] ropePositions = new Vector3[_SegmentsCount];
+        for (int i = 0; i < _SegmentsCount; i++)
         {
-            ropePositions[i] = this.ropeSegments[i].posNow;
+            ropePositions[i] = _RopeSegments[i].PosNow;
         }
 
-        lineRenderer.positionCount = ropePositions.Length;
-        lineRenderer.SetPositions(ropePositions);
+        _LineRenderer.positionCount = ropePositions.Length;
+        _LineRenderer.SetPositions(ropePositions);
     }
 
     public struct RopeSegment
     {
-        public Vector2 posNow;
-        public Vector2 posOld;
+        public Vector2 PosNow;
+        public Vector2 PosOld;
 
         public RopeSegment(Vector2 pos)
         {
-            this.posNow = pos;
-            this.posOld = pos;
+            PosNow = pos;
+            PosOld = pos;
         }
     }
 }

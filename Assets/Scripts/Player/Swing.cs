@@ -1,3 +1,4 @@
+using System;
 using Sirenix.OdinInspector;
 using TarodevController;
 using UnityEngine;
@@ -8,71 +9,76 @@ public class Swing : MonoBehaviour
     [TitleGroup("References")]
     public LayerMask Attachable;
     public Rigidbody2D RigidBody;
-    public LineRenderer LineRenderer;
     public Transform TailOrigin;
     public PlayerController PlayerController;
-    [FormerlySerializedAs("PlayerSettings")] public PlayerAbilitiesSettings playerAbilitiesSettingsSettings;
+    public PlayerAbilitiesSettings PlayerAbilitiesSettings;
 
     [TitleGroup("Info")]
-    [ReadOnly, ShowInInspector] public bool IsSwinging = false;
-    [ReadOnly, ShowInInspector] private Vector2 InputDirection = Vector2.zero;
-    [ReadOnly, ShowInInspector] private float AttachScore = float.MinValue;
-
-    [ReadOnly, ShowInInspector] private Vector2 _JumpDirection;
-    [ReadOnly, ShowInInspector] private float _Amplitude;
-    [ReadOnly, ShowInInspector] private float _SpeedInherited;
-    [ReadOnly, ShowInInspector] private Vector2 _JumpForce;
-    [ReadOnly, ShowInInspector] private Vector2 SwingDirection;
+    [ReadOnly, SerializeField] private bool _IsSwinging = false;
+    [ReadOnly, SerializeField] private Vector2 _InputDirection = Vector2.zero;
+    [ReadOnly, SerializeField] private float _AttachScore = float.MinValue;
+    [ReadOnly, SerializeField] private Vector2 _JumpDirection;
+    [ReadOnly, SerializeField] private float _Amplitude;
+    [ReadOnly, SerializeField] private float _SpeedInherited;
+    [ReadOnly, SerializeField] private Vector2 _JumpForce;
+    [ReadOnly, SerializeField] private Vector2 _SwingDirection;
 
     private ZiplineActivator _ZiplineActivator;
-    private SpringJoint2D _TailJoint;
     private Vector2 _TailAttachPoint;
-    private GameObject _AttacherObject = null;
+    private Transform _AttacherTransform;
+    private Rope _Tail;
+    
+    public bool IsSwinging => _IsSwinging;
+    public Vector2 InputDirection => _InputDirection;
+
+    private void OnValidate()
+    {
+        _Tail = transform.Find("Tail").GetComponent<Rope>();
+    }
 
     void Update()
     {
         GetInputDirection();
-        UpdateAttachPoint();
 
-        if (_AttacherObject != null)
+        if (_IsSwinging)
             HandleSwinging();
 
         // Player must be in the air to attach
         bool inAir = !PlayerController.IsGrounded && !PlayerController.IsClimbing;
-        if (Input.GetKeyDown(playerAbilitiesSettingsSettings.AttachKey) && inAir)
+        if (Input.GetKeyDown(PlayerAbilitiesSettings.AttachKey) && inAir)
             HandleTailUse();
 
-        if (Input.GetKeyUp(playerAbilitiesSettingsSettings.AttachKey) && _AttacherObject != null)
+        if (Input.GetKeyUp(PlayerAbilitiesSettings.AttachKey) && _IsSwinging)
             HandleTailRelease();
     }
 
-    void UpdateAttachPoint()
+    void FixedUpdate()
     {
-        if (_AttacherObject == null)
+        if (!_IsSwinging) 
             return;
-
-        Vector3 attacherPosition = _AttacherObject.transform.position;
-        _TailJoint.connectedAnchor = new(attacherPosition.x, attacherPosition.y);
-        _TailAttachPoint = attacherPosition;
+        
+        // Set the player's position at the end of the rope's segment
+        GameObject player = PlayerController.gameObject;
+        player.transform.position = _Tail.EndSegment;
     }
 
     void GetInputDirection()
     {
-        InputDirection = Vector2.zero;
-        if (Input.GetKey(playerAbilitiesSettingsSettings.LeftKey))
-            InputDirection.x = -1;
-        if (Input.GetKey(playerAbilitiesSettingsSettings.RightKey))
-            InputDirection.x = 1;
-        if (Input.GetKey(playerAbilitiesSettingsSettings.DownKey))
-            InputDirection.y = -1;
-        if (Input.GetKey(playerAbilitiesSettingsSettings.UpKey))
-            InputDirection.y = 1;
+        _InputDirection = Vector2.zero;
+        if (Input.GetKey(PlayerAbilitiesSettings.LeftKey))
+            _InputDirection.x = -1;
+        if (Input.GetKey(PlayerAbilitiesSettings.RightKey))
+            _InputDirection.x = 1;
+        if (Input.GetKey(PlayerAbilitiesSettings.DownKey))
+            _InputDirection.y = -1;
+        if (Input.GetKey(PlayerAbilitiesSettings.UpKey))
+            _InputDirection.y = 1;
     }
 
     void HandleTailUse()
     {
         // Get swing direction
-        Vector2 swingDirection = InputDirection;
+        Vector2 swingDirection = _InputDirection;
 
         // Local function for calculating the best collider score
         (float, Vector2) CalculateColliderScore(Collider2D collider)
@@ -98,7 +104,7 @@ public class Swing : MonoBehaviour
 
         // Cast for objects on attachable layer in the maximum range
         Collider2D[] colliders = Physics2D.OverlapCircleAll
-            (TailOrigin.position, playerAbilitiesSettingsSettings.MaxTailLength, Attachable);
+            (TailOrigin.position, PlayerAbilitiesSettings.MaxTailLength, Attachable);
         if (colliders.Length == 0)
             return;
 
@@ -122,14 +128,13 @@ public class Swing : MonoBehaviour
             }
         }
         // Info
-        AttachScore = bestColliderScore;
+        _AttachScore = bestColliderScore;
 
         // Configure the tail joint
         _TailAttachPoint = bestColliderPosition;
         AttachTail(_TailAttachPoint, bestCollider);
-        DrawTailLine();
-        IsSwinging = true;
-        RigidBody.linearDamping = playerAbilitiesSettingsSettings.LinearDamping;
+        _IsSwinging = true;
+        RigidBody.linearDamping = PlayerAbilitiesSettings.LinearDamping;
     }
 
     void AttachToZipline(GameObject attachmentObject)
@@ -144,31 +149,35 @@ public class Swing : MonoBehaviour
 
     void AttachTail(Vector2 attachPoint, Collider2D attacherCollider)
     {
+        //
+        // // Make a new Attacher game object
+        // _AttacherObject = new GameObject("Attacher");
+        // _AttacherObject.transform.position = attachPoint;
+        // // Make it a child of the attachment object
+        // _AttacherObject.transform.SetParent(attachmentObject.transform, true);
+        //
+        // // Add a spring joint and configure it
+        // _TailJoint = gameObject.AddComponent<SpringJoint2D>();
+        // _TailJoint.autoConfigureDistance = false;
+        // _TailJoint.autoConfigureConnectedAnchor = false;
+        // _TailJoint.connectedAnchor = attachPoint;
+        //
+        // _TailJoint.distance = distanceFromPoint;
+        // _TailJoint.enableCollision = true;
+        //
+        // // Adjust spring settings
+        // _TailJoint.frequency = PlayerAbilitiesSettings.Frequency;
+        // _TailJoint.dampingRatio = PlayerAbilitiesSettings.DampingRatio;
+        
         GameObject attachmentObject = attacherCollider.gameObject;
-
-        // Make a new Attacher game object
-        _AttacherObject = new GameObject("Attacher");
-        _AttacherObject.transform.position = attachPoint;
-        // Make it a child of the attachment object
-        _AttacherObject.transform.SetParent(attachmentObject.transform, true);
-
-        // Add a spring joint and configure it
-        _TailJoint = gameObject.AddComponent<SpringJoint2D>();
-        _TailJoint.autoConfigureDistance = false;
-        _TailJoint.autoConfigureConnectedAnchor = false;
-        _TailJoint.connectedAnchor = attachPoint;
-
         float distanceFromPoint = Vector2.Distance(TailOrigin.position, attachPoint);
-        _TailJoint.distance = distanceFromPoint;
-        _TailJoint.enableCollision = true;
-
-        // Adjust spring settings
-        _TailJoint.frequency = playerAbilitiesSettingsSettings.Frequency;
-        _TailJoint.dampingRatio = playerAbilitiesSettingsSettings.DampingRatio;
+        // Setup tail
+        Vector2 directionAttachmentToTail = TailOrigin.position - attachmentObject.transform.position;
+        _Tail.Reset(attachmentObject.transform, directionAttachmentToTail, distanceFromPoint);
+        _Tail.Enable();
 
         AttachToZipline(attachmentObject);
     }
-
 
     void HandleSwinging()
     {
@@ -180,15 +189,34 @@ public class Swing : MonoBehaviour
         // in relation to the attachment point.
         // Directly below the attach point, the swing force is max.
         float naturalSwingForce = Mathf.Abs(Vector2.Dot(Vector2.down, swingDirection));
-        Vector2 force = naturalSwingForce * playerAbilitiesSettingsSettings.BaseSwingForce * forceDirection;
+        Vector2 force = naturalSwingForce * PlayerAbilitiesSettings.BaseSwingForce * forceDirection;
         RigidBody.AddForce(force);
 
-        SwingDirection = swingDirection;
+        _SwingDirection = swingDirection;
 
         // Gravity
-        RigidBody.AddForce(Vector2.down * playerAbilitiesSettingsSettings.GravityMultiplier);
+        RigidBody.AddForce(Vector2.down * PlayerAbilitiesSettings.GravityMultiplier);
     }
 
+    void HandleTailRelease()
+    {
+        Vector2 releaseDirection = _InputDirection;
+        _IsSwinging = false;
+        RigidBody.linearDamping = 0f;
+        
+        // Disable tail
+        _Tail.Disable();
+
+        // Reset the tail joint and attacher
+        DetachFromZipline();
+
+        // Jump-boost
+        ApplyReleaseJump(releaseDirection);
+        // Make sure the normal movement script inherits the velocity left over
+        // from this script.
+        PlayerController.InheritVelocity(RigidBody.linearVelocity);
+    }
+    
     void DetachFromZipline()
     {
         if (_ZiplineActivator != null)
@@ -200,54 +228,13 @@ public class Swing : MonoBehaviour
         }
     }
 
-    void HandleTailRelease()
-    {
-        Vector2 releaseDirection = InputDirection;
-        IsSwinging = false;
-        RigidBody.linearDamping = 0f;
-
-        // Reset line renderer
-        ClearTailLine();
-        // Reset the tail joint and attacher
-        Destroy(_TailJoint);
-        Destroy(_AttacherObject);
-        // Detach from zipline if it's there
-        DetachFromZipline();
-
-        // Jump boost
-        ApplyReleaseJump(releaseDirection);
-        // Make sure the normal movement script inherits the velocity left over
-        // from this script.
-        PlayerController.InheritVelocity(RigidBody.linearVelocity);
-    }
-
     void ApplyReleaseJump(Vector2 releaseDirection)
     {
         // Apply jump boost by scaling the direction the player released the tail.
-        Vector2 jumpForce = releaseDirection * playerAbilitiesSettingsSettings.JumpScalar;
+        Vector2 jumpForce = releaseDirection * PlayerAbilitiesSettings.JumpScalar;
         RigidBody.linearVelocity += jumpForce;
 
         // Print info
         _JumpForce = jumpForce;
-    }
-
-    void DrawTailLine()
-    {
-        LineRenderer.positionCount = 2;
-        LineRenderer.SetPosition(0, TailOrigin.position);
-        LineRenderer.SetPosition(1, _TailAttachPoint);
-    }
-
-    void ClearTailLine()
-    {
-        LineRenderer.positionCount = 0;
-    }
-
-    void LateUpdate()
-    {
-        if (_AttacherObject != null)
-        {
-            DrawTailLine();
-        }
     }
 }
