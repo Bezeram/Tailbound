@@ -2658,17 +2658,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.4687891, y: 0.06379867}
+  m_Offset: {x: 2.468789, y: 0.06379867}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
     oldSize: {x: 1, y: 1.125}
-    newSize: {x: 1, y: 1}
+    newSize: {x: 5, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 2
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.815382, y: 0.1209}
+  m_Size: {x: 4.815382, y: 0.1209}
   m_EdgeRadius: 0
 --- !u!212 &622746256
 SpriteRenderer:
@@ -2719,7 +2719,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 5, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -2737,10 +2737,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4935aaff3ac5d47498f9efc5fa586b29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Count: 1
+  Count: 5
   Direction: 0
-  _OldColliderSize: {x: 0.815382, y: 0.1209}
-  _OldColliderOffset: {x: 0.4687891, y: 0.06379867}
+  _OldColliderSize: {x: 4.815382, y: 0.1209}
+  _OldColliderOffset: {x: 2.468789, y: 0.06379867}
 --- !u!4 &622746258
 Transform:
   m_ObjectHideFlags: 0
@@ -2750,7 +2750,7 @@ Transform:
   m_GameObject: {fileID: 622746254}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 29.36123, y: -5.798435, z: -0.063239336}
+  m_LocalPosition: {x: 23, y: -8, z: -0.063239336}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

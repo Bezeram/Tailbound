@@ -16,16 +16,35 @@ public class Spikes : MonoBehaviour
     [TitleGroup("Input")] public SpikesDirection Direction = SpikesDirection.Up;
 
     private BoxCollider2D _Collider;
+    private SpriteRenderer _SpriteRenderer;
     public Vector2 _OldColliderSize;
     public Vector2 _OldColliderOffset;
 
     private readonly Vector2 _DefaultColliderSize = new (0.815382f, 0.1209f);
     private readonly Vector2 _DefaultColliderOffset = new(0.4687891f, 0.06379867f);
 
+    void AdaptSpriteTiling()
+    {
+        if (_SpriteRenderer == null)
+        {
+            _SpriteRenderer = GetComponent<SpriteRenderer>(); 
+            _SpriteRenderer.drawMode = SpriteDrawMode.Tiled;
+        }
+        
+        _SpriteRenderer.size = Vector2.one + ExtendDirection * (Count - 1);
+    }
+    
+    private Vector2 ExtendDirection => 
+        Direction is SpikesDirection.Up or SpikesDirection.Down ? Vector2.right : Vector2.down;
+    
     void OnValidate()
     {
         if (_Collider == null)
             _Collider = GetComponent<BoxCollider2D>();
+        
+        // Sprite is rendered as a tile.
+        // Extend the tile size depending on the Count.
+        AdaptSpriteTiling();
         
         // Rotate based on direction.
         float angle = (int)Direction * 90;
@@ -42,10 +61,7 @@ public class Spikes : MonoBehaviour
         }
         
         // Extend the box collider depending on the spikes count.
-        Vector2 extendDirection = Direction is SpikesDirection.Up or SpikesDirection.Down 
-            ? Vector2.right : Vector2.down;
-        
-        _Collider.size = _DefaultColliderSize + extendDirection * (Count - 1);
+        _Collider.size = _DefaultColliderSize + ExtendDirection * (Count - 1);
         // Recalculate the offset.
         // This is necessary because the size is based in the center.
         _Collider.offset = _OldColliderOffset + (_Collider.size - _OldColliderSize) / 2f;
