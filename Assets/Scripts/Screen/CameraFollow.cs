@@ -72,7 +72,7 @@ public class CameraFollow : MonoBehaviour
 
         // Switch screen bounds here
         this.Screen = newScreen; 
-        levelLoader.Reload_level();
+        levelLoader.ReloadLevel();
 
         yield return new WaitForSeconds(0.5f);
 

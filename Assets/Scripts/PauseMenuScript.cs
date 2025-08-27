@@ -1,10 +1,10 @@
 using UnityEngine;
 using TarodevController;
 
-public class Pause_Menu_Script : MonoBehaviour
+public class PauseMenuScript : MonoBehaviour
 {
-    public static bool is_paused =  false;
-    public GameObject pause_menu_ui;
+    public static bool isPaused =  false;
+    public GameObject pauseMenuUi;
     private GameObject player;
 
     private void Start()
@@ -17,7 +17,7 @@ public class Pause_Menu_Script : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (is_paused == true)
+            if (isPaused == true)
             {
                 Resume();
             }
@@ -30,16 +30,16 @@ public class Pause_Menu_Script : MonoBehaviour
 
     public void Resume()
     {
-        pause_menu_ui.SetActive(false);
+        pauseMenuUi.SetActive(false);
         Time.timeScale = 1f;
-        is_paused = false;
+        isPaused = false;
     }
 
     void Pause()
     {
-        pause_menu_ui.SetActive(true);
+        pauseMenuUi.SetActive(true);
         Time.timeScale = 0f;
-        is_paused = true;
+        isPaused = true;
     }
 
     public void Restart()
@@ -50,6 +50,7 @@ public class Pause_Menu_Script : MonoBehaviour
 
     public void Menu()
     {
-        Debug.Log("LOAD MENU");
+        Resume();
+        GameObject.Find("LevelLoader").GetComponent<LevelLoader>().LoadLevel(0);
     }
 }

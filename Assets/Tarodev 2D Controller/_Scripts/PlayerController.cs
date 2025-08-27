@@ -59,7 +59,7 @@ namespace TarodevController
         {
             _RigidBody = GetComponent<Rigidbody2D>();
             _col = GetComponent<BoxCollider2D>();
-            _RigidBody.transform.position = Checkpoint.current_checkpoint_position; 
+            _RigidBody.transform.position = Checkpoint.currentCheckpointPosition; 
             _ClimbingCollider = transform.Find("ClimbHitbox").GetComponent<BoxCollider2D>();
             LevelLoader = GameObject.FindGameObjectWithTag("LevelLoader");
             _IsDead = false;
@@ -486,7 +486,7 @@ namespace TarodevController
             _FrameVelocity.x = 0;
             _FrameVelocity.y = 0;
             _RigidBody.linearVelocity = _FrameVelocity;
-            LevelLoader.GetComponent<LevelLoader>().Reload_level();
+            LevelLoader.GetComponent<LevelLoader>().ReloadLevel();
         }
 
         private void ApplyMovement() => _RigidBody.linearVelocity = _FrameVelocity;

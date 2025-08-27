@@ -8,42 +8,47 @@ public class LevelLoader : MonoBehaviour
 {
     public Animator transition;
 
-    public void Reload_level()
+    public void ReloadLevel()
     {
-        StartCoroutine(ReloadLevel());
+        StartCoroutine(Load_Level(SceneManager.GetActiveScene().buildIndex));
     }
 
-    public void Reload_level_no_transition()
+    public void LoadLevel(int level)
     {
-        StartCoroutine(ReloadLevelNoTransition());
+        StartCoroutine(Load_Level(level));
     }
 
-    public void Finish_Level(int level)
+    public void ReloadLevelNoTransition()
     {
-        StartCoroutine(FinishLevel(level));
+        StartCoroutine(Reload_Level_No_Transition());
     }
 
-    public static void Start_Level(int level)
+    public void FinishLevel(int level)
+    {
+        StartCoroutine(Finish_Level(level));
+    }
+
+    public static void StartLevel(int level)
     {
         SceneManager.LoadScene(level);
     }
 
-    IEnumerator ReloadLevel()
+    IEnumerator Load_Level(int level)
     {
         transition.SetTrigger("Restart");
 
         yield return new WaitForSeconds(1);
 
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene(level);
     }
 
-    IEnumerator ReloadLevelNoTransition()
+    IEnumerator Reload_Level_No_Transition()
     {
         yield return new WaitForSeconds(1);
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    IEnumerator FinishLevel(int level)
+    IEnumerator Finish_Level(int level)
     {
         transition.SetTrigger("Restart");
 
