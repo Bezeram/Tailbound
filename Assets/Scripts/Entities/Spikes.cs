@@ -11,35 +11,33 @@ public class Spikes : MonoBehaviour
         Down = 2,
         Right = 3,
     }
+
+    private const float _CountRangeMin = 0.5f;
+    private const float _CountRangeMax = 20.5f;
+    private const float _CountRangeStep = 0.5f;
     
-    [TitleGroup("Input"), Range(1, 20)] public int Count = 1;
+    [TitleGroup("Input"), Range(_CountRangeMin, _CountRangeMax)] 
+    public float Count = 1;
     [TitleGroup("Input")] public SpikesDirection Direction = SpikesDirection.Up;
+    [FoldoutGroup("Advanced")] public LayerMask PlayerLayer;
 
     private BoxCollider2D _Collider;
     private SpriteRenderer _SpriteRenderer;
+    
     private Vector2 _OldColliderSize;
     private Vector2 _OldColliderOffset;
-
-    private readonly Vector2 _DefaultColliderSize = new (0.815382f, 0.1209f);
+    private readonly Vector2 _DefaultColliderSize = new(0.815382f, 0.1209f);
     private readonly Vector2 _DefaultColliderOffset = new(0.4687891f, 0.06379867f);
-
-    void AdaptSpriteTiling()
-    {
-        if (_SpriteRenderer == null)
-        {
-            _SpriteRenderer = GetComponent<SpriteRenderer>(); 
-            _SpriteRenderer.drawMode = SpriteDrawMode.Tiled;
-        }
-        
-        _SpriteRenderer.size = Vector2.one + _ExtendDirection * (Count - 1);
-    }
-
+    
     private readonly Vector2 _ExtendDirection = Vector2.right;
     
     void OnValidate()
     {
         if (_Collider == null)
             _Collider = GetComponent<BoxCollider2D>();
+        
+        // Snap count to step size defined
+        SnapCountToStep();
         
         // Sprite is rendered as a tile.
         // Extend the tile size depending on the Count.
@@ -48,8 +46,8 @@ public class Spikes : MonoBehaviour
         // Rotate based on direction.
         float angle = (int)Direction * 90;
         transform.rotation = Quaternion.Euler(0, 0, angle);
-
-        if (Count == 1)
+        
+        if (Mathf.Abs(Count - 1) <= 0e-4)
         {
             // Reset
             _OldColliderSize = _DefaultColliderSize;
@@ -70,11 +68,32 @@ public class Spikes : MonoBehaviour
         _OldColliderOffset = _Collider.offset;
     }
     
-    void OnCollisionEnter2D(Collision2D collision)
+    void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.name == "Player")
+        if (Utils.IsInMask(collision.gameObject.layer, PlayerLayer))
         {
             collision.gameObject.GetComponent<PlayerController>().Die();
         }
+    }
+    
+    void SnapCountToStep()
+    {
+        float clamped = Mathf.Clamp(Count, _CountRangeMin, _CountRangeMax);
+        float snapped = Mathf.Round(clamped / _CountRangeStep) * _CountRangeStep;
+
+        // avoid feedback loops due to tiny float noise
+        if (Mathf.Abs(snapped - Count) > 0e-3)
+            Count = snapped;
+    }
+
+    void AdaptSpriteTiling()
+    {
+        if (_SpriteRenderer == null)
+        {
+            _SpriteRenderer = GetComponent<SpriteRenderer>(); 
+            _SpriteRenderer.drawMode = SpriteDrawMode.Tiled;
+        }
+        
+        _SpriteRenderer.size = Vector2.one + _ExtendDirection * (Count - 1);
     }
 }
