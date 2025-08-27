@@ -8,7 +8,7 @@ public class SpawnPoint : MonoBehaviour
     void OnValidate()
     {
         if (transform.parent == null || !transform.parent.TryGetComponent(out _SpriteRenderer))
-            Debug.LogWarning("SpawnPoint object has no ScreenArea parent!");
+            Debug.LogWarning("SpawnPoint object has no ScreenArea parent!", context: this);
     }
 
     void Update()

@@ -12,7 +12,7 @@ public class CheckpointTrigger : MonoBehaviour
         if (_ScreenArea == null)
         {
             if (transform.parent == null || !transform.parent.TryGetComponent(out _ScreenArea))
-                Debug.LogWarning("Checkpoint trigger requires a ScreenArea parent!");
+                Debug.LogWarning("Checkpoint trigger requires a ScreenArea parent!", context: this);
         }
     }
 
@@ -20,7 +20,7 @@ public class CheckpointTrigger : MonoBehaviour
     {
         if (_ScreenArea == null)
         {
-            Debug.LogWarning("Entered a Checkpoint-trigger without a ScreenArea parent!");
+            Debug.LogWarning("Entered a Checkpoint-trigger without a ScreenArea parent!", context: this);
             return;
         }
         
