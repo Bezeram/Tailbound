@@ -1,12 +1,13 @@
 using UnityEngine;
-using UnityEngine.UIElements;
 
 [ExecuteInEditMode]
-public class Screens : MonoBehaviour
+public class ScreenArea : MonoBehaviour
 {
     private readonly LineRenderer[] lineRenderers = new LineRenderer[4];
     public Vector2 size;
 
+    public Vector3 CurrentCheckpoint;
+    
     void Start()
     {
         bool inEditorMode = !Application.isPlaying;

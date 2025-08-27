@@ -5,7 +5,7 @@ using UnityEngine.Rendering.Universal;
 public class CameraFollow : MonoBehaviour
 {
     public Transform Target;
-    public Screens Screen;
+    public ScreenArea Screen;
     private PixelPerfectCamera pixelPerfectCamera;
 
     void Start()
@@ -64,7 +64,7 @@ public class CameraFollow : MonoBehaviour
 
     public LevelLoader levelLoader; // Reference your LevelLoader script here
 
-    public IEnumerator ScreenTransition(Screens newScreen)
+    public IEnumerator ScreenTransition(ScreenArea newScreen)
     {
         ScreenWipe wipe = FindFirstObjectByType<ScreenWipe>();
         if (wipe != null)

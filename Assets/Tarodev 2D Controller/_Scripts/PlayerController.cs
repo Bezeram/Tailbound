@@ -17,19 +17,18 @@ namespace TarodevController
     {
         [TitleGroup("References")]
         public PlayerMovementSettings _stats;
-        [FormerlySerializedAs("playerAbilitiesSettingsSettings")] [FormerlySerializedAs("PlayerSettings")] public PlayerAbilitiesSettings PlayerAbilitiesSettings;
+        public PlayerAbilitiesSettings PlayerAbilitiesSettings;
         public Swing SwingScript;
         public GameObject LevelLoader;
-
-        [FormerlySerializedAs("_frameVelocity")]
+        
         [TitleGroup("Info")]
         [ReadOnly, ShowInInspector, SerializeField] private Vector2 _FrameVelocity;
         [ReadOnly, ShowInInspector, SerializeField] private float _Stamina;
-        [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbingLeft = false;
-        [ReadOnly, ShowInInspector, SerializeField] private bool IsAdjacentToWallLeft = false;
-        [ReadOnly, ShowInInspector, SerializeField] private bool IsAdjacentToWallRight = false;
-        [ReadOnly, ShowInInspector, SerializeField] private bool _FacingLeft = false;
-        [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbing = false;
+        [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbingLeft;
+        [ReadOnly, ShowInInspector, SerializeField] private bool _IsAdjacentToWallLeft;
+        [ReadOnly, ShowInInspector, SerializeField] private bool _IsAdjacentToWallRight;
+        [ReadOnly, ShowInInspector, SerializeField] private bool _FacingLeft;
+        [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbing;
 
         public bool IsClimbing => _IsClimbing;
         
@@ -59,7 +58,6 @@ namespace TarodevController
         {
             _RigidBody = GetComponent<Rigidbody2D>();
             _col = GetComponent<BoxCollider2D>();
-            _RigidBody.transform.position = Checkpoint.currentCheckpointPosition; 
             _ClimbingCollider = transform.Find("ClimbHitbox").GetComponent<BoxCollider2D>();
             LevelLoader = GameObject.FindGameObjectWithTag("LevelLoader");
             _IsDead = false;
@@ -231,8 +229,8 @@ namespace TarodevController
             bool adjacentWallRight = IsWallAdjacent(Vector2.right);
 
             // Info
-            IsAdjacentToWallLeft = adjacentWallLeft;
-            IsAdjacentToWallRight = adjacentWallRight;
+            _IsAdjacentToWallLeft = adjacentWallLeft;
+            _IsAdjacentToWallRight = adjacentWallRight;
 
             // Landed on the Ground
             if (!_Grounded && groundHit)
@@ -336,7 +334,7 @@ namespace TarodevController
                 ExecuteJump();
             else if (_IsClimbing && IsFacingTowardWall())
                 ExecuteClimbJump();
-            else if (!_Grounded && IsAdjacentToWallLeft || IsAdjacentToWallRight)
+            else if (!_Grounded && _IsAdjacentToWallLeft || _IsAdjacentToWallRight)
                 ExecuteWallJump();
 
             _JumpToConsume = false;
@@ -370,7 +368,7 @@ namespace TarodevController
             _BufferedJumpUsable = false;
             _CoyoteUsable = false;
 
-            Vector2 direction = new(IsAdjacentToWallLeft ? 1 : -1, 1);
+            Vector2 direction = new(_IsAdjacentToWallLeft ? 1 : -1, 1);
             _FrameVelocity = direction * PlayerAbilitiesSettings.WallJumpPower;
 
             Jumped?.Invoke();
