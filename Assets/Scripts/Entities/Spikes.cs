@@ -17,8 +17,8 @@ public class Spikes : MonoBehaviour
 
     private BoxCollider2D _Collider;
     private SpriteRenderer _SpriteRenderer;
-    public Vector2 _OldColliderSize;
-    public Vector2 _OldColliderOffset;
+    private Vector2 _OldColliderSize;
+    private Vector2 _OldColliderOffset;
 
     private readonly Vector2 _DefaultColliderSize = new (0.815382f, 0.1209f);
     private readonly Vector2 _DefaultColliderOffset = new(0.4687891f, 0.06379867f);
@@ -31,11 +31,10 @@ public class Spikes : MonoBehaviour
             _SpriteRenderer.drawMode = SpriteDrawMode.Tiled;
         }
         
-        _SpriteRenderer.size = Vector2.one + ExtendDirection * (Count - 1);
+        _SpriteRenderer.size = Vector2.one + _ExtendDirection * (Count - 1);
     }
-    
-    private Vector2 ExtendDirection => 
-        Direction is SpikesDirection.Up or SpikesDirection.Down ? Vector2.right : Vector2.down;
+
+    private readonly Vector2 _ExtendDirection = Vector2.right;
     
     void OnValidate()
     {
@@ -61,7 +60,7 @@ public class Spikes : MonoBehaviour
         }
         
         // Extend the box collider depending on the spikes count.
-        _Collider.size = _DefaultColliderSize + ExtendDirection * (Count - 1);
+        _Collider.size = _DefaultColliderSize + _ExtendDirection * (Count - 1);
         // Recalculate the offset.
         // This is necessary because the size is based in the center.
         _Collider.offset = _OldColliderOffset + (_Collider.size - _OldColliderSize) / 2f;
