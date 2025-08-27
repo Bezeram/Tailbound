@@ -12,7 +12,7 @@ public class ScreenArea : MonoBehaviour
     
     void OnDrawGizmos()
     {
-        Gizmos.color = Color.green;
+        Gizmos.color = Color.white;
         Gizmos.DrawWireCube(transform.position, GetComponent<BoxCollider2D>().size);
     }
 }
