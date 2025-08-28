@@ -8,10 +8,12 @@ public class PlayerData
     public int currentScene;
     public float[] position = new float[4];
     public List<float[]> bananaPositions;
+    public int score;
 
     public PlayerData()
     {
         currentScene = Checkpoint.currentScene;
+        score = Checkpoint.score;
         position[0] = Checkpoint.currentCheckpointPosition.x;
         position[1] = Checkpoint.currentCheckpointPosition.y;
         position[2] = Checkpoint.currentCheckpointPosition.z;
