@@ -27,14 +27,17 @@ public class Swing : MonoBehaviour
     private ZiplineActivator _ZiplineActivator;
     private SpringJoint2D _TailJoint;
     private Vector2 _TailAttachPoint;
-    private GameObject _AttacherObject = null;
+    private GameObject _AttacherObject;
 
     void Update()
     {
+        if (PauseMenuScript.isPaused)
+            return;
+        
         GetInputDirection();
         UpdateAttachPoint();
 
-        if (_AttacherObject != null)
+        if (IsSwinging)
             HandleSwinging();
 
         // Player must be in the air to attach
@@ -42,13 +45,18 @@ public class Swing : MonoBehaviour
         if (Input.GetKeyDown(playerAbilitiesSettingsSettings.AttachKey) && inAir)
             HandleTailUse();
 
-        if (Input.GetKeyUp(playerAbilitiesSettingsSettings.AttachKey) && _AttacherObject != null)
+        if (Input.GetKeyUp(playerAbilitiesSettingsSettings.AttachKey) && IsSwinging)
+            HandleTailRelease();
+        
+        // If the player somehow stopped pressing the attachment key without triggering
+        // the release key event (ex: pause menu), automatically disable swinging.
+        if (!Input.GetKey(playerAbilitiesSettingsSettings.AttachKey) && IsSwinging)
             HandleTailRelease();
     }
 
     void UpdateAttachPoint()
     {
-        if (_AttacherObject == null)
+        if (!IsSwinging)
             return;
 
         Vector3 attacherPosition = _AttacherObject.transform.position;
@@ -245,9 +253,7 @@ public class Swing : MonoBehaviour
 
     void LateUpdate()
     {
-        if (_AttacherObject != null)
-        {
+        if (IsSwinging)
             DrawTailLine();
-        }
     }
 }

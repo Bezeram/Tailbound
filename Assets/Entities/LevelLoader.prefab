@@ -469,7 +469,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a06d8028b238cd84cb170cad8f98e5a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  transition: {fileID: 9138550364027525339}
+  Transition: {fileID: 0}
+  Player: {fileID: 0}
+  ScreenManager: {fileID: 0}
 --- !u!1 &4109289236180999095
 GameObject:
   m_ObjectHideFlags: 0
@@ -1039,7 +1041,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0206afd4a5b37e4dbfc8ad586194c2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pauseMenuUi: {fileID: 0}
+  pauseMenuUi: {fileID: 3866644506548981666}
 --- !u!114 &5647235051171014196
 MonoBehaviour:
   m_ObjectHideFlags: 0
