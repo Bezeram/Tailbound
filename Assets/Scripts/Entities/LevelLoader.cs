@@ -4,10 +4,14 @@ using System.Collections.Generic;
 using TarodevController;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 public class LevelLoader : MonoBehaviour
 {
-    public Animator transition;
+    private static readonly int AnimationTriggerStart = Animator.StringToHash("Start");
+    private static readonly int AnimationTriggerEnd = Animator.StringToHash("End");
+    
+    public Animator Transition;
     public PlayerController Player;
     public ScreenManager ScreenManager;
 
@@ -17,23 +21,34 @@ public class LevelLoader : MonoBehaviour
         ScreenManager = FindFirstObjectByType<ScreenManager>();
     }
 
-    public IEnumerator Respawn()
+    public void Respawn()
     {
-        transition.SetTrigger("Restart");
+        StartCoroutine(_Respawn());
+    }
+
+    IEnumerator _Respawn()
+    {
+        Transition.SetTrigger(AnimationTriggerStart);
         
         yield return new WaitForSeconds(1);
         
-        StartCoroutine(_ResetScreenForRespawn());
+        _ResetScreenForRespawn();
+        
+        Transition.SetTrigger(AnimationTriggerEnd);
+        
+        yield return new WaitForSeconds(1);
+        
+        // Respawn player after animation is finished.
+        // I.e. the player may now move.
+        Player.Respawn();
     }
 
-    IEnumerator _ResetScreenForRespawn()
+    void _ResetScreenForRespawn()
     {
         // TODO: every entity which must be reset
         //  has its data copied from a clone representing its initial state in the screen.
         //  Also move the player to their current respawn point.
         Player.transform.position = ScreenManager.CurrentSpawnPosition;
-
-        yield return null;
     }
 
     public void LoadLevel(int level)
@@ -58,7 +73,7 @@ public class LevelLoader : MonoBehaviour
 
     IEnumerator Load_Level(int level)
     {
-        transition.SetTrigger("Restart");
+        Transition.SetTrigger(AnimationTriggerStart);
 
         yield return new WaitForSeconds(1);
 
@@ -73,7 +88,7 @@ public class LevelLoader : MonoBehaviour
 
     IEnumerator Finish_Level(int level)
     {
-        transition.SetTrigger("Restart");
+        Transition.SetTrigger(AnimationTriggerStart);
 
         yield return new WaitForSeconds(1);
 

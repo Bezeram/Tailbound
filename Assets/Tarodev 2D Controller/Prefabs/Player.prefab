@@ -132,7 +132,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f61c64124c8575748994f087b9dc1b8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _stats: {fileID: 11400000, guid: 05e6a06c5af93134ab98ff12e2c27265, type: 2}
+  Stats: {fileID: 11400000, guid: 05e6a06c5af93134ab98ff12e2c27265, type: 2}
   PlayerAbilitiesSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
   SwingScript: {fileID: 6558970843273908572}
   LevelLoader: {fileID: 4067423233591614951, guid: f9c4ed6633928754eb69af8dd5745ed8, type: 3}
@@ -143,6 +143,7 @@ MonoBehaviour:
   _IsAdjacentToWallRight: 0
   _FacingLeft: 0
   _IsClimbing: 0
+  _IsDead: 0
 --- !u!114 &6558970843273908572
 MonoBehaviour:
   m_ObjectHideFlags: 0
