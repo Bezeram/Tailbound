@@ -133,14 +133,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _stats: {fileID: 11400000, guid: 05e6a06c5af93134ab98ff12e2c27265, type: 2}
-  PlayerSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
+  PlayerAbilitiesSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
   SwingScript: {fileID: 6558970843273908572}
   LevelLoader: {fileID: 4067423233591614951, guid: f9c4ed6633928754eb69af8dd5745ed8, type: 3}
-  _frameVelocity: {x: 0, y: 0}
+  _FrameVelocity: {x: 0, y: 0}
   _Stamina: 0
   _IsClimbingLeft: 0
-  IsAdjacentToWallLeft: 0
-  IsAdjacentToWallRight: 0
+  _IsAdjacentToWallLeft: 0
+  _IsAdjacentToWallRight: 0
   _FacingLeft: 0
   _IsClimbing: 0
 --- !u!114 &6558970843273908572
@@ -162,7 +162,7 @@ MonoBehaviour:
   LineRenderer: {fileID: 5567480390823644627}
   TailOrigin: {fileID: 4732904917756146319}
   PlayerController: {fileID: 478934572882729278}
-  PlayerSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
+  playerAbilitiesSettingsSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
   IsSwinging: 0
 --- !u!114 &6831988449785421683
 MonoBehaviour:

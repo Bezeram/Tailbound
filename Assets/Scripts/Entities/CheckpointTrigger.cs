@@ -1,39 +1,110 @@
+using System.Linq;
+using Sirenix.OdinInspector;
+using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Serialization;
 
+[ExecuteAlways]
 public class CheckpointTrigger : MonoBehaviour
 {
-    private BoxCollider2D _Collider;
-    private ScreenArea _ScreenArea;
+    [TitleGroup("Input")] public ScreenArea ScreenArea;
     
-    void OnValidate()
+    private BoxCollider2D _Collider;
+    private float _UpdateTimer;
+
+    public Vector3[] Centers;
+    public Vector3[] Sizes;
+    
+    void UpdateScreenParent()
     {
+        // Do not run while in prefab editing mode.
         if (_Collider == null)
             _Collider = GetComponent<BoxCollider2D>();
-        if (_ScreenArea == null)
+        
+        // Find the closest screen to attach to.
+        var screens = FindObjectsByType<ScreenArea>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        if (screens.Length == 0)
+            return;
+        
+        // Compute screens bounds to determine its closest point and thus the shortest distance.  
+        int minIndex = 0;
+        var minBounds = new Bounds(screens[0].Center, screens[0].Size);
+        float minDistance = Vector3.Distance(minBounds.ClosestPoint(transform.position), transform.position);
+        Centers = new Vector3[screens.Length];
+        Sizes = new Vector3[screens.Length];
+        Centers[0] = screens[0].Center;
+        Sizes[0] = screens[0].Size;
+        for (int i = 1; i < screens.Length; i++)
         {
-            if (transform.parent == null || !transform.parent.TryGetComponent(out _ScreenArea))
-                Debug.LogWarning("Checkpoint trigger requires a ScreenArea parent!", context: this);
+            var bounds = new Bounds(screens[i].Center, screens[i].Size);
+            float distance = Vector3.Distance(bounds.ClosestPoint(transform.position), transform.position);
+            
+            Centers[i] = screens[i].Center;
+            Sizes[i] = screens[i].Size;
+            
+            if (distance < minDistance)
+            {
+                minIndex = i;
+                minDistance = distance;
+            }
         }
+        
+        ScreenArea = screens[minIndex];
     }
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        if (_ScreenArea == null)
+        if (ScreenArea == null)
         {
-            Debug.LogWarning("Entered a Checkpoint-trigger without a ScreenArea parent!", context: this);
+            Debug.LogWarning("Entered a Checkpoint trigger without a ScreenArea parent!", context: this);
             return;
         }
+        if (collision.gameObject.layer != LayerMask.NameToLayer("Player")) 
+            return;
         
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Player"))
+        // Locate the closest RespawnPoint
+        var spawnPoints = transform.parent.GetComponentsInChildren<SpawnPoint>();
+        if (spawnPoints.Length == 0)
         {
-            // TODO: Find a respawn object contained in the current screen
-            //  and set the current respawn point in the ScreenArea reference.
+            // ScreenArea already throws error
+            return;
+        }
+            
+        // Get the closest respawn point and set the spawn point.
+        SpawnPoint closestSpawnPoint = spawnPoints.OrderBy(sp => sp.transform.position).First();
+        ScreenArea.CurrentSpawnPoint = closestSpawnPoint;
+    }
+
+    void Update()
+    {
+        // Do not run while in prefab editing mode.
+        if (EditorUtility.IsPersistent(this)) 
+            return;
+        if (PrefabUtility.IsPartOfPrefabAsset(this))
+            return;
+        if (PrefabStageUtility.GetCurrentPrefabStage() != null)
+            return;
+        if (Application.isPlaying)
+            return;
+        
+        _UpdateTimer += Time.deltaTime;
+        if (_UpdateTimer >= 0.5f)
+        {
+            // Set parent to the screen area.
+            if (ScreenArea != null)
+                transform.SetParent(ScreenArea.transform);
+            
+            UpdateScreenParent();
+            _UpdateTimer -= 0.5f;
         }
     }
     
     void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(transform.position, GetComponent<BoxCollider2D>().size);
+        BoxCollider2D col = GetComponent<BoxCollider2D>();
+        Vector3 center = transform.position + new Vector3(col.offset.x, col.offset.y, 0);
+        Gizmos.DrawWireCube(center, col.size);
     }
 }

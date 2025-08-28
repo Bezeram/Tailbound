@@ -44,7 +44,7 @@ public class CameraFollow : MonoBehaviour
 
         // Screen bounds in pixels
         Vector2 screenMin = Screen.transform.position * ppu;
-        Vector2 screenMax = screenMin + (Screen._Size * ppu);
+        Vector2 screenMax = screenMin + (Screen.Size * ppu);
 
         // Clamp X position
         if (cameraPosition.x - halfCamWidth < screenMin.x)
