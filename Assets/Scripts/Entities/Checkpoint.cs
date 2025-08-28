@@ -1,9 +1,12 @@
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
 public class Checkpoint : MonoBehaviour
 {
     public static Vector3 currentCheckpointPosition;
     public static int currentScene;
+    public static List<Vector3> bananaPositions; 
 
     private void Awake()
     {

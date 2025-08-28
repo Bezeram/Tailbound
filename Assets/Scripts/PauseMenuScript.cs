@@ -50,6 +50,7 @@ public class PauseMenuScript : MonoBehaviour
 
     public void Menu()
     {
+        SaveSystem.SaveGame();
         Resume();
         GameObject.Find("LevelLoader").GetComponent<LevelLoader>().LoadLevel(0);
     }
