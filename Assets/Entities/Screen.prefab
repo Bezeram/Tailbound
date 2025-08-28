@@ -345,6 +345,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   size: {x: 42, y: 17}
+  CurrentCheckpoint: {x: 0, y: 0, z: 0}
 --- !u!1 &5732929655595259865
 GameObject:
   m_ObjectHideFlags: 0

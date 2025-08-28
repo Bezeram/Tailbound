@@ -469,7 +469,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a06d8028b238cd84cb170cad8f98e5a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  transition: {fileID: 9138550364027525339}
+  Transition: {fileID: 0}
+  Player: {fileID: 0}
+  ScreenManager: {fileID: 0}
 --- !u!1 &4109289236180999095
 GameObject:
   m_ObjectHideFlags: 0

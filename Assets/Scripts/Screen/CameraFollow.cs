@@ -5,7 +5,7 @@ using UnityEngine.Rendering.Universal;
 public class CameraFollow : MonoBehaviour
 {
     public Transform Target;
-    public Screens Screen;
+    public ScreenArea Screen;
     private PixelPerfectCamera pixelPerfectCamera;
 
     void Start()
@@ -44,7 +44,7 @@ public class CameraFollow : MonoBehaviour
 
         // Screen bounds in pixels
         Vector2 screenMin = Screen.transform.position * ppu;
-        Vector2 screenMax = screenMin + (Screen.size * ppu);
+        Vector2 screenMax = screenMin + (Screen.Size * ppu);
 
         // Clamp X position
         if (cameraPosition.x - halfCamWidth < screenMin.x)
@@ -64,7 +64,7 @@ public class CameraFollow : MonoBehaviour
 
     public LevelLoader levelLoader; // Reference your LevelLoader script here
 
-    public IEnumerator ScreenTransition(Screens newScreen)
+    public IEnumerator ScreenTransition(ScreenArea newScreen)
     {
         ScreenWipe wipe = FindFirstObjectByType<ScreenWipe>();
         if (wipe != null)
@@ -72,7 +72,7 @@ public class CameraFollow : MonoBehaviour
 
         // Switch screen bounds here
         this.Screen = newScreen; 
-        levelLoader.ReloadLevel();
+        levelLoader.Respawn();
 
         yield return new WaitForSeconds(0.5f);
 

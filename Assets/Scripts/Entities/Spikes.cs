@@ -36,12 +36,10 @@ public class Spikes : MonoBehaviour
         if (_Collider == null)
             _Collider = GetComponent<BoxCollider2D>();
         
-        // Snap count to step size defined
+        // Snap count to step size defined.
         SnapCountToStep();
         
-        // Sprite is rendered as a tile.
-        // Extend the tile size depending on the Count.
-        AdaptSpriteTiling();
+        
         
         // Rotate based on direction.
         float angle = (int)Direction * 90;
@@ -66,6 +64,18 @@ public class Spikes : MonoBehaviour
         // Update "old" values at the next iteration.
         _OldColliderSize = _Collider.size;
         _OldColliderOffset = _Collider.offset;
+    }
+
+    void Update()
+    {
+        if (Application.isPlaying)
+            return;
+        
+        // Sprite is rendered as a tile.
+        // Extend the tile size depending on the Count.
+        // This could've been called in OnValidate(),
+        //  but it produces an annoying warning.
+        AdaptSpriteTiling();
     }
     
     void OnTriggerEnter2D(Collider2D collision)

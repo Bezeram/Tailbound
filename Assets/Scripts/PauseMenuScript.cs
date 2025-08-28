@@ -5,6 +5,8 @@ public class PauseMenuScript : MonoBehaviour
 {
     public static bool isPaused =  false;
     public GameObject pauseMenuUi;
+    public float TimeScale;
+    
     private GameObject player;
 
     private void Start()
@@ -25,7 +27,9 @@ public class PauseMenuScript : MonoBehaviour
             {
                 Pause();
             }
-        }    
+        }
+
+        TimeScale = Time.timeScale;
     }
 
     public void Resume()

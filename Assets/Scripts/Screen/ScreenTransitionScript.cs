@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider2D))]
 public class ScreenTransitionScript : MonoBehaviour
 {
-    public Screens NextScreen; // The screen to switch to when player enters
+    public ScreenArea NextScreen; // The screen to switch to when player enters
     public Vector2 ArrowDirection = Vector2.right; // purely visual/editor helper
 
     private void OnDrawGizmos()

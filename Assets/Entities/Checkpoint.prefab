@@ -91,3 +91,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c74cee750f75b44d893df2a0adb5094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ScreenArea: {fileID: 0}
+  Centers:
+  - {x: -16.5, y: -3.5749998, z: 0}
+  - {x: 65, y: -3.5749998, z: 0}
+  Sizes:
+  - {x: 127, y: 16.85, z: 0}
+  - {x: 28, y: 16.85, z: 0}
