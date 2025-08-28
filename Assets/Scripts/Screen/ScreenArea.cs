@@ -10,6 +10,7 @@ public class ScreenArea : MonoBehaviour
         
     [TitleGroup("Input"), ReadOnly] 
     public Vector3 Center => transform.position + new Vector3(Size.x * 0.5f, Size.y * 0.5f, 0f);
+    public Vector3 CurrentSpawnPosition => CurrentSpawnPoint.transform.position;
 
     private float _UpdateTimer;
 

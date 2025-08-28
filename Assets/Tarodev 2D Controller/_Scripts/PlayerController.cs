@@ -483,8 +483,9 @@ namespace TarodevController
             _IsDead = true;
             _FrameVelocity.x = 0;
             _FrameVelocity.y = 0;
-            _RigidBody.linearVelocity = _FrameVelocity;
-            LevelLoader.GetComponent<LevelLoader>().ReloadLevel();
+            ApplyMovement();
+            
+            LevelLoader.GetComponent<LevelLoader>().Respawn();
         }
 
         private void ApplyMovement() => _RigidBody.linearVelocity = _FrameVelocity;

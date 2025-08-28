@@ -1,16 +1,39 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TarodevController;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class LevelLoader : MonoBehaviour
 {
     public Animator transition;
+    public PlayerController Player;
+    public ScreenManager ScreenManager;
 
-    public void ReloadLevel()
+    void Awake()
     {
-        StartCoroutine(Load_Level(SceneManager.GetActiveScene().buildIndex));
+        Player = FindFirstObjectByType<PlayerController>();
+        ScreenManager = FindFirstObjectByType<ScreenManager>();
+    }
+
+    public IEnumerator Respawn()
+    {
+        transition.SetTrigger("Restart");
+        
+        yield return new WaitForSeconds(1);
+        
+        StartCoroutine(_ResetScreenForRespawn());
+    }
+
+    IEnumerator _ResetScreenForRespawn()
+    {
+        // TODO: every entity which must be reset
+        //  has its data copied from a clone representing its initial state in the screen.
+        //  Also move the player to their current respawn point.
+        Player.transform.position = ScreenManager.CurrentSpawnPosition;
+
+        yield return null;
     }
 
     public void LoadLevel(int level)

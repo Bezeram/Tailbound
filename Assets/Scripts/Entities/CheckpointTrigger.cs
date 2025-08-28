@@ -1,5 +1,6 @@
 using System.Linq;
 using Sirenix.OdinInspector;
+using TarodevController;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -72,8 +73,22 @@ public class CheckpointTrigger : MonoBehaviour
         }
             
         // Get the closest respawn point and set the spawn point.
-        SpawnPoint closestSpawnPoint = spawnPoints.OrderBy(sp => sp.transform.position).First();
-        ScreenArea.CurrentSpawnPoint = closestSpawnPoint;
+        // Compute screens bounds to determine its closest point and thus the shortest distance.
+        Vector3 playerPosition = collision.transform.position;
+        int minIndex = 0;
+        float minDistance = Vector3.Distance(playerPosition, spawnPoints[0].transform.position);
+        for (int i = 1; i < spawnPoints.Length; i++)
+        {
+            float distance = Vector3.Distance(playerPosition, spawnPoints[i].transform.position);
+            
+            if (distance < minDistance)
+            {
+                minIndex = i;
+                minDistance = distance;
+            }
+        }
+        
+        ScreenArea.CurrentSpawnPoint = spawnPoints[minIndex];
     }
 
     void Update()
