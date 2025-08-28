@@ -11,7 +11,7 @@ public class Swing : MonoBehaviour
     public LineRenderer LineRenderer;
     public Transform TailOrigin;
     public PlayerController PlayerController;
-    [FormerlySerializedAs("PlayerSettings")] public PlayerAbilitiesSettings playerAbilitiesSettingsSettings;
+    public PlayerAbilitiesSettings PlayerAbilitiesSettings;
 
     [TitleGroup("Info")]
     [ReadOnly, ShowInInspector] public bool IsSwinging = false;
@@ -42,15 +42,15 @@ public class Swing : MonoBehaviour
 
         // Player must be in the air to attach
         bool inAir = !PlayerController.IsGrounded && !PlayerController.IsClimbing;
-        if (Input.GetKeyDown(playerAbilitiesSettingsSettings.AttachKey) && inAir)
+        if (Input.GetKeyDown(PlayerAbilitiesSettings.AttachKey) && inAir)
             HandleTailUse();
 
-        if (Input.GetKeyUp(playerAbilitiesSettingsSettings.AttachKey) && IsSwinging)
+        if (Input.GetKeyUp(PlayerAbilitiesSettings.AttachKey) && IsSwinging)
             HandleTailRelease();
         
         // If the player somehow stopped pressing the attachment key without triggering
         // the release key event (ex: pause menu), automatically disable swinging.
-        if (!Input.GetKey(playerAbilitiesSettingsSettings.AttachKey) && IsSwinging)
+        if (!Input.GetKey(PlayerAbilitiesSettings.AttachKey) && IsSwinging)
             HandleTailRelease();
     }
 
@@ -67,13 +67,13 @@ public class Swing : MonoBehaviour
     void GetInputDirection()
     {
         InputDirection = Vector2.zero;
-        if (Input.GetKey(playerAbilitiesSettingsSettings.LeftKey))
+        if (Input.GetKey(PlayerAbilitiesSettings.LeftKey))
             InputDirection.x = -1;
-        if (Input.GetKey(playerAbilitiesSettingsSettings.RightKey))
+        if (Input.GetKey(PlayerAbilitiesSettings.RightKey))
             InputDirection.x = 1;
-        if (Input.GetKey(playerAbilitiesSettingsSettings.DownKey))
+        if (Input.GetKey(PlayerAbilitiesSettings.DownKey))
             InputDirection.y = -1;
-        if (Input.GetKey(playerAbilitiesSettingsSettings.UpKey))
+        if (Input.GetKey(PlayerAbilitiesSettings.UpKey))
             InputDirection.y = 1;
     }
 
@@ -106,7 +106,7 @@ public class Swing : MonoBehaviour
 
         // Cast for objects on attachable layer in the maximum range
         Collider2D[] colliders = Physics2D.OverlapCircleAll
-            (TailOrigin.position, playerAbilitiesSettingsSettings.MaxTailLength, Attachable);
+            (TailOrigin.position, PlayerAbilitiesSettings.MaxTailLength, Attachable);
         if (colliders.Length == 0)
             return;
 
@@ -137,7 +137,7 @@ public class Swing : MonoBehaviour
         AttachTail(_TailAttachPoint, bestCollider);
         DrawTailLine();
         IsSwinging = true;
-        RigidBody.linearDamping = playerAbilitiesSettingsSettings.LinearDamping;
+        RigidBody.linearDamping = PlayerAbilitiesSettings.LinearDamping;
     }
 
     void AttachToZipline(GameObject attachmentObject)
@@ -171,8 +171,8 @@ public class Swing : MonoBehaviour
         _TailJoint.enableCollision = true;
 
         // Adjust spring settings
-        _TailJoint.frequency = playerAbilitiesSettingsSettings.Frequency;
-        _TailJoint.dampingRatio = playerAbilitiesSettingsSettings.DampingRatio;
+        _TailJoint.frequency = PlayerAbilitiesSettings.Frequency;
+        _TailJoint.dampingRatio = PlayerAbilitiesSettings.DampingRatio;
 
         AttachToZipline(attachmentObject);
     }
@@ -188,13 +188,13 @@ public class Swing : MonoBehaviour
         // in relation to the attachment point.
         // Directly below the attach point, the swing force is max.
         float naturalSwingForce = Mathf.Abs(Vector2.Dot(Vector2.down, swingDirection));
-        Vector2 force = naturalSwingForce * playerAbilitiesSettingsSettings.BaseSwingForce * forceDirection;
+        Vector2 force = naturalSwingForce * PlayerAbilitiesSettings.BaseSwingForce * forceDirection;
         RigidBody.AddForce(force);
 
         SwingDirection = swingDirection;
 
         // Gravity
-        RigidBody.AddForce(Vector2.down * playerAbilitiesSettingsSettings.GravityMultiplier);
+        RigidBody.AddForce(Vector2.down * PlayerAbilitiesSettings.GravityMultiplier);
     }
 
     void DetachFromZipline()
@@ -232,7 +232,7 @@ public class Swing : MonoBehaviour
     void ApplyReleaseJump(Vector2 releaseDirection)
     {
         // Apply jump boost by scaling the direction the player released the tail.
-        Vector2 jumpForce = releaseDirection * playerAbilitiesSettingsSettings.JumpScalar;
+        Vector2 jumpForce = releaseDirection * PlayerAbilitiesSettings.JumpScalar;
         RigidBody.linearVelocity += jumpForce;
 
         // Print info
