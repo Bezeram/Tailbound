@@ -1,7 +1,6 @@
 using Sirenix.OdinInspector;
 using TarodevController;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class Swing : MonoBehaviour
 {
@@ -14,15 +13,15 @@ public class Swing : MonoBehaviour
     public PlayerAbilitiesSettings PlayerAbilitiesSettings;
 
     [TitleGroup("Info")]
-    [ReadOnly, ShowInInspector] public bool IsSwinging = false;
-    [ReadOnly, ShowInInspector] private Vector2 InputDirection = Vector2.zero;
-    [ReadOnly, ShowInInspector] private float AttachScore = float.MinValue;
+    [ReadOnly, ShowInInspector] public bool IsSwinging;
+    [ReadOnly, ShowInInspector] private Vector2 _InputDirection = Vector2.zero;
+    [ReadOnly, ShowInInspector] private float _AttachScore = float.MinValue;
 
     [ReadOnly, ShowInInspector] private Vector2 _JumpDirection;
     [ReadOnly, ShowInInspector] private float _Amplitude;
     [ReadOnly, ShowInInspector] private float _SpeedInherited;
     [ReadOnly, ShowInInspector] private Vector2 _JumpForce;
-    [ReadOnly, ShowInInspector] private Vector2 SwingDirection;
+    [ReadOnly, ShowInInspector] private Vector2 _SwingDirection;
 
     private ZiplineActivator _ZiplineActivator;
     private SpringJoint2D _TailJoint;
@@ -59,53 +58,30 @@ public class Swing : MonoBehaviour
         if (!IsSwinging)
             return;
 
-        Vector3 attacherPosition = _AttacherObject.transform.position;
-        _TailJoint.connectedAnchor = new(attacherPosition.x, attacherPosition.y);
-        _TailAttachPoint = attacherPosition;
+        _TailAttachPoint = _AttacherObject.transform.position;
+        _TailJoint.connectedAnchor = _TailAttachPoint;
     }
 
     void GetInputDirection()
     {
-        InputDirection = Vector2.zero;
+        _InputDirection = Vector2.zero;
         if (Input.GetKey(PlayerAbilitiesSettings.LeftKey))
-            InputDirection.x = -1;
+            _InputDirection.x = -1;
         if (Input.GetKey(PlayerAbilitiesSettings.RightKey))
-            InputDirection.x = 1;
+            _InputDirection.x = 1;
         if (Input.GetKey(PlayerAbilitiesSettings.DownKey))
-            InputDirection.y = -1;
+            _InputDirection.y = -1;
         if (Input.GetKey(PlayerAbilitiesSettings.UpKey))
-            InputDirection.y = 1;
+            _InputDirection.y = 1;
     }
 
     void HandleTailUse()
     {
         // Get swing direction
-        Vector2 swingDirection = InputDirection;
-
-        // Local function for calculating the best collider score
-        (float, Vector2) CalculateColliderScore(Collider2D collider)
-        {
-            Vector2 center = (Vector2)collider.bounds.center;
-            float score = 0;
-            // 2 different scoring mechanisms
-            if (swingDirection == Vector2.zero)
-            {
-                // If no preference direction was chosen, pick the closest attachable.
-                // Use the closest point in reference to the player.
-                // Return negative to prefer the smallest distance,
-                // which with a negative sign becomes the biggest score.
-                score = -Vector2.Distance(TailOrigin.position, collider.ClosestPoint(TailOrigin.position));
-                return (score, center);
-            }
-
-            // Use the dot product to determine "closest arrow" to swing direction.
-            Vector2 direction = center - (Vector2)TailOrigin.position;
-            score = Vector2.Dot(direction.normalized, swingDirection);
-            return (score, center);
-        }
+        Vector2 swingDirection = _InputDirection;
 
         // Cast for objects on attachable layer in the maximum range
-        Collider2D[] colliders = Physics2D.OverlapCircleAll
+        var colliders = Physics2D.OverlapCircleAll
             (TailOrigin.position, PlayerAbilitiesSettings.MaxTailLength, Attachable);
         if (colliders.Length == 0)
             return;
@@ -114,23 +90,23 @@ public class Swing : MonoBehaviour
         // Get the center of the colliders and draw a vector to the
         // center of all colliders detected.
         // Use the CalculateColliderScore() function for the score.
-        // Best match has highest score.
+        // Best match has the highest score.
         Vector2 bestColliderPosition = Vector2.zero;
         Collider2D bestCollider = null;
         float bestColliderScore = float.MinValue;
-        foreach (Collider2D collider in colliders)
+        foreach (Collider2D col in colliders)
         {
-            (float score, Vector2 center) = CalculateColliderScore(collider);
+            (float score, Vector2 center) = CalculateColliderScore(col);
 
             if (score > bestColliderScore)
             {
                 bestColliderScore = score;
                 bestColliderPosition = center;
-                bestCollider = collider;
+                bestCollider = col;
             }
         }
         // Info
-        AttachScore = bestColliderScore;
+        _AttachScore = bestColliderScore;
 
         // Configure the tail joint
         _TailAttachPoint = bestColliderPosition;
@@ -138,6 +114,29 @@ public class Swing : MonoBehaviour
         DrawTailLine();
         IsSwinging = true;
         RigidBody.linearDamping = PlayerAbilitiesSettings.LinearDamping;
+        return;
+
+        // Local function for calculating the best collider score
+        (float, Vector2) CalculateColliderScore(Collider2D collision)
+        {
+            Vector2 center = collision.bounds.center;
+            float score;
+            // 2 different scoring mechanisms
+            if (swingDirection == Vector2.zero)
+            {
+                // If no preference direction was chosen, pick the closest attachable.
+                // Use the closest point in reference to the player.
+                // Return negative to prefer the smallest distance,
+                // which with a negative sign becomes the biggest score.
+                score = -Vector2.Distance(TailOrigin.position, collision.ClosestPoint(TailOrigin.position));
+                return (score, center);
+            }
+
+            // Use the dot product to determine "closest arrow" to swing direction.
+            Vector2 direction = center - (Vector2)TailOrigin.position;
+            score = Vector2.Dot(direction.normalized, swingDirection);
+            return (score, center);
+        }
     }
 
     void AttachToZipline(GameObject attachmentObject)
@@ -181,17 +180,17 @@ public class Swing : MonoBehaviour
     void HandleSwinging()
     {
         Vector2 forceDirection = new Vector2(Input.GetAxis("Horizontal"), 0);
-        // Direction pointing from the attach point to the player
+        // Direction pointing from the attachment point to the player
         Vector2 tailPivot = new(TailOrigin.position.x, TailOrigin.position.y);
         Vector2 swingDirection = (tailPivot - _TailAttachPoint).normalized;
         // Swing force decreases with how high the player is
         // in relation to the attachment point.
-        // Directly below the attach point, the swing force is max.
+        // Directly below the attachment point, the swing force is max.
         float naturalSwingForce = Mathf.Abs(Vector2.Dot(Vector2.down, swingDirection));
         Vector2 force = naturalSwingForce * PlayerAbilitiesSettings.BaseSwingForce * forceDirection;
         RigidBody.AddForce(force);
 
-        SwingDirection = swingDirection;
+        _SwingDirection = swingDirection;
 
         // Gravity
         RigidBody.AddForce(Vector2.down * PlayerAbilitiesSettings.GravityMultiplier);
@@ -210,7 +209,7 @@ public class Swing : MonoBehaviour
 
     void HandleTailRelease()
     {
-        Vector2 releaseDirection = InputDirection;
+        Vector2 releaseDirection = _InputDirection;
         IsSwinging = false;
         RigidBody.linearDamping = 0f;
 
@@ -222,7 +221,7 @@ public class Swing : MonoBehaviour
         // Detach from zipline if it's there
         DetachFromZipline();
 
-        // Jump boost
+        // Jump-boost
         ApplyReleaseJump(releaseDirection);
         // Make sure the normal movement script inherits the velocity left over
         // from this script.
