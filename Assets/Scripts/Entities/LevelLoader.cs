@@ -1,10 +1,6 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using TarodevController;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 
 public class LevelLoader : MonoBehaviour
 {
@@ -13,7 +9,7 @@ public class LevelLoader : MonoBehaviour
     
     public Animator Transition;
     public PlayerController Player;
-    [FormerlySerializedAs("SceneManager")] [FormerlySerializedAs("ScreenManager")] public LevelManager LevelManager;
+    public LevelManager LevelManager;
 
     void Awake()
     {

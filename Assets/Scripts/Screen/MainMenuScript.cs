@@ -1,24 +1,27 @@
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine.SceneManagement;
+using System.IO;
 
 public class MainMenuScript : MonoBehaviour
 {
     public void NewGame()
     {
-        // TODO: Reset player data
-        
-        StartGame();
+        // Delete save file
+        File.Delete(SaveSystem.SaveFilePath); 
+        StartGame(1);
     }
 
-    public void StartGame()
+    public void Continue()
     {
-        LevelLoader.StartLevel(1);
+        StartGame(1);
     }
 
     public void Exit()
     {
         Application.Quit();
+    }
+    
+    void StartGame(int level)
+    {
+        LevelLoader.StartLevel(level);
     }
 }

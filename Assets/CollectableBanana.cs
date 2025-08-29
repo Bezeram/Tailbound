@@ -8,8 +8,6 @@ public class CollectableBanana : MonoBehaviour
 
     void Start()
     {
-        if (ID == -1)
-            Debug.LogWarning("ID has not been set!", context: this);
         if (BananaChannel == null)
             Debug.LogWarning("BananaChannel has not been set!", context: this);
     }

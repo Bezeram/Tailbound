@@ -535,8 +535,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 274714056}
-        m_TargetAssemblyTypeName: Main_Menu_Script, Assembly-CSharp
-        m_MethodName: ContinueGame
+        m_TargetAssemblyTypeName: MainMenuScript, Assembly-CSharp
+        m_MethodName: Continue
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

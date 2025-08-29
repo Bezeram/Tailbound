@@ -9,7 +9,7 @@ using UnityEngine.Serialization;
 [ExecuteAlways]
 public class CheckpointTrigger : MonoBehaviour
 {
-    [TitleGroup("Input"), ReadOnly] public ScreenArea ScreenArea;
+    [FormerlySerializedAs("ScreenArea")] [TitleGroup("Input"), ReadOnly] public ScreenBox ScreenBox;
     
     private BoxCollider2D _Collider;
     private float _UpdateTimer;
@@ -21,7 +21,7 @@ public class CheckpointTrigger : MonoBehaviour
             _Collider = GetComponent<BoxCollider2D>();
         
         // Find the closest screen to attach to.
-        var screens = FindObjectsByType<ScreenArea>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var screens = FindObjectsByType<ScreenBox>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         if (screens.Length == 0)
             return;
         
@@ -41,12 +41,12 @@ public class CheckpointTrigger : MonoBehaviour
             }
         }
         
-        ScreenArea = screens[minIndex];
+        ScreenBox = screens[minIndex];
     }
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        if (ScreenArea == null)
+        if (ScreenBox == null)
         {
             Debug.LogWarning("Entered a Checkpoint trigger without a ScreenArea parent!", context: this);
             return;
@@ -78,7 +78,7 @@ public class CheckpointTrigger : MonoBehaviour
             }
         }
         
-        ScreenArea.SetSpawnPoint(spawnPoints[minIndex]);
+        ScreenBox.CurrentSpawnPoint = spawnPoints[minIndex];
     }
 
     void Update()
@@ -97,8 +97,8 @@ public class CheckpointTrigger : MonoBehaviour
         if (_UpdateTimer >= 0.5f)
         {
             // Set parent to the screen area.
-            if (ScreenArea != null)
-                transform.SetParent(ScreenArea.transform);
+            if (ScreenBox != null)
+                transform.SetParent(ScreenBox.transform);
             
             UpdateScreenParent();
             _UpdateTimer -= 0.5f;
