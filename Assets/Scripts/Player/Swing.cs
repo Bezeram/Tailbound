@@ -30,7 +30,7 @@ public class Swing : MonoBehaviour
 
     void Update()
     {
-        if (PauseMenuScript.isPaused)
+        if (LevelManager.IsPaused)
             return;
         
         GetInputDirection();

@@ -9,13 +9,10 @@ using UnityEngine.Serialization;
 [ExecuteAlways]
 public class CheckpointTrigger : MonoBehaviour
 {
-    [TitleGroup("Input")] public ScreenArea ScreenArea;
+    [TitleGroup("Input"), ReadOnly] public ScreenArea ScreenArea;
     
     private BoxCollider2D _Collider;
     private float _UpdateTimer;
-
-    public Vector3[] Centers;
-    public Vector3[] Sizes;
     
     void UpdateScreenParent()
     {
@@ -32,17 +29,10 @@ public class CheckpointTrigger : MonoBehaviour
         int minIndex = 0;
         var minBounds = new Bounds(screens[0].Center, screens[0].Size);
         float minDistance = Vector3.Distance(minBounds.ClosestPoint(transform.position), transform.position);
-        Centers = new Vector3[screens.Length];
-        Sizes = new Vector3[screens.Length];
-        Centers[0] = screens[0].Center;
-        Sizes[0] = screens[0].Size;
         for (int i = 1; i < screens.Length; i++)
         {
             var bounds = new Bounds(screens[i].Center, screens[i].Size);
             float distance = Vector3.Distance(bounds.ClosestPoint(transform.position), transform.position);
-            
-            Centers[i] = screens[i].Center;
-            Sizes[i] = screens[i].Size;
             
             if (distance < minDistance)
             {
@@ -88,7 +78,7 @@ public class CheckpointTrigger : MonoBehaviour
             }
         }
         
-        ScreenArea.CurrentSpawnPoint = spawnPoints[minIndex];
+        ScreenArea.SetSpawnPoint(spawnPoints[minIndex]);
     }
 
     void Update()

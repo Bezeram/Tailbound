@@ -13,12 +13,12 @@ public class LevelLoader : MonoBehaviour
     
     public Animator Transition;
     public PlayerController Player;
-    public ScreenManager ScreenManager;
+    [FormerlySerializedAs("SceneManager")] [FormerlySerializedAs("ScreenManager")] public LevelManager LevelManager;
 
     void Awake()
     {
         Player = FindFirstObjectByType<PlayerController>();
-        ScreenManager = FindFirstObjectByType<ScreenManager>();
+        LevelManager = FindFirstObjectByType<LevelManager>();
     }
 
     public void Respawn()
@@ -48,7 +48,7 @@ public class LevelLoader : MonoBehaviour
         // TODO: every entity which must be reset
         //  has its data copied from a clone representing its initial state in the screen.
         //  Also move the player to their current respawn point.
-        Player.transform.position = ScreenManager.CurrentSpawnPosition;
+        Player.transform.position = LevelManager.CurrentSpawnPosition;
     }
 
     public void LoadLevel(int level)
@@ -68,7 +68,7 @@ public class LevelLoader : MonoBehaviour
 
     public static void StartLevel(int level)
     {
-        SceneManager.LoadScene(level);
+        UnityEngine.SceneManagement.SceneManager.LoadScene(level);
     }
 
     IEnumerator Load_Level(int level)
@@ -77,13 +77,13 @@ public class LevelLoader : MonoBehaviour
 
         yield return new WaitForSeconds(1);
 
-        SceneManager.LoadScene(level);
+        UnityEngine.SceneManagement.SceneManager.LoadScene(level);
     }
 
     IEnumerator Reload_Level_No_Transition()
     {
         yield return new WaitForSeconds(1);
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
     }
 
     IEnumerator Finish_Level(int level)
@@ -92,6 +92,6 @@ public class LevelLoader : MonoBehaviour
 
         yield return new WaitForSeconds(1);
 
-        SceneManager.LoadScene(level);
+        UnityEngine.SceneManagement.SceneManager.LoadScene(level);
     }
 }

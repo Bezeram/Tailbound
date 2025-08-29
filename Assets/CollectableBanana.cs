@@ -1,30 +1,28 @@
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 
 public class CollectableBanana : MonoBehaviour
 {
-    private SpriteRenderer _spriteRenderer;
+    public LayerMask PlayerLayer;
+    public BananaChannel BananaChannel; 
+    public int ID = -1;
 
     void Start()
     {
-        _spriteRenderer = GetComponent<SpriteRenderer>();
-        foreach (Vector3 elem in Checkpoint.bananaPositions)
-        {
-            if (elem == gameObject.transform.position)
-            {
-                Destroy(gameObject);
-                return;
-            }
-        }
+        if (ID == -1)
+            Debug.LogWarning("ID has not been set!", context: this);
+        if (BananaChannel == null)
+            Debug.LogWarning("BananaChannel has not been set!", context: this);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.name == "Player")
+        if (ID == -1)
+            Debug.LogWarning("ID has not been set!", context: this);
+        
+        if (Utils.IsInMask(collision.gameObject.layer, PlayerLayer))
         {
-            Checkpoint.bananaPositions.Add(new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, gameObject.transform.position.z));
-            Checkpoint.score++;
+            BananaChannel?.Raise(this);
+            
             Destroy(gameObject);
         }
     }

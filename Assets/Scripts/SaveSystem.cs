@@ -4,15 +4,13 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 public static class SaveSystem
 {
-    public static void SaveGame()
+    public static void SaveGame(PlayerData playerData)
     {
         BinaryFormatter formatter = new BinaryFormatter();
         string path = Application.persistentDataPath + "/gameSave.monk";
         FileStream stream = new FileStream(path, FileMode.Create);
 
-        PlayerData data = new PlayerData();
-
-        formatter.Serialize(stream, data);
+        formatter.Serialize(stream, playerData);
         stream.Close();
     }
 
@@ -27,10 +25,9 @@ public static class SaveSystem
             PlayerData data = formatter.Deserialize(stream) as PlayerData;
             stream.Close();
             return data;
-        } else
-        {
-            Debug.LogError("Save file not found");
-            return null;
         }
+        
+        Debug.LogError("Save file not found");
+        return null;
     }
 }

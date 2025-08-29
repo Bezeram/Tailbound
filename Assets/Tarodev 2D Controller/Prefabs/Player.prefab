@@ -163,7 +163,7 @@ MonoBehaviour:
   LineRenderer: {fileID: 5567480390823644627}
   TailOrigin: {fileID: 4732904917756146319}
   PlayerController: {fileID: 478934572882729278}
-  playerAbilitiesSettingsSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
+  PlayerAbilitiesSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
   IsSwinging: 0
 --- !u!114 &6831988449785421683
 MonoBehaviour:
@@ -35041,7 +35041,7 @@ MonoBehaviour:
   m_Intensity: 1.2
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
-  m_ApplyToSortingLayers: c90e2d942faae813f53b95570000000099675e85
+  m_ApplyToSortingLayers: 97c26401c90e2d942faae813f53b955799675e8599675e85
   m_LightCookieSprite: {fileID: 0}
   m_DeprecatedPointLightCookieSprite: {fileID: 0}
   m_LightOrder: 0

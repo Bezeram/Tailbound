@@ -1,30 +1,20 @@
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine.Serialization;
 
 [System.Serializable]
 public class PlayerData
 {
-    public int currentScene;
-    public float[] position = new float[4];
-    public List<float[]> bananaPositions;
-    public int score;
+    public int ScreenID;
+    public int SpawnPointID;
+    public List<int> CollectedBananaIDs;
 
-    public PlayerData()
+    public PlayerData(int screenID, int spawnPointID, List<int> collectedBananasIDs)
     {
-        currentScene = Checkpoint.currentScene;
-        score = Checkpoint.score;
-        position[0] = Checkpoint.currentCheckpointPosition.x;
-        position[1] = Checkpoint.currentCheckpointPosition.y;
-        position[2] = Checkpoint.currentCheckpointPosition.z;
-        bananaPositions = new List<float[]>();
-        foreach (Vector3 elem in Checkpoint.bananaPositions)
-        {
-            float[] tempArray = new float[4];
-            tempArray[0] = elem.x;
-            tempArray[1] = elem.y;
-            tempArray[2] = elem.z;
-            bananaPositions.Add(tempArray);
-        }
+        ScreenID = screenID;
+        SpawnPointID = spawnPointID;
+        // Serialize Vector3 array in a bidimensional primitive type array.
+        CollectedBananaIDs = collectedBananasIDs.ToList();
     }
 }

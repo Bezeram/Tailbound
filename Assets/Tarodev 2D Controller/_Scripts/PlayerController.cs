@@ -67,7 +67,7 @@ namespace TarodevController
 
         void Update()
         {
-            if (PauseMenuScript.isPaused)
+            if (LevelManager.IsPaused)
                 return;
             
             HighlightStaminaLoss();
@@ -84,7 +84,7 @@ namespace TarodevController
 
 		void FixedUpdate()
 		{
-            if (PauseMenuScript.isPaused)
+            if (LevelManager.IsPaused)
                 return;
             
             if (SwingScript.IsSwinging)
