@@ -16,7 +16,7 @@ public class CollectableBanana : MonoBehaviour
     [Tooltip("Delay before the banana follows the player and before the player stops following.")] 
     public int FollowUpdatesPerSecond = 20;
     public float FollowVerticalOffset = 1;
-    public float MaxPlayerDistance = 2;
+    public float DelayFollow = 0.5f;
     
     [ReadOnly] public int ID = -1;
 
@@ -28,11 +28,10 @@ public class CollectableBanana : MonoBehaviour
     private PlayerController _PlayerController;
     private bool _PickedUp;
     private bool _Collected;
-    [FormerlySerializedAs("_PlayerPositions")] public Vector3 _PlayerPosition;
-    private Vector3 _LastPlayerPosition;
-    private int _PositionsIndex;
-    public float _TimerUpdates;
-    private float _DeltaTimeFollowUpdates;
+    private Vector3 _PreviousPosition;
+    private Vector3 _NextPosition;
+    private bool _StoppedMovingNow;
+    private float _TimerUpdates;
 
     void Start()
     {
@@ -40,9 +39,6 @@ public class CollectableBanana : MonoBehaviour
             Debug.LogWarning("BananaChannel has not been set!", context: this);
         
         _InitialPosition = transform.position;
-        _DeltaTimeFollowUpdates = 1f / FollowUpdatesPerSecond;
-        
-        int updatesDuringFollowDelay = Mathf.CeilToInt(FollowUpdatesPerSecond);
     }
 
     void HandleBobbing()
@@ -66,27 +62,35 @@ public class CollectableBanana : MonoBehaviour
         // The banana follows but stops when close enough to the player.
         // Note: A new banana should keep its distance to the last banana collected, otherwise the bananas
         // are going to stack on top of each other and not form a beautiful banana trail.
-        _TimerUpdates += Time.deltaTime;
-        while (_TimerUpdates >= _DeltaTimeFollowUpdates)
+        // Only update if the player is moving.
+        if (_PlayerController.IsMoving)
         {
-            _TimerUpdates -= _DeltaTimeFollowUpdates;
+            _StoppedMovingNow = false;
             
-            bool closeToPlayer = Vector3.Distance(transform.position, _PlayerController.transform.position) < MaxPlayerDistance;
-            bool playerNotMoving = !_PlayerController.IsMoving;
-            if (closeToPlayer || playerNotMoving)
-                break;
-            
-            // Add player positions continuously.
-            // Positions are overwritten at 1 second intervals.
-            _LastPlayerPosition = _PlayerPosition;
-            _PlayerPosition = _PlayerController.transform.position;
+            _TimerUpdates += Time.deltaTime;
+            while (_TimerUpdates >= DelayFollow)
+            {
+                _TimerUpdates -= DelayFollow;
+                // Update position                
+                _PreviousPosition = _NextPosition;
+                _NextPosition = _PlayerController.transform.position + Vector3.up * FollowVerticalOffset;
+            }
+        }
+        else
+        {
+            if (!_StoppedMovingNow)
+            {
+                _StoppedMovingNow = true;
+                // Stop banana immediately.
+                // Only run this code once.
+                _NextPosition = transform.position;
+                _PreviousPosition = _NextPosition;
+                _TimerUpdates = DelayFollow;
+            }
         }
         
-        // Only once enough time has passed will the banana actually be moved.
-        // In the meantime, a lot of updates have been steadily going.
-        float lerpT = _TimerUpdates / _DeltaTimeFollowUpdates;
-        Vector3 lerpPos = Vector3.Lerp(_LastPlayerPosition, _PlayerPosition, lerpT);
-        transform.position = lerpPos + Vector3.up * FollowVerticalOffset;
+        float lerpT = _TimerUpdates / DelayFollow;
+        transform.position = Vector3.Lerp(_PreviousPosition, _NextPosition, lerpT);
     }
 
     void Update()
@@ -114,9 +118,10 @@ public class CollectableBanana : MonoBehaviour
             BananaChannel?.Raise(this);
             // Follow player
             _PickedUp = true;
+            
             _PlayerController = collision.gameObject.GetComponent<PlayerController>();
-            _LastPlayerPosition = _PlayerController.transform.position;
-            _PlayerPosition = _PlayerController.transform.position;
+            _NextPosition = _PlayerController.transform.position;
+            _PreviousPosition = transform.position;
         }
     }
 }
