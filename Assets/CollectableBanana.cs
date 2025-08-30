@@ -165,7 +165,6 @@ public class CollectableBanana : MonoBehaviour
 
     [SerializeField] private PulseAnimationState _PulseAnimationState = PulseAnimationState.Finish;
     
-    // TODO:
     void HandlePulseAnimation()
     {
         if (_PulseAnimationState is PulseAnimationState.Finish)
