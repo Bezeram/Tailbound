@@ -17,20 +17,15 @@ public class ScreenBox : MonoBehaviour
     public Vector3 Center => transform.position + new Vector3(Size.x * 0.5f, Size.y * 0.5f, 0f);
     public Vector3 CurrentSpawnPosition => CurrentSpawnPoint.transform.position;
     
-    public Vector3[] GetBananas()
-    {
-        // All bananas in a screen must be children to a screen.
-        var bananas = GetComponentsInChildren<CollectableBanana>();
-        var positions = new Vector3[bananas.Length];
-        
-        for (int i = 0; i < positions.Length; i++)
-            positions[i] = bananas[i].transform.position;
-
-        return positions;
-    }
+    private BoxCollider2D _TransitionCollider;
 
     void OnValidate()
     {
+        // Setup collider
+        _TransitionCollider = GetComponent<BoxCollider2D>();
+        _TransitionCollider.offset = Size / 2;
+        _TransitionCollider.size = Size;
+        
         if (FirstSpawnPoint != null)
         {
             // Check if the spawn point selected is a child of the screen.
@@ -59,5 +54,17 @@ public class ScreenBox : MonoBehaviour
         
         Gizmos.color = Color.white;
         Gizmos.DrawWireCube(transform.position + offset, Size);
+    }
+    
+    public Vector3[] GetBananas()
+    {
+        // All bananas in a screen must be children to a screen.
+        var bananas = GetComponentsInChildren<CollectableBanana>();
+        var positions = new Vector3[bananas.Length];
+        
+        for (int i = 0; i < positions.Length; i++)
+            positions[i] = bananas[i].transform.position;
+
+        return positions;
     }
 }
