@@ -47,12 +47,12 @@ MonoBehaviour:
   m_ComponentVersion: 2
   m_LightType: 3
   m_BlendStyleIndex: 0
-  m_FalloffIntensity: 0.227
+  m_FalloffIntensity: 0.37
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 2.38
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
-  m_ApplyToSortingLayers: 97c26401c90e2d942faae813f53b955799675e8500000000
+  m_ApplyToSortingLayers: 97c26401c90e2d942faae813f53b955799675e85000000002d13b68d
   m_LightCookieSprite: {fileID: 0}
   m_DeprecatedPointLightCookieSprite: {fileID: 0}
   m_LightOrder: 0
@@ -72,8 +72,8 @@ MonoBehaviour:
     m_Extent: {x: 0.9985302, y: 0.99853027, z: 0}
   m_PointLightInnerAngle: 360
   m_PointLightOuterAngle: 360
-  m_PointLightInnerRadius: 0.61
-  m_PointLightOuterRadius: 1.0478472
+  m_PointLightInnerRadius: 1.07
+  m_PointLightOuterRadius: 3.62
   m_ShapeLightParametricSides: 5
   m_ShapeLightParametricAngleOffset: 0
   m_ShapeLightParametricRadius: 1
@@ -161,8 +161,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1917447379
+  m_SortingLayer: -2
   m_SortingOrder: 0
   m_Sprite: {fileID: -2515378696496965225, guid: 7cc9f1261f44d9a419de3c1d438edd78, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -193,9 +193,8 @@ MonoBehaviour:
   BananaChannel: {fileID: 11400000, guid: cd599e7fa6c2c4b4680109d053d75af1, type: 2}
   BobOffset: 0.15
   BobTime: 1
-  FollowUpdatesPerSecond: 20
-  FollowVerticalOffset: 1
-  DelayFollow: 0.5
+  FollowVerticalOffset: 1.5
+  DelayFollow: 0.3
   ID: -1
 --- !u!61 &8896929759981156340
 BoxCollider2D:

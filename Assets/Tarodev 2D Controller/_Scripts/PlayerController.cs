@@ -43,15 +43,12 @@ namespace TarodevController
         
         public bool IsClimbing => _IsClimbing;
         public bool IsMoving => _RigidBody.linearVelocity.magnitude > 0.2;
-
-        #region Interface
-
+        
         public Vector2 FrameInput => _FrameInput.Move;
         public event Action<bool, float> GroundedChanged;
         public event Action Climbed;
+        public event Action Died;
         public event Action Jumped;
-
-        #endregion
 
         private float _Time;
 
@@ -217,9 +214,11 @@ namespace TarodevController
         }
 
         private float _FrameLeftGrounded = float.MinValue;
-        [ReadOnly] private bool _Grounded;
+        [ReadOnly, SerializeField] private bool _Grounded;
+        [ReadOnly, SerializeField] private float _TimeOnGround;
 
         public bool IsGrounded => _Grounded;
+        public float TimeOnGround => _TimeOnGround;
 
         void CheckCollisions()
         {
@@ -247,7 +246,7 @@ namespace TarodevController
                 // Reset stamina
                 _Stamina = PlayerAbilitiesSettings.StaminaTotal;
                 _SpriteRenderer.color = Color.white;
-
+                
                 _Grounded = true;
                 _CoyoteUsable = true;
                 _BufferedJumpUsable = true;
@@ -262,6 +261,11 @@ namespace TarodevController
                 _FrameLeftGrounded = _Time;
                 GroundedChanged?.Invoke(false, 0);
             }
+            
+            if (_Grounded)
+                _TimeOnGround += Time.fixedDeltaTime;
+            else
+                _TimeOnGround = 0;
 
             // Check for wall collision
             if (hitWallLeft || hitWallRight)
@@ -486,13 +490,14 @@ namespace TarodevController
 
         public void Die()
         {
-            //play death animation
+            // Play death animation
             _IsDead = true;
-            _FrameVelocity.x = 0;
-            _FrameVelocity.y = 0;
+            _FrameVelocity = Vector2.zero;
             ApplyMovement();
             
             LevelLoader.GetComponent<LevelLoader>().Respawn();
+            
+            Died?.Invoke();
         }
 
         public void Respawn()
