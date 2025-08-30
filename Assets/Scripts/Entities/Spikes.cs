@@ -2,6 +2,7 @@ using Sirenix.OdinInspector;
 using TarodevController;
 using UnityEngine;
 
+[ExecuteAlways]
 public class Spikes : MonoBehaviour
 {
     public enum SpikesDirection
@@ -38,8 +39,6 @@ public class Spikes : MonoBehaviour
         
         // Snap count to step size defined.
         SnapCountToStep();
-        
-        
         
         // Rotate based on direction.
         float angle = (int)Direction * 90;
