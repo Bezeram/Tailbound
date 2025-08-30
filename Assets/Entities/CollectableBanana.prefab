@@ -61,7 +61,7 @@ MonoBehaviour:
   m_NormalMapDistance: 3
   m_NormalMapQuality: 2
   m_UseNormalMap: 0
-  m_ShadowsEnabled: 1
+  m_ShadowsEnabled: 0
   m_ShadowIntensity: 0.75
   m_ShadowSoftness: 0.3
   m_ShadowSoftnessFalloffIntensity: 0.5
@@ -193,6 +193,9 @@ MonoBehaviour:
   BananaChannel: {fileID: 11400000, guid: cd599e7fa6c2c4b4680109d053d75af1, type: 2}
   BobOffset: 0.15
   BobTime: 1
+  FollowUpdatesPerSecond: 20
+  FollowVerticalOffset: 1
+  DelayFollow: 0.5
   ID: -1
 --- !u!61 &8896929759981156340
 BoxCollider2D:
