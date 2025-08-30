@@ -17,7 +17,7 @@ TagManager:
   - 
   - Water
   - UI
-  - Solid
+  - SolidGround
   - Player
   - Attachable
   - AudioSource
@@ -26,8 +26,8 @@ TagManager:
   - SpawnPoint
   - Background
   - Light
-  - 
-  - 
+  - CollectableBanana
+  - Spikes
   - 
   - 
   - 

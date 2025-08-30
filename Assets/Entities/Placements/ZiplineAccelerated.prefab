@@ -45,7 +45,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 0.8
+  m_Volume: 0.3
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -139,7 +139,7 @@ GameObject:
   m_Component:
   - component: {fileID: 386586538530495629}
   - component: {fileID: 9108282485170058274}
-  m_Layer: 6
+  m_Layer: 13
   m_Name: Belt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -226,7 +226,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1667839235624106571}
   - component: {fileID: 6497605055563469316}
-  m_Layer: 6
+  m_Layer: 13
   m_Name: StartPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -313,7 +313,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3471523962317756936}
   - component: {fileID: 4258008601800167461}
-  m_Layer: 6
+  m_Layer: 13
   m_Name: ZiplineAccelerated
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -515,7 +515,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6586368654650963647}
   - component: {fileID: 2262604249184580731}
-  m_Layer: 6
+  m_Layer: 13
   m_Name: EndPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}

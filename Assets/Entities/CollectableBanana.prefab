@@ -226,7 +226,7 @@ GameObject:
   - component: {fileID: 1092849577608099051}
   - component: {fileID: 8896929759981156340}
   - component: {fileID: 3668175424415255868}
-  m_Layer: 6
+  m_Layer: 15
   m_Name: CollectableBanana
   m_TagString: Untagged
   m_Icon: {fileID: 0}

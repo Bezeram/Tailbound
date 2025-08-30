@@ -264,6 +264,7 @@ public class CollectableBanana : MonoBehaviour
                 break;
             case BananaState.Disable:
                 _SpriteRenderer.enabled = false;
+                enabled = false;
                 _Light.enabled = false;
                 break;
             case BananaState.Lost:
