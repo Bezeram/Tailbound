@@ -331,10 +331,14 @@ MonoBehaviour:
   _DelayCollect: 0.15
   _TimeSquish: 0.5
   _TimeLoseAnimation: 1
-  _TimePulse: 5
+  _TimePulse: 8
   _AudioVolume: 0.3
+  _PulseRotationOffset: 30
+  _PulseAnimationTime: 0.2
   ID: -1
   State: 0
+  _TimerPulseAnimation: 0
+  _PulseAnimationState: 0
 --- !u!61 &8896929759981156340
 BoxCollider2D:
   m_ObjectHideFlags: 0

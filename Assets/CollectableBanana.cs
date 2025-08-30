@@ -31,10 +31,12 @@ public class CollectableBanana : MonoBehaviour
     [SerializeField] private float _TimeLoseAnimation = 3f;
     [SerializeField] private float _TimePulse = 5f;
     [SerializeField] private float _AudioVolume = 0.3f;
+    [SerializeField] private float _PulseRotationOffset = Mathf.PI / 6;
+    [SerializeField] private float _PulseAnimationTime = 0.2f;
     [ReadOnly] public int ID = -1;
-    [ReadOnly] public BananaState State = BananaState.Idle; 
+    [ReadOnly] public BananaState State = BananaState.Idle;
     
-    private float _AnimationTimer;
+    private float _DisappearAnimationTimer;
 
     private Vector3 _InitialPosition;
     private float _TimerBobbing = 0.5f;
@@ -44,6 +46,7 @@ public class CollectableBanana : MonoBehaviour
     private PlayerController _PlayerController;
     private AudioSource _AudioSource;
     private SpriteRenderer _SpriteRenderer;
+    private Animator _Animator;
     private Light2D _Light;
     private float _InitialOuterLightRadius;
     
@@ -54,7 +57,8 @@ public class CollectableBanana : MonoBehaviour
     private bool _StoppedMovingNow = true;
     private float _TimerUpdates;
     private float _TimerLoseAnimation;
-    private float _TimerPulse;
+    private float _TimerPulseTrigger;
+    [SerializeField] private float _TimerPulseAnimation;
 
     void OnValidate()
     {
@@ -62,6 +66,7 @@ public class CollectableBanana : MonoBehaviour
         _InitialOuterLightRadius = _Light.pointLightOuterRadius;
         _AudioSource = transform.GetComponentInChildren<AudioSource>();
         _SpriteRenderer = GetComponent<SpriteRenderer>();
+        _Animator = GetComponent<Animator>();
     }
 
     void Start()
@@ -134,8 +139,8 @@ public class CollectableBanana : MonoBehaviour
 
     void HandleDisappearAnimation()
     {
-        _AnimationTimer += Time.deltaTime;
-        float lerpT = _AnimationTimer / _TimeSquish;
+        _DisappearAnimationTimer += Time.deltaTime;
+        float lerpT = _DisappearAnimationTimer / _TimeSquish;
         lerpT = Utils.EaseInCubic(lerpT);
         
         float lerpScaleY = 1 - lerpT;
@@ -148,11 +153,81 @@ public class CollectableBanana : MonoBehaviour
         if (lerpT >= 1)
             State = BananaState.Disable;
     }
+
+    enum PulseAnimationState
+    {
+        TurnLeft = 0,
+        SwingRight,
+        SwingLeft,
+        TurnRight,
+        Finish
+    }
+
+    [SerializeField] private PulseAnimationState _PulseAnimationState = PulseAnimationState.Finish;
     
     // TODO:
     void HandlePulseAnimation()
     {
+        if (_PulseAnimationState is PulseAnimationState.Finish)
+            return;
         
+        _TimerPulseAnimation += Time.deltaTime;
+        float t = _TimerPulseAnimation / _PulseAnimationTime;
+        
+        switch (_PulseAnimationState)
+        {
+            case PulseAnimationState.TurnLeft:
+            {
+                Quaternion leftEdge = Quaternion.Euler(0, 0, 0);
+                Quaternion rightEdge = Quaternion.Euler(0, 0, 2 * _PulseRotationOffset);
+                transform.rotation = Quaternion.Lerp(leftEdge, rightEdge, t);
+                // Interrupt half-way. "Distances" between points lerped must be the same to maintain the same speed.
+                if (t >= 0.5)
+                {
+                    _PulseAnimationState = PulseAnimationState.SwingRight;
+                    _TimerPulseAnimation -= _PulseAnimationTime * 0.5f;
+                }
+                break;
+            }
+            case PulseAnimationState.SwingRight:
+            {
+                Quaternion leftEdge = Quaternion.Euler(0, 0, _PulseRotationOffset);
+                Quaternion rightEdge = Quaternion.Euler(0, 0, -_PulseRotationOffset);
+                transform.rotation = Quaternion.Lerp(leftEdge, rightEdge, t);
+                if (t >= 1)
+                {
+                    _PulseAnimationState = PulseAnimationState.SwingLeft;
+                    _TimerPulseAnimation -= _PulseAnimationTime;
+                }
+                break;
+            }
+            case PulseAnimationState.SwingLeft:
+            {
+                Quaternion leftEdge = Quaternion.Euler(0, 0, -_PulseRotationOffset);
+                Quaternion rightEdge = Quaternion.Euler(0, 0, _PulseRotationOffset);
+                transform.rotation = Quaternion.Lerp(leftEdge, rightEdge, t);
+                if (t >= 1)
+                {
+                    _PulseAnimationState = PulseAnimationState.TurnRight;
+                    _TimerPulseAnimation -= _PulseAnimationTime;
+                }
+                break;
+            }
+            case PulseAnimationState.TurnRight:
+            {
+                Quaternion leftEdge = Quaternion.Euler(0, 0, _PulseRotationOffset);
+                Quaternion rightEdge = Quaternion.Euler(0, 0, -_PulseRotationOffset);
+                transform.rotation = Quaternion.Lerp(leftEdge, rightEdge, t);
+                // Interrupt half-way. "Distances" between points lerped must be the same to maintain the same speed.
+                if (t >= 0.5)
+                {
+                    _PulseAnimationState = PulseAnimationState.Finish;
+                    _TimerPulseAnimation -= _PulseAnimationTime * 0.5f;
+                    transform.rotation = Quaternion.Euler(0, 0, 0);
+                }
+                break;
+            }
+        }
     }
 
     void Update()
@@ -160,12 +235,16 @@ public class CollectableBanana : MonoBehaviour
         // Pulse sound
         if (State is BananaState.Idle or BananaState.PickedUp)
         {
-            _TimerPulse += Time.deltaTime;
-            if (_TimerPulse >= _TimePulse)
+            _TimerPulseTrigger += Time.deltaTime;
+            if (_TimerPulseTrigger >= _TimePulse)
             {
+                _PulseAnimationState = PulseAnimationState.TurnLeft;
+                _TimerPulseAnimation = 0;
                 _AudioSource.PlayOneShot(BananaPulse, _AudioVolume);
-                _TimerPulse -= _TimePulse;
+                _TimerPulseTrigger -= _TimePulse;
             }
+            
+            HandlePulseAnimation();
         }
         
         // Main update
