@@ -42,6 +42,7 @@ namespace TarodevController
         private bool _StaminaFlashingRed;
         
         public bool IsClimbing => _IsClimbing;
+        public bool IsMoving => _RigidBody.linearVelocity.magnitude > 0.2;
 
         #region Interface
 

@@ -86,8 +86,9 @@ public class LevelManager : MonoBehaviour
             CurrentScreen.CurrentSpawnPoint = CurrentScreen.FirstSpawnPoint;
         }
         
-        // Move player
+        // Move player and clear trail renderer.
         _PlayerController.transform.position = CurrentSpawnPosition;
+        _PlayerController.gameObject.GetComponentInChildren<TrailRenderer>().Clear();
         CurrentScreen.gameObject.SetActive(true);
     }
     
