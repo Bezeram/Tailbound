@@ -1,8 +1,6 @@
 using Sirenix.OdinInspector;
 using TarodevController;
-using Unity.Mathematics.Geometry;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class CollectableBanana : MonoBehaviour
 {
@@ -13,8 +11,6 @@ public class CollectableBanana : MonoBehaviour
     [TitleGroup("Input")] 
     public float BobOffset = 0.15f;
     public float BobTime = 1f;
-    [Tooltip("Delay before the banana follows the player and before the player stops following.")] 
-    public int FollowUpdatesPerSecond = 20;
     public float FollowVerticalOffset = 1;
     public float DelayFollow = 0.5f;
     
