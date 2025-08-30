@@ -10,13 +10,16 @@ public class CollectableBanana : MonoBehaviour
         Idle = 0,
         PickedUp,
         Collected,
-        Destroy,
+        Disable,
         Lost
     }
     
     [TitleGroup("References")]
     public LayerMask PlayerLayer;
     public BananaChannel BananaChannel;
+    public AudioClip BananaPulse;
+    public AudioClip BananaTouch;
+    public AudioClip BananaCollect;
     
     [TitleGroup("Input")] 
     [SerializeField] private float _BobOffset = 0.15f;
@@ -25,7 +28,9 @@ public class CollectableBanana : MonoBehaviour
     [SerializeField] private float _DelayFollow = 0.5f;
     [SerializeField] private float _DelayCollect = 0.15f;
     [SerializeField] private float _TimeSquish = 1;
-    [SerializeField] private float _TimeLoseAnimation = 3f; 
+    [SerializeField] private float _TimeLoseAnimation = 3f;
+    [SerializeField] private float _TimePulse = 5f;
+    [SerializeField] private float _AudioVolume = 0.3f;
     [ReadOnly] public int ID = -1;
     [ReadOnly] public BananaState State = BananaState.Idle; 
     
@@ -37,6 +42,8 @@ public class CollectableBanana : MonoBehaviour
     private int _BobDirection = 1;
     
     private PlayerController _PlayerController;
+    private AudioSource _AudioSource;
+    private SpriteRenderer _SpriteRenderer;
     private Light2D _Light;
     private float _InitialOuterLightRadius;
     
@@ -47,11 +54,14 @@ public class CollectableBanana : MonoBehaviour
     private bool _StoppedMovingNow = true;
     private float _TimerUpdates;
     private float _TimerLoseAnimation;
+    private float _TimerPulse;
 
     void OnValidate()
     {
         _Light = transform.GetComponentInChildren<Light2D>();
         _InitialOuterLightRadius = _Light.pointLightOuterRadius;
+        _AudioSource = transform.GetComponentInChildren<AudioSource>();
+        _SpriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     void Start()
@@ -60,6 +70,7 @@ public class CollectableBanana : MonoBehaviour
             Debug.LogWarning("BananaChannel has not been set!", context: this);
         
         _InitialPosition = transform.position;
+        _AudioSource.clip = BananaPulse;
     }
 
     void HandleBobbing()
@@ -114,10 +125,11 @@ public class CollectableBanana : MonoBehaviour
 
     void HandleCollection()
     {
+        State = BananaState.Collected;
         // Notify LevelManager banana has been collected.
         BananaChannel?.Raise(this);
         
-        State = BananaState.Collected;        
+        _AudioSource.PlayOneShot(BananaCollect, _AudioVolume);
     }
 
     void HandleDisappearAnimation()
@@ -134,16 +146,33 @@ public class CollectableBanana : MonoBehaviour
         _Light.pointLightOuterRadius = lerpScaleY * _InitialOuterLightRadius;
         
         if (lerpT >= 1)
-            State = BananaState.Destroy;
+            State = BananaState.Disable;
+    }
+    
+    // TODO:
+    void HandlePulseAnimation()
+    {
+        
     }
 
     void Update()
     {
+        // Pulse sound
+        if (State is BananaState.Idle or BananaState.PickedUp)
+        {
+            _TimerPulse += Time.deltaTime;
+            if (_TimerPulse >= _TimePulse)
+            {
+                _AudioSource.PlayOneShot(BananaPulse, _AudioVolume);
+                _TimerPulse -= _TimePulse;
+            }
+        }
+        
+        // Main update
         switch (State)
         {
             case BananaState.Idle:
                 HandleBobbing();
-                
                 break;
             case BananaState.PickedUp:
                 FollowPlayer();
@@ -151,13 +180,13 @@ public class CollectableBanana : MonoBehaviour
                 // collecting the banana.
                 if (_PlayerController.TimeOnGround >= _DelayCollect)
                     HandleCollection();
-                
                 break;
             case BananaState.Collected:
                 HandleDisappearAnimation();
                 break;
-            case BananaState.Destroy:
-                Destroy(gameObject);
+            case BananaState.Disable:
+                _SpriteRenderer.enabled = false;
+                _Light.enabled = false;
                 break;
             case BananaState.Lost:
                HandleLoseAnimation();
@@ -178,7 +207,7 @@ public class CollectableBanana : MonoBehaviour
 
     void OnPlayerDeath()
     {
-        if (State is BananaState.Collected or BananaState.Destroy)
+        if (State is BananaState.Collected or BananaState.Disable)
             return;
         
         State = BananaState.Lost;
@@ -195,7 +224,7 @@ public class CollectableBanana : MonoBehaviour
         if (ID == -1)
             Debug.LogWarning("ID has not been set!", context: this);
         
-        if (Utils.IsInMask(collision.gameObject.layer, PlayerLayer))
+        if (Utils.IsInMask(collision.gameObject.layer, PlayerLayer) && State == BananaState.Idle)
         {
             State = BananaState.PickedUp;
             
@@ -206,6 +235,8 @@ public class CollectableBanana : MonoBehaviour
             // If the player dies before collecting the banana, it's lost
             // and returns to its original position.
             _PlayerController.Died += OnPlayerDeath;
+            
+            _AudioSource.PlayOneShot(BananaTouch, _AudioVolume);
         }
     }
 }
