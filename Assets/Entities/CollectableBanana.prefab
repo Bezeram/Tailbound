@@ -197,6 +197,7 @@ MonoBehaviour:
   _DelayFollow: 0.5
   _DelayCollect: 0.15
   _TimeSquish: 0.75
+  _TimeLoseAnimation: 1
   ID: -1
   State: 0
 --- !u!61 &8896929759981156340

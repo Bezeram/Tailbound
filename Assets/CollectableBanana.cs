@@ -10,7 +10,8 @@ public class CollectableBanana : MonoBehaviour
         Idle = 0,
         PickedUp,
         Collected,
-        Destroy
+        Destroy,
+        Lost
     }
     
     [TitleGroup("References")]
@@ -24,6 +25,7 @@ public class CollectableBanana : MonoBehaviour
     [SerializeField] private float _DelayFollow = 0.5f;
     [SerializeField] private float _DelayCollect = 0.15f;
     [SerializeField] private float _TimeSquish = 1;
+    [SerializeField] private float _TimeLoseAnimation = 3f; 
     [ReadOnly] public int ID = -1;
     [ReadOnly] public BananaState State = BananaState.Idle; 
     
@@ -42,8 +44,9 @@ public class CollectableBanana : MonoBehaviour
     private bool _Collected;
     private Vector3 _PreviousPosition;
     private Vector3 _NextPosition;
-    private bool _StoppedMovingNow;
+    private bool _StoppedMovingNow = true;
     private float _TimerUpdates;
+    private float _TimerLoseAnimation;
 
     void OnValidate()
     {
@@ -81,29 +84,27 @@ public class CollectableBanana : MonoBehaviour
         // Note: A new banana should keep its distance to the last banana collected, otherwise the bananas
         // are going to stack on top of each other and not form a beautiful banana trail.
         // Only update if the player is moving.
-        if (_PlayerController.IsMoving)
+        _TimerUpdates += Time.deltaTime;
+        while (_TimerUpdates >= _DelayFollow)
         {
-            _StoppedMovingNow = false;
+            _TimerUpdates -= _DelayFollow;
+            _PreviousPosition = _NextPosition;
             
-            _TimerUpdates += Time.deltaTime;
-            while (_TimerUpdates >= _DelayFollow)
+            if (!_PlayerController.IsMoving)
             {
-                _TimerUpdates -= _DelayFollow;
-                // Update position                
-                _PreviousPosition = _NextPosition;
-                _NextPosition = _PlayerController.transform.position + Vector3.up * _FollowVerticalOffset;
+                if (_StoppedMovingNow)
+                {
+                    // When the player stops, record the current
+                    // position as the next position.
+                    _StoppedMovingNow = false;
+                    _NextPosition = transform.position;
+                }
             }
-        }
-        else
-        {
-            if (!_StoppedMovingNow)
+            else
             {
                 _StoppedMovingNow = true;
-                // Stop banana immediately.
-                // Only run this code once.
-                _NextPosition = transform.position;
-                _PreviousPosition = _NextPosition;
-                _TimerUpdates = _DelayFollow;
+                // Update position                
+                _NextPosition = _PlayerController.transform.position + Vector3.up * _FollowVerticalOffset;
             }
         }
         
@@ -158,7 +159,32 @@ public class CollectableBanana : MonoBehaviour
             case BananaState.Destroy:
                 Destroy(gameObject);
                 break;
+            case BananaState.Lost:
+               HandleLoseAnimation();
+               break;
         }
+    }
+
+    void HandleLoseAnimation()
+    {
+        _TimerLoseAnimation += Time.deltaTime;
+        float lerpT = _TimerLoseAnimation / _TimeLoseAnimation;
+        lerpT = Utils.EaseOutCubic(lerpT);
+        transform.position = Vector3.Lerp(_PreviousPosition, _NextPosition, lerpT);
+        
+        if (lerpT >= 1)
+            State = BananaState.Idle;
+    }
+
+    void OnPlayerDeath()
+    {
+        if (State is BananaState.Collected or BananaState.Destroy)
+            return;
+        
+        State = BananaState.Lost;
+        _NextPosition = _InitialPosition;
+        _PreviousPosition = transform.position;
+        _TimerLoseAnimation = 0;
     }
 
     void OnTriggerEnter2D(Collider2D collision)
@@ -177,6 +203,9 @@ public class CollectableBanana : MonoBehaviour
             _PlayerController = collision.gameObject.GetComponent<PlayerController>();
             _NextPosition = _PlayerController.transform.position;
             _PreviousPosition = transform.position;
+            // If the player dies before collecting the banana, it's lost
+            // and returns to its original position.
+            _PlayerController.Died += OnPlayerDeath;
         }
     }
 }

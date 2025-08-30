@@ -42,7 +42,7 @@ namespace TarodevController
         private bool _StaminaFlashingRed;
         
         public bool IsClimbing => _IsClimbing;
-        public bool IsMoving => _RigidBody.linearVelocity.magnitude > 0.2;
+        public bool IsMoving => _RigidBody.linearVelocity.magnitude > 0e-2;
         
         public Vector2 FrameInput => _FrameInput.Move;
         public event Action<bool, float> GroundedChanged;
