@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4887463968705526867}
   - component: {fileID: 6733665377175097333}
-  m_Layer: 7
+  m_Layer: 14
   m_Name: Spotlight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -191,11 +191,14 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   BananaChannel: {fileID: 11400000, guid: cd599e7fa6c2c4b4680109d053d75af1, type: 2}
-  BobOffset: 0.15
-  BobTime: 1
-  FollowVerticalOffset: 1.5
-  DelayFollow: 0.3
+  _BobOffset: 0.15
+  _BobTime: 1
+  _FollowVerticalOffset: 1
+  _DelayFollow: 0.5
+  _DelayCollect: 0.15
+  _TimeSquish: 0.75
   ID: -1
+  State: 0
 --- !u!61 &8896929759981156340
 BoxCollider2D:
   m_ObjectHideFlags: 0

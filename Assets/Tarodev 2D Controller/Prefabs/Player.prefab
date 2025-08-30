@@ -144,6 +144,8 @@ MonoBehaviour:
   _FacingLeft: 0
   _IsClimbing: 0
   _IsDead: 0
+  _Grounded: 0
+  _TimeOnGround: 0
 --- !u!114 &6558970843273908572
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34999,7 +35001,7 @@ GameObject:
   m_Component:
   - component: {fileID: 628066054664594431}
   - component: {fileID: 2124373968693674493}
-  m_Layer: 7
+  m_Layer: 14
   m_Name: Spotlight
   m_TagString: Untagged
   m_Icon: {fileID: 0}

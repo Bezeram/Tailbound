@@ -1,6 +1,7 @@
 using Sirenix.OdinInspector;
 using TarodevController;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 public class CollectableBanana : MonoBehaviour
 {
@@ -34,12 +35,21 @@ public class CollectableBanana : MonoBehaviour
     private int _BobDirection = 1;
     
     private PlayerController _PlayerController;
+    private Light2D _Light;
+    private float _InitialOuterLightRadius;
+    
     private bool _PickedUp;
     private bool _Collected;
     private Vector3 _PreviousPosition;
     private Vector3 _NextPosition;
     private bool _StoppedMovingNow;
     private float _TimerUpdates;
+
+    void OnValidate()
+    {
+        _Light = transform.GetComponentInChildren<Light2D>();
+        _InitialOuterLightRadius = _Light.pointLightOuterRadius;
+    }
 
     void Start()
     {
@@ -113,12 +123,14 @@ public class CollectableBanana : MonoBehaviour
     {
         _AnimationTimer += Time.deltaTime;
         float lerpT = _AnimationTimer / _TimeSquish;
-        float lerpScaleY = Mathf.Lerp(1, 0, lerpT);
+        lerpT = Utils.EaseInCubic(lerpT);
+        
+        float lerpScaleY = 1 - lerpT;
         Vector3 lerpScale = new Vector3(transform.localScale.x, lerpScaleY, transform.localScale.z);
-
         transform.localScale = lerpScale;
-        // Change light scale
-        transform.GetChild(0).localScale = lerpScale;
+        
+        // Make outer light radius smaller
+        _Light.pointLightOuterRadius = lerpScaleY * _InitialOuterLightRadius;
         
         if (lerpT >= 1)
             State = BananaState.Destroy;
