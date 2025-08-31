@@ -44,6 +44,7 @@ namespace TarodevController
         public Vector2 FrameInput => _frameInput.Move;
         public event Action<bool, float> GroundedChanged;
         public event Action Climbed;
+        public event Action Died;
         public event Action Jumped;
 
         #endregion
@@ -479,6 +480,8 @@ namespace TarodevController
             _frameVelocity.y = 0;
             _RigidBody.linearVelocity = _frameVelocity;
             LevelLoader.GetComponent<LevelLoader>().Reload_level();
+            
+            Died?.Invoke();
         }
 
         private void ApplyMovement() => _RigidBody.linearVelocity = _frameVelocity;

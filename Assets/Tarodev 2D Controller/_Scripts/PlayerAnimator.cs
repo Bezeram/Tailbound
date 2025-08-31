@@ -27,14 +27,14 @@ namespace TarodevController
         private AudioClip[] _footsteps;
 
         private AudioSource _source;
-        private IPlayerController _player;
+        private PlayerController _player;
         private bool _grounded;
         private ParticleSystem.MinMaxGradient _currentGradient;
 
         private void Awake()
         {
             _source = GetComponent<AudioSource>();
-            _player = GetComponentInParent<IPlayerController>();
+            _player = GetComponentInParent<PlayerController>();
         }
 
         private void OnEnable()
@@ -57,13 +57,9 @@ namespace TarodevController
         {
             if (_player == null) return;
 
-            DetectGroundColor();
-
             HandleSpriteFlip();
 
             HandleIdleSpeed();
-
-            HandleCharacterTilt();
         }
 
         private void HandleSpriteFlip()
@@ -74,24 +70,16 @@ namespace TarodevController
         private void HandleIdleSpeed()
         {
             var inputStrength = Mathf.Abs(_player.FrameInput.x);
-            _anim.SetFloat(IdleSpeedKey, Mathf.Lerp(1, _maxIdleSpeed, inputStrength));
             _moveParticles.transform.localScale = Vector3.MoveTowards(_moveParticles.transform.localScale, Vector3.one * inputStrength, 2 * Time.deltaTime);
             
             // Set isRunning based on input
             _anim.SetBool(IsRunningKey, inputStrength > 0);
         }
 
-        private void HandleCharacterTilt()
-        {
-            var runningTilt = _grounded ? Quaternion.Euler(0, 0, _maxTilt * _player.FrameInput.x) : Quaternion.identity;
-            _anim.transform.up = Vector3.RotateTowards(_anim.transform.up, runningTilt * Vector2.up, _tiltSpeed * Time.deltaTime, 0f);
-        }
-
         private void OnJumped()
         {
             _anim.SetTrigger(JumpKey);
             _anim.ResetTrigger(GroundedKey);
-
 
             if (_grounded) // Avoid coyote
             {
@@ -107,7 +95,6 @@ namespace TarodevController
             
             if (grounded)
             {
-                DetectGroundColor();
                 SetColor(_landParticles);
 
                 _anim.SetTrigger(GroundedKey);
@@ -123,25 +110,19 @@ namespace TarodevController
             }
         }
 
-        private void DetectGroundColor()
-        {
-            var hit = Physics2D.Raycast(transform.position, Vector3.down, 2);
-
-            if (!hit || hit.collider.isTrigger || !hit.transform.TryGetComponent(out SpriteRenderer r)) return;
-            var color = r.color;
-            _currentGradient = new ParticleSystem.MinMaxGradient(color * 0.9f, color * 1.2f);
-            SetColor(_moveParticles);
-        }
-
         private void SetColor(ParticleSystem ps)
         {
             var main = ps.main;
             main.startColor = _currentGradient;
         }
 
-        private static readonly int GroundedKey = Animator.StringToHash("Grounded");
-        private static readonly int IdleSpeedKey = Animator.StringToHash("IdleSpeed");
+        private static readonly int IsRunningKey = Animator.StringToHash("IsRunning");
+        private static readonly int IsSwingingKey = Animator.StringToHash("IsSwinging");
+        private static readonly int SwingingLeftKey = Animator.StringToHash("SwingingLeft");
         private static readonly int JumpKey = Animator.StringToHash("Jump");
-        private static readonly int IsRunningKey = Animator.StringToHash("isRunning");
+        private static readonly int GroundedKey = Animator.StringToHash("Grounded");
+        private static readonly int DiedKey = Animator.StringToHash("Died");
+        private static readonly int RespawnedKey = Animator.StringToHash("Respawned");
+        private static readonly int SighedKey = Animator.StringToHash("Sighed");
     }
 }
