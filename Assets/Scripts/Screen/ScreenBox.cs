@@ -28,6 +28,11 @@ public class ScreenBox : MonoBehaviour
         transform.GetChild(0).gameObject.SetActive(active);
     }
 
+    void Start()
+    {
+        CurrentSpawnPoint = FirstSpawnPoint;
+    }
+
     void OnValidate()
     {
         _LevelManager = FindAnyObjectByType<LevelManager>();
@@ -56,10 +61,8 @@ public class ScreenBox : MonoBehaviour
         if (IsTransitioning)
             return;
         
-        Debug.Log("Trigger entered with ID=" + ID);
         if (Utils.IsInMask(collision.gameObject.layer, PlayerLayer))
         {
-            Debug.Log("Trigger entered with player with ID=" + ID);
             // No transitions on the same screen.
             if (_LevelManager.CurrentScreen.ID == ID)
                 return;

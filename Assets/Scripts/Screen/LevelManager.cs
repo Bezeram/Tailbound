@@ -104,6 +104,8 @@ public class LevelManager : MonoBehaviour
         // Move player and clear trail renderer.
         _PlayerController.transform.position = CurrentSpawnPosition;
         _PlayerController.gameObject.GetComponentInChildren<TrailRenderer>().Clear();
+        // Move camera
+        _CameraFollow.Screen = CurrentScreen;
         // Set active the content of the screen used.
         CurrentScreen.ToggleScreenContent(true);
     }
@@ -164,8 +166,6 @@ public class LevelManager : MonoBehaviour
     
     public void RunScreenTransition(int newScreenID)
     {
-        Debug.Log("screen transition triggered");
-        
         // Pause game momentarily
         PauseNoUI();
         _TransitioningScreens = true;
