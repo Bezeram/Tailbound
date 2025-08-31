@@ -1,3 +1,4 @@
+using TarodevController;
 using UnityEngine;
 
 [ExecuteAlways]
@@ -6,12 +7,14 @@ public class DeathBox : MonoBehaviour
     private ScreenBox _ParentScreen;
     private LevelLoader _LevelLoader;
     private BoxCollider2D _DeathCollider;
-    
+    private PlayerController _PlayerController;
+
     void OnValidate()
     {
         _ParentScreen = transform.parent.GetComponent<ScreenBox>();
         _DeathCollider = GetComponent<BoxCollider2D>();
-        
+        _PlayerController = FindAnyObjectByType<PlayerController>();
+
         if (_ParentScreen == null)
             Debug.LogError("DeathBox is not a direct child of a ScreenBox!", context: this);
     }
@@ -50,9 +53,12 @@ public class DeathBox : MonoBehaviour
         
         if (Utils.IsInMask(collision.gameObject.layer, _ParentScreen.PlayerLayer))
         {
-            
-            // Death
-            _LevelLoader.RespawnPlayer();
+            // Left below the screen
+            if (_PlayerController.transform.position.y < transform.position.y)
+            {
+                // Death
+                _LevelLoader.RespawnPlayer();
+            }
         }
     }
 }

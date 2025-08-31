@@ -81,7 +81,7 @@ public class Spikes : MonoBehaviour
     {
         if (Utils.IsInMask(collision.gameObject.layer, PlayerLayer))
         {
-            collision.gameObject.GetComponent<PlayerController>().Die();
+            collision.gameObject.GetComponent<PlayerController>().Kill();
         }
     }
     

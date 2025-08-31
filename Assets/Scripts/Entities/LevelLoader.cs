@@ -19,6 +19,7 @@ public class LevelLoader : MonoBehaviour
 
     public void RespawnPlayer()
     {
+        Player.Kill();
         StartCoroutine(_Respawn());
     }
 
@@ -32,7 +33,7 @@ public class LevelLoader : MonoBehaviour
         
         Transition.SetTrigger(AnimationTriggerEnd);
         
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(0.3f);
         
         // Respawn player after animation is finished.
         // I.e. the player may now move.

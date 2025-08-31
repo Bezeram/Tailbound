@@ -43,7 +43,6 @@ namespace TarodevController
         
         public bool IsClimbing => _IsClimbing;
         public bool IsMoving => _RigidBody.linearVelocity.magnitude > 0e-2;
-        public Vector2 Forward => _FacingLeft ? Vector2.left : Vector2.right;
         public Vector2 FrameVelocity => _FrameVelocity;
         
         public Vector2 FrameInput => _FrameInput.Move;
@@ -490,14 +489,15 @@ namespace TarodevController
             }
         }
 
-        public void Die()
+        public void Kill()
         {
+            if (_IsDead)
+                return;
+
             // Play death animation
             _IsDead = true;
             _FrameVelocity = Vector2.zero;
             ApplyMovement();
-            
-            LevelLoader.GetComponent<LevelLoader>().RespawnPlayer();
             
             Died?.Invoke();
         }

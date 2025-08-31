@@ -31,13 +31,13 @@ namespace TarodevController
         private bool _grounded;
         private ParticleSystem.MinMaxGradient _currentGradient;
 
-        private void Awake()
+        void OnValidate()
         {
             _source = GetComponent<AudioSource>();
             _player = GetComponentInParent<IPlayerController>();
         }
 
-        private void OnEnable()
+        void OnEnable()
         {
             _player.Jumped += OnJumped;
             _player.GroundedChanged += OnGroundedChanged;
@@ -45,17 +45,21 @@ namespace TarodevController
             _moveParticles.Play();
         }
 
-        private void OnDisable()
+        void OnDisable()
         {
-            _player.Jumped -= OnJumped;
-            _player.GroundedChanged -= OnGroundedChanged;
+            if (_player != null)
+            {
+                _player.Jumped -= OnJumped;
+                _player.GroundedChanged -= OnGroundedChanged;
+            }
 
             _moveParticles.Stop();
         }
 
-        private void Update()
+        void Update()
         {
-            if (_player == null) return;
+            if (_player == null) 
+                return;
 
             DetectGroundColor();
 

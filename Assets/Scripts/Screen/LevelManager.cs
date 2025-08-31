@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Sirenix.OdinInspector;
-using Sirenix.Reflection.Editor;
 using TarodevController;
 using UnityEngine;
 
@@ -39,6 +38,7 @@ public class LevelManager : MonoBehaviour
 
     [ReadOnly, SerializeField] private bool _TransitioningScreens;
     [SerializeField] private float _TransitionTime;
+    [SerializeField] private float _TransitionMoveScalar = 1;
     private float _TransitionTimer;
     private Vector3 _TransitionLastPlayerPosition;
     private Vector3 _TransitionNextPlayerPosition;
@@ -51,7 +51,8 @@ public class LevelManager : MonoBehaviour
         _LevelLoader = FindAnyObjectByType<LevelLoader>();
         _CameraFollow  = FindAnyObjectByType<CameraFollow>();
         _MainCamera = GameObject.FindGameObjectWithTag("MainCamera");
-        
+        _PlayerController = FindAnyObjectByType<PlayerController>();
+
         if (BananaChannel == null)
             Debug.LogWarning("Assign a banana channel for the Scene Manager!", context: this);
         if (PauseMenuUI == null)
@@ -64,7 +65,7 @@ public class LevelManager : MonoBehaviour
         _Screens = FindObjectsByType<ScreenBox>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
         _Bananas = FindObjectsByType<CollectableBanana>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
         _SpawnPoints = FindObjectsByType<SpawnPoint>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
-        _PlayerController = FindAnyObjectByType<PlayerController>();
+        
         // Assign ID to each screen.
         // Disable all screens before activating the one with the player.
         foreach (var screen in _Screens)
@@ -100,6 +101,9 @@ public class LevelManager : MonoBehaviour
             _CurrentScreenID = 0;
             CurrentScreen.CurrentSpawnPoint = CurrentScreen.FirstSpawnPoint;
         }
+
+        // Subscribe to player death
+        _PlayerController.Died += OnPlayerDeath;
         
         // Move player and clear trail renderer.
         _PlayerController.transform.position = CurrentSpawnPosition;
@@ -173,11 +177,18 @@ public class LevelManager : MonoBehaviour
         // Activate the new screen.
         CurrentScreen.ToggleScreenContent(true);
         _CameraFollow.Screen = CurrentScreen;
-        
+
+        // Screen and player movement
+        Vector3 moveDirection = (CurrentScreen.Center - TransitionPreviousScreen.Center).normalized;
+        // Only keep the most dominant direction
+        if (Mathf.Abs(moveDirection.x) > Mathf.Abs(moveDirection.y))
+            moveDirection.y = 0;
+        else
+            moveDirection.x = 0;
         // Setup lerp points
         // Player
         _TransitionLastPlayerPosition = _PlayerController.transform.position;
-        _TransitionNextPlayerPosition = _PlayerController.transform.position + (Vector3)_PlayerController.Forward;
+        _TransitionNextPlayerPosition = _TransitionLastPlayerPosition + moveDirection * _TransitionMoveScalar;
         // Camera
         _TransitionLastCameraPosition = _CameraFollow.transform.position;
         // Get the camera position in the new screen.
@@ -224,7 +235,12 @@ public class LevelManager : MonoBehaviour
     public void Restart()
     {
         Resume();
-        _PlayerController.Die();
+        _LevelLoader.RespawnPlayer();
+    }
+
+    void OnPlayerDeath()
+    {
+        _LevelLoader.RespawnPlayer();
     }
 
     public void Menu()
