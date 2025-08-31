@@ -158,11 +158,6 @@ public class LevelManager : MonoBehaviour
             Resume();
         }
     }
-
-    // TODO: make sure the pause menu works as intended with the scene
-    //  since timescale is no longer tampered with.
-    
-    // TODO: increase spikes size so it's not possible to stand on edge
     
     public void RunScreenTransition(int newScreenID)
     {
