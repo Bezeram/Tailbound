@@ -8,13 +8,14 @@ public class LevelManager : MonoBehaviour
     [TitleGroup("References")]
     public GameObject PauseMenuUI;
     public BananaChannel BananaChannel;
+
+    [SerializeField] private ScreenBox _StartScreen;
     
     // Store IDs to banana positions.
     private readonly List<int> _CollectedBananas = new();
     [ReadOnly, SerializeField] private ScreenBox[] _Screens;
     [ReadOnly, SerializeField] private CollectableBanana[] _Bananas;
     [ReadOnly, SerializeField] private SpawnPoint[] _SpawnPoints;
-    [ReadOnly, SerializeField] private float _TimeScale;
     [ReadOnly, SerializeField] private int _CurrentScreenID;
 
     private PlayerController _PlayerController;
@@ -102,6 +103,13 @@ public class LevelManager : MonoBehaviour
             // Assume new game
             _CurrentScreenID = 0;
             CurrentScreen.CurrentSpawnPoint = CurrentScreen.FirstSpawnPoint;
+        }
+
+        // Override screen from save file if a specfic one was provided
+        // in the editor.
+        if (_StartScreen != null)
+        {
+            _CurrentScreenID = _StartScreen.ID;
         }
 
         // Subscribe to player death
@@ -215,9 +223,6 @@ public class LevelManager : MonoBehaviour
             else
                 Pause();
         }
-        
-        // Info
-        _TimeScale = Time.timeScale;
     }
 
     public void Resume()
