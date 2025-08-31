@@ -43,14 +43,6 @@ public class ScreenBox : MonoBehaviour
         _TransitionCollider.offset = Size / 2;
         _TransitionCollider.size = Size - Vector2.one * ColliderMargin * 2;
         
-        if (FirstSpawnPoint != null)
-        {
-            // Check if the spawn point selected is a child of the screen.
-            if (FirstSpawnPoint.transform.parent.parent != transform)
-                Debug.LogError("First spawn point selected is not a grandchild of the screen!", context: this);
-            return;
-        }
-        
         // If no spawn point has been set, automatically choose one.
         _SpawnPoints = GetComponentsInChildren<SpawnPoint>();
         if (_SpawnPoints.Length != 0)

@@ -38,7 +38,9 @@ public class LevelManager : MonoBehaviour
 
     [ReadOnly, SerializeField] private bool _TransitioningScreens;
     [SerializeField] private float _TransitionTime;
-    [SerializeField] private float _TransitionMoveScalar = 1;
+    [SerializeField] private float _TransitionMoveScalarHorizontal = 1;
+    [SerializeField] private float _TransitionMoveScalarDownwards = 1.3f;
+    [SerializeField] private float _TransitionMoveScalarUpwards = 2;
     private float _TransitionTimer;
     private Vector3 _TransitionLastPlayerPosition;
     private Vector3 _TransitionNextPlayerPosition;
@@ -179,16 +181,19 @@ public class LevelManager : MonoBehaviour
         _CameraFollow.Screen = CurrentScreen;
 
         // Screen and player movement
-        Vector3 moveDirection = (CurrentScreen.Center - TransitionPreviousScreen.Center).normalized;
+        Vector2 moveDirection = (CurrentScreen.Center - TransitionPreviousScreen.Center).normalized;
         // Only keep the most dominant direction
         if (Mathf.Abs(moveDirection.x) > Mathf.Abs(moveDirection.y))
             moveDirection.y = 0;
         else
             moveDirection.x = 0;
+        float transitionScalar = (moveDirection.x != 0) ? _TransitionMoveScalarHorizontal :
+            (moveDirection.y > 0) ? _TransitionMoveScalarUpwards : _TransitionMoveScalarDownwards;
+
         // Setup lerp points
         // Player
         _TransitionLastPlayerPosition = _PlayerController.transform.position;
-        _TransitionNextPlayerPosition = _TransitionLastPlayerPosition + moveDirection * _TransitionMoveScalar;
+        _TransitionNextPlayerPosition = _TransitionLastPlayerPosition + (Vector3)(moveDirection * transitionScalar);
         // Camera
         _TransitionLastCameraPosition = _CameraFollow.transform.position;
         // Get the camera position in the new screen.
