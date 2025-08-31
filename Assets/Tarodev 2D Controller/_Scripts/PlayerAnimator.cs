@@ -80,6 +80,9 @@ namespace TarodevController
             var inputStrength = Mathf.Abs(_player.FrameInput.x);
             _anim.SetFloat(IdleSpeedKey, Mathf.Lerp(1, _maxIdleSpeed, inputStrength));
             _moveParticles.transform.localScale = Vector3.MoveTowards(_moveParticles.transform.localScale, Vector3.one * inputStrength, 2 * Time.deltaTime);
+            
+            // Set isRunning based on input
+            _anim.SetBool(IsRunningKey, inputStrength > 0);
         }
 
         private void HandleCharacterTilt()
@@ -143,5 +146,6 @@ namespace TarodevController
         private static readonly int GroundedKey = Animator.StringToHash("Grounded");
         private static readonly int IdleSpeedKey = Animator.StringToHash("IdleSpeed");
         private static readonly int JumpKey = Animator.StringToHash("Jump");
+        private static readonly int IsRunningKey = Animator.StringToHash("isRunning");
     }
 }

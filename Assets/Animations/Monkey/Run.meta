@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Animations/Banana.meta
+guid: 7f149c1f038a81d4cbca988e8cd01b31
+========
+guid: 45cee65e92e59784dbd1ac54e750f8d9
+>>>>>>>> b1b9b25 (added the monkey but still some bugs):Assets/Animations/Monkey/Run.meta
+folderAsset: yes
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
