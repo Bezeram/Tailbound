@@ -20,15 +20,15 @@ public class Spikes : MonoBehaviour
     [TitleGroup("Input"), Range(_CountRangeMin, _CountRangeMax)] 
     public float Count = 1;
     [TitleGroup("Input")] public SpikesDirection Direction = SpikesDirection.Up;
+    [TitleGroup("Input")] public Vector2 _DefaultColliderSize = new(0.815382f, 0.1209f);
+    [TitleGroup("Input")] public Vector2 _DefaultColliderOffset = new(0.4687891f, 0.06379867f);
     [FoldoutGroup("Advanced")] public LayerMask PlayerLayer;
 
     private BoxCollider2D _Collider;
     private SpriteRenderer _SpriteRenderer;
     
-    private Vector2 _OldColliderSize;
     private Vector2 _OldColliderOffset;
-    private readonly Vector2 _DefaultColliderSize = new(0.815382f, 0.1209f);
-    private readonly Vector2 _DefaultColliderOffset = new(0.4687891f, 0.06379867f);
+    private Vector2 _OldColliderSize;
     
     private readonly Vector2 _ExtendDirection = Vector2.right;
     

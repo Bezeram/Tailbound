@@ -48,6 +48,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Count: 1
   Direction: 0
+  _DefaultColliderSize: {x: 0.94, y: 0.1209}
+  _DefaultColliderOffset: {x: 0.4687891, y: 0.06379867}
   PlayerLayer:
     serializedVersion: 2
     m_Bits: 128
@@ -150,5 +152,5 @@ BoxCollider2D:
     drawMode: 2
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.815382, y: 0.1209}
+  m_Size: {x: 0.94, y: 0.1209}
   m_EdgeRadius: 0
