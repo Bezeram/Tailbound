@@ -17,7 +17,7 @@ public class LevelLoader : MonoBehaviour
         LevelManager = FindFirstObjectByType<LevelManager>();
     }
 
-    public void Respawn()
+    public void RespawnPlayer()
     {
         StartCoroutine(_Respawn());
     }
@@ -45,6 +45,8 @@ public class LevelLoader : MonoBehaviour
         //  has its data copied from a clone representing its initial state in the screen.
         //  Also move the player to their current respawn point.
         Player.transform.position = LevelManager.CurrentSpawnPosition;
+        TrailRenderer trailRenderer = Player.GetComponentInChildren<TrailRenderer>();
+        trailRenderer.Clear();
     }
 
     public void LoadLevel(int level)

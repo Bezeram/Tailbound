@@ -151,7 +151,7 @@ public class LevelManager : MonoBehaviour
             // Disable old screen content and re-enable collider.
             TransitionPreviousScreen.ToggleScreenContent(false);
             TransitionPreviousScreen.IsTransitioning = false;
-            CurrentScreen.IsTransitioning = true;
+            CurrentScreen.IsTransitioning = false;
             // Set new screen.
             _CameraFollow.enabled = true;
             // Animation finished, resume game.

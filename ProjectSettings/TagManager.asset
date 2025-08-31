@@ -56,6 +56,9 @@ TagManager:
   - name: Solid
     uniqueID: 1469398005
     locked: 0
+  - name: Prop
+    uniqueID: 1131177885
+    locked: 0
   - name: CollectableBanana
     uniqueID: 2377519917
     locked: 0
