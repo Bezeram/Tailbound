@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Sirenix.OdinInspector;
+using Sirenix.Reflection.Editor;
 using TarodevController;
 using UnityEngine;
 
@@ -19,6 +20,8 @@ public class LevelManager : MonoBehaviour
 
     private PlayerController _PlayerController;
     private LevelLoader _LevelLoader;
+    private CameraFollow _CameraFollow;
+    private GameObject _MainCamera;
     
     private static bool _isPaused;
     public static bool IsPaused => _isPaused;
@@ -31,11 +34,23 @@ public class LevelManager : MonoBehaviour
     public int NewSpawnPointID() { _LastSpawnPointID++; return _LastSpawnPointID; }
     
     public ScreenBox CurrentScreen => _Screens[_CurrentScreenID];
+    public ScreenBox TransitionPreviousScreen => _Screens[_TransitionLastScreenID];
     public Vector3 CurrentSpawnPosition => _Screens[_CurrentScreenID].CurrentSpawnPosition;
+
+    [ReadOnly, SerializeField] private bool _TransitioningScreens;
+    [SerializeField] private float _TransitionTime;
+    private float _TransitionTimer;
+    private Vector3 _TransitionLastPlayerPosition;
+    private Vector3 _TransitionNextPlayerPosition;
+    private Vector3 _TransitionLastCameraPosition;
+    private Vector3 _TransitionNextCameraPosition;
+    private int _TransitionLastScreenID;
 
     void OnValidate()
     {
         _LevelLoader = FindAnyObjectByType<LevelLoader>();
+        _CameraFollow  = FindAnyObjectByType<CameraFollow>();
+        _MainCamera = GameObject.FindGameObjectWithTag("MainCamera");
         
         if (BananaChannel == null)
             Debug.LogWarning("Assign a banana channel for the Scene Manager!", context: this);
@@ -55,7 +70,7 @@ public class LevelManager : MonoBehaviour
         foreach (var screen in _Screens)
         {
             screen.ID = NewScreenID();            
-            screen.gameObject.SetActive(false);
+            screen.ToggleScreenContent(false);
         }
         // Assign ID to each banana
         foreach (CollectableBanana banana in _Bananas)
@@ -89,7 +104,8 @@ public class LevelManager : MonoBehaviour
         // Move player and clear trail renderer.
         _PlayerController.transform.position = CurrentSpawnPosition;
         _PlayerController.gameObject.GetComponentInChildren<TrailRenderer>().Clear();
-        CurrentScreen.gameObject.SetActive(true);
+        // Set active the content of the screen used.
+        CurrentScreen.ToggleScreenContent(true);
     }
     
     void OnEnable()
@@ -105,11 +121,78 @@ public class LevelManager : MonoBehaviour
     void Update()
     {
         HandlePausing();
+        HandleScreenTransition();
     }
 
     void HandleBananaCollected(CollectableBanana banana)
     {
         _CollectedBananas.Add(banana.ID);
+    }
+
+    void HandleScreenTransition()
+    {
+        if (!_TransitioningScreens)
+            return;
+        
+        // Animate screen
+        _TransitionTimer += Time.deltaTime;
+        float t = _TransitionTimer / _TransitionTime;
+        t = Utils.EaseOutCubic(t);
+        
+        // Subtly move player towards final position
+        _MainCamera.transform.position = Vector3.Lerp(_TransitionLastCameraPosition, _TransitionNextCameraPosition, t);
+        _PlayerController.transform.position = Vector3.Lerp(_TransitionLastPlayerPosition, _TransitionNextPlayerPosition, t);
+
+        if (t >= 1)
+        {
+            _TransitioningScreens = false;
+            // Disable old screen content and re-enable collider.
+            TransitionPreviousScreen.ToggleScreenContent(false);
+            TransitionPreviousScreen.IsTransitioning = false;
+            CurrentScreen.IsTransitioning = true;
+            // Set new screen.
+            _CameraFollow.enabled = true;
+            // Animation finished, resume game.
+            Resume();
+        }
+    }
+
+    // TODO: make sure the pause menu works as intended with the scene
+    //  since timescale is no longer tampered with.
+    
+    // TODO: increase spikes size so it's not possible to stand on edge
+    
+    public void RunScreenTransition(int newScreenID)
+    {
+        Debug.Log("screen transition triggered");
+        
+        // Pause game momentarily
+        PauseNoUI();
+        _TransitioningScreens = true;
+        // Setup old and new screen.
+        _TransitionLastScreenID = _CurrentScreenID;
+        _CurrentScreenID = newScreenID;
+        // Deactivate old screen collider to prevent colliding during transition.
+        TransitionPreviousScreen.IsTransitioning = true;
+        CurrentScreen.IsTransitioning = true;
+        // Activate the new screen.
+        CurrentScreen.ToggleScreenContent(true);
+        _CameraFollow.Screen = CurrentScreen;
+        
+        // Setup lerp points
+        // Player
+        _TransitionLastPlayerPosition = _PlayerController.transform.position;
+        _TransitionNextPlayerPosition = _PlayerController.transform.position + (Vector3)_PlayerController.Forward;
+        // Camera
+        _TransitionLastCameraPosition = _CameraFollow.transform.position;
+        // Get the camera position in the new screen.
+        Vector2 cameraRestraint = _CameraFollow.GetCameraPosition();
+        _TransitionNextCameraPosition = new Vector3(cameraRestraint.x, cameraRestraint.y, _CameraFollow.transform.position.z);
+        
+        // Disable camera follow script during transition
+        _CameraFollow.enabled = false;
+        
+        _TransitionTimer = 0;
     }
 
     void HandlePausing()
@@ -129,14 +212,17 @@ public class LevelManager : MonoBehaviour
     public void Resume()
     {
         PauseMenuUI.SetActive(false);
-        Time.timeScale = 1f;
         _isPaused = false;
     }
 
     public void Pause()
     {
         PauseMenuUI.SetActive(true);
-        Time.timeScale = 0f;
+        _isPaused = true;
+    }
+
+    public void PauseNoUI()
+    {
         _isPaused = true;
     }
 

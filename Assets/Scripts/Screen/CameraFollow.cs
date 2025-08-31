@@ -30,7 +30,7 @@ public class CameraFollow : MonoBehaviour
         transform.position = new Vector3(cameraPos.x, cameraPos.y, transform.position.z);
     }
 
-    Vector2 GetCameraPosition()
+    public Vector2 GetCameraPosition()
     {
         float ppu = 16f; // pixels per world unit
         Camera cam = pixelPerfectCamera.GetComponent<Camera>();
@@ -61,25 +61,4 @@ public class CameraFollow : MonoBehaviour
         // Convert back to world units
         return cameraPosition / ppu;
     }
-
-    public LevelLoader levelLoader; // Reference your LevelLoader script here
-
-    public IEnumerator ScreenTransition(ScreenBox newScreen)
-    {
-        ScreenWipe wipe = FindFirstObjectByType<ScreenWipe>();
-        if (wipe != null)
-            yield return StartCoroutine(wipe.WipeIn());
-
-        // Switch screen bounds here
-        this.Screen = newScreen; 
-        levelLoader.Respawn();
-
-        yield return new WaitForSeconds(0.5f);
-
-        if (wipe != null)
-            yield return StartCoroutine(wipe.WipeOut());
-    }
-
-
-
 }

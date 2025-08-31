@@ -10,7 +10,7 @@ public class SpawnPoint : MonoBehaviour
         if (transform.parent == null)
             return;
         
-        if (!transform.parent.TryGetComponent(out ScreenBox screen))
+        if (!transform.parent.parent.TryGetComponent(out ScreenBox screen))
             Debug.LogWarning("SpawnPoint object has no ScreenArea parent!", context: this);
     }
 }

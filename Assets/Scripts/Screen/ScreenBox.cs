@@ -7,7 +7,10 @@ public class ScreenBox : MonoBehaviour
 {
     [TitleGroup("Input")] public Vector2 Size;
     [TitleGroup("Input")] public SpawnPoint FirstSpawnPoint;
+    [TitleGroup("Input")] public LayerMask PlayerLayer;
+    [TitleGroup("Input")] public float ColliderMargin = 0.2f;
     [TitleGroup("Info"), ReadOnly] public SpawnPoint CurrentSpawnPoint;
+    [TitleGroup("Info"), ReadOnly] public bool IsTransitioning;
     [TitleGroup("Info"), ReadOnly, SerializeField] private int _CurrentSpawnPointID;
     [TitleGroup("Info"), ReadOnly, SerializeField] private SpawnPoint[] _SpawnPoints;
 
@@ -17,20 +20,28 @@ public class ScreenBox : MonoBehaviour
     public Vector3 Center => transform.position + new Vector3(Size.x * 0.5f, Size.y * 0.5f, 0f);
     public Vector3 CurrentSpawnPosition => CurrentSpawnPoint.transform.position;
     
-    private BoxCollider2D _TransitionCollider;
+    public BoxCollider2D _TransitionCollider;
+    private LevelManager _LevelManager;
+    
+    public void ToggleScreenContent(bool active)
+    {
+        transform.GetChild(0).gameObject.SetActive(active);
+    }
 
     void OnValidate()
     {
+        _LevelManager = FindAnyObjectByType<LevelManager>();
+        
         // Setup collider
         _TransitionCollider = GetComponent<BoxCollider2D>();
         _TransitionCollider.offset = Size / 2;
-        _TransitionCollider.size = Size;
+        _TransitionCollider.size = Size - Vector2.one * ColliderMargin * 2;
         
         if (FirstSpawnPoint != null)
         {
             // Check if the spawn point selected is a child of the screen.
-            if (FirstSpawnPoint.transform.parent != transform)
-                Debug.LogError("First spawn point selected is not a child of the screen!", context: this);
+            if (FirstSpawnPoint.transform.parent.parent != transform)
+                Debug.LogError("First spawn point selected is not a grandchild of the screen!", context: this);
             return;
         }
         
@@ -38,6 +49,23 @@ public class ScreenBox : MonoBehaviour
         _SpawnPoints = GetComponentsInChildren<SpawnPoint>();
         if (_SpawnPoints.Length != 0)
             FirstSpawnPoint = _SpawnPoints[0];
+    }
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (IsTransitioning)
+            return;
+        
+        Debug.Log("Trigger entered with ID=" + ID);
+        if (Utils.IsInMask(collision.gameObject.layer, PlayerLayer))
+        {
+            Debug.Log("Trigger entered with player with ID=" + ID);
+            // No transitions on the same screen.
+            if (_LevelManager.CurrentScreen.ID == ID)
+                return;
+            
+            _LevelManager.RunScreenTransition(ID);
+        }
     }
 
     void OnTransformChildrenChanged()
