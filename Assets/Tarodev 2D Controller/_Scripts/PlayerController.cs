@@ -44,11 +44,13 @@ namespace TarodevController
         public bool IsClimbing => _IsClimbing;
         public bool IsMoving => _RigidBody.linearVelocity.magnitude > 0e-2;
         public Vector2 FrameVelocity => _FrameVelocity;
+        public bool FacingLeft => _FacingLeft;
         
         public Vector2 FrameInput => _FrameInput.Move;
         public event Action<bool, float> GroundedChanged;
         public event Action Climbed;
         public event Action Died;
+        public event Action Respawned;
         public event Action Jumped;
 
         private float _Time;
@@ -505,6 +507,8 @@ namespace TarodevController
         public void Respawn()
         {
             _IsDead = false;
+            
+            Respawned?.Invoke();
         }
 
         private void ApplyMovement() => _RigidBody.linearVelocity = _FrameVelocity;
