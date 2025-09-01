@@ -39,6 +39,7 @@ namespace TarodevController
         [SerializeField] private AudioClip _JumpAudioClip;
         [SerializeField] private AudioClip _DeathAudioClip;
         [SerializeField] private AudioClip _PreDeathAudioClip;
+        [SerializeField] private AudioClip _RespawnAudioClip;
 
         private float _TimerIdle;
         private float _TimerDeathAnimation;
@@ -102,6 +103,8 @@ namespace TarodevController
 
         void OnRespawn()
         {
+            _AudioSource.PlayOneShot(_RespawnAudioClip, _SoundsVolume);
+            
             _Animator.SetTrigger(RespawnedKey);
         }
 
