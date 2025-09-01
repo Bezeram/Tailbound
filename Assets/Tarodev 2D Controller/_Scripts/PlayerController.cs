@@ -1,7 +1,6 @@
 using Sirenix.OdinInspector;
 using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace TarodevController
 {
@@ -15,23 +14,29 @@ namespace TarodevController
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
     public class PlayerController : MonoBehaviour, IPlayerController
     {
+        public enum DeathType
+        {
+            None,
+            Instant,
+            NotInstant,
+        }
+        
         [TitleGroup("References")]
         public PlayerMovementSettings Stats;
         public PlayerAbilitiesSettings PlayerAbilitiesSettings;
         public Swing SwingScript;
-        public GameObject LevelLoader;
         
-        [TitleGroup("Info")]
-        [ReadOnly, ShowInInspector, SerializeField] private Vector2 _FrameVelocity;
-        [ReadOnly, ShowInInspector, SerializeField] private float _Stamina;
-        [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbingLeft;
-        [ReadOnly, ShowInInspector, SerializeField] private bool _IsAdjacentToWallLeft;
-        [ReadOnly, ShowInInspector, SerializeField] private bool _IsAdjacentToWallRight;
-        [ReadOnly, ShowInInspector, SerializeField] private bool _FacingLeft;
-        [ReadOnly, ShowInInspector, SerializeField] private bool _IsClimbing;
-        [ReadOnly, ShowInInspector, SerializeField] private bool _IsDead;
+        [FoldoutGroup("Info"), ReadOnly, SerializeField] private Vector2 _FrameVelocity;
+        [FoldoutGroup("Info"), ReadOnly, SerializeField] private float _Stamina;
+        [FoldoutGroup("Info"), ReadOnly, SerializeField] private bool _IsClimbingLeft;
+        [FoldoutGroup("Info"), ReadOnly, SerializeField] private bool _IsAdjacentToWallLeft;
+        [FoldoutGroup("Info"), ReadOnly, SerializeField] private bool _IsAdjacentToWallRight;
+        [FoldoutGroup("Info"), ReadOnly, SerializeField] private bool _FacingLeft;
+        [FoldoutGroup("Info"), ReadOnly, SerializeField] private bool _IsClimbing;
+        [FoldoutGroup("Info"), ReadOnly, SerializeField] private DeathType _DeathState = DeathType.None;
         
         private SpriteRenderer _SpriteRenderer;
+        private TrailRenderer _TrailRenderer;
         private Rigidbody2D _RigidBody;
         private BoxCollider2D _Collider;
         private BoxCollider2D _ClimbingCollider;
@@ -45,26 +50,20 @@ namespace TarodevController
         public bool IsMoving => _RigidBody.linearVelocity.magnitude > 0e-2;
         public Vector2 FrameVelocity => _FrameVelocity;
         public bool FacingLeft => _FacingLeft;
+        public DeathType DeathState => _DeathState;
         
         public Vector2 FrameInput => _FrameInput.Move;
+        // bool: true = landed on ground, false = left the ground
+        // float: force landed on ground
         public event Action<bool, float> GroundedChanged;
-        public event Action Climbed;
+        // bool: is jumping left?
+        public event Action<bool> WallJumped;
+        // bool: was the death instant
         public event Action<bool> Died;
         public event Action Respawned;
         public event Action Jumped;
 
         private float _Time;
-
-        void Awake()
-        {
-            _RigidBody = GetComponent<Rigidbody2D>();
-            _Collider = GetComponent<BoxCollider2D>();
-            _ClimbingCollider = transform.Find("ClimbHitbox").GetComponent<BoxCollider2D>();
-            LevelLoader = GameObject.FindGameObjectWithTag("LevelLoader");
-            _IsDead = false;
-
-            _CachedQueryStartInColliders = Physics2D.queriesStartInColliders;
-        }
 
         void Update()
         {
@@ -73,10 +72,7 @@ namespace TarodevController
             
             HighlightStaminaLoss();
             
-            if (SwingScript.IsSwinging)
-                return;
-
-            if (_IsDead)
+            if (SwingScript.IsSwinging || _DeathState != DeathType.None)
                 return;
 
             _Time += Time.deltaTime;
@@ -85,16 +81,10 @@ namespace TarodevController
 
 		void FixedUpdate()
 		{
-            if (LevelManager.IsPaused)
-                return;
-            
-            if (SwingScript.IsSwinging)
+            if (LevelManager.IsPaused || SwingScript.IsSwinging || _DeathState != DeathType.None)
                 return;
 
-            if (_IsDead)
-                return;
-
-            CheckCollisions();
+            HandleCollisions();
 
             HandleClimbing();
 			HandleJump();
@@ -187,7 +177,6 @@ namespace TarodevController
 
             _IsClimbingLeft = _FacingLeft;
             _IsClimbing = true;
-            Climbed?.Invoke();
         }
 
         void HandleClimbing()
@@ -223,13 +212,13 @@ namespace TarodevController
         public bool IsGrounded => _Grounded;
         public float TimeOnGround => _TimeOnGround;
 
-        void CheckCollisions()
+        void HandleCollisions()
         {
             Physics2D.queriesStartInColliders = false;
 
             // Ground and Ceiling
             bool groundHit = Physics2D.BoxCast(_Collider.bounds.center, _Collider.size, 0, Vector2.down, Stats.GrounderDistance, Stats.SolidLayer);
-            bool ceilingHit = Physics2D.BoxCast(_Collider.bounds.center, _Collider.size, 0, Vector2.up, Stats.GrounderDistance, Stats.SolidLayer);
+            bool hitCeiling = Physics2D.BoxCast(_Collider.bounds.center, _Collider.size, 0, Vector2.up, Stats.GrounderDistance, Stats.SolidLayer);
             // Wall collision
             bool hitWallLeft = Physics2D.BoxCast(_Collider.bounds.center, _Collider.size, 0, Vector2.left, Stats.GrounderDistance, Stats.SolidLayer);
             bool hitWallRight = Physics2D.BoxCast(_Collider.bounds.center, _Collider.size, 0, Vector2.right, Stats.GrounderDistance, Stats.SolidLayer);
@@ -271,11 +260,16 @@ namespace TarodevController
                 _TimeOnGround = 0;
 
             // Check for wall collision
-            if (hitWallLeft || hitWallRight)
+            if (hitWallLeft || hitWallRight && !_IsClimbing)
             {
                 // Apply deceleration
-                if (!_IsClimbing)
-                    _FrameVelocity.x = Mathf.MoveTowards(_FrameVelocity.x, 0, Stats.WallDeceleration * Time.fixedDeltaTime);
+                _FrameVelocity.x = Mathf.MoveTowards(_FrameVelocity.x, 0, Stats.WallDeceleration * Time.fixedDeltaTime);
+            }
+
+            if (hitCeiling && !_IsClimbing)
+            {
+                // Apply deceleration
+                _FrameVelocity.y = 0;
             }
 
             // Check for climbing
@@ -385,7 +379,7 @@ namespace TarodevController
             Vector2 direction = new(_IsAdjacentToWallLeft ? 1 : -1, 1);
             _FrameVelocity = direction * PlayerAbilitiesSettings.WallJumpPower;
 
-            Jumped?.Invoke();
+            WallJumped?.Invoke(_IsAdjacentToWallLeft);
         }
 
         void ExecuteClimbJump()
@@ -495,25 +489,31 @@ namespace TarodevController
         // being propelled back by the ouchie.
         public void Kill(bool instantly)
         {
-            if (_IsDead)
+            if (_DeathState != DeathType.None)
                 return;
-
-            // Play death animation
-            _IsDead = true;
-            _FrameVelocity = Vector2.zero;
-            ApplyMovement();
+            _DeathState = instantly ? DeathType.Instant : DeathType.NotInstant;
+            
+            // Move player offscreen
+            if (instantly)
+                transform.position += Vector3.down * 10;
             
             Died?.Invoke(instantly);
         }
 
-        public void Respawn()
+        public void Respawn(Vector3 respawnPosition)
         {
-            _IsDead = false;
+            _DeathState = DeathType.None;
+            transform.position = respawnPosition;
+            
+            _FrameVelocity = Vector2.zero;
+            ApplyMovement();
+
+            _TrailRenderer.Clear();
             
             Respawned?.Invoke();
         }
 
-        private void ApplyMovement() => _RigidBody.linearVelocity = _FrameVelocity;
+        void ApplyMovement() => _RigidBody.linearVelocity = _FrameVelocity;
 
 #if UNITY_EDITOR
         private void OnValidate()
@@ -523,6 +523,13 @@ namespace TarodevController
 
             // Find sprite
             _SpriteRenderer = transform.Find("Visual").Find("Sprite").GetComponent<SpriteRenderer>();
+            _RigidBody = GetComponent<Rigidbody2D>();
+            _Collider = GetComponent<BoxCollider2D>();
+            _ClimbingCollider = transform.Find("ClimbHitbox").GetComponent<BoxCollider2D>();
+            _DeathState = DeathType.None;
+            _TrailRenderer = GetComponentInChildren<TrailRenderer>();
+
+            _CachedQueryStartInColliders = Physics2D.queriesStartInColliders;
         }
 #endif
     }

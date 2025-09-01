@@ -62,6 +62,9 @@ TagManager:
   - name: CollectableBanana
     uniqueID: 2377519917
     locked: 0
+  - name: PlayerTrailRenderer
+    uniqueID: 3666334165
+    locked: 0
   - name: Player
     uniqueID: 2237556633
     locked: 0

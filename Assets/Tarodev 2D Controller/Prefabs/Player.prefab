@@ -134,7 +134,6 @@ MonoBehaviour:
   Stats: {fileID: 11400000, guid: 05e6a06c5af93134ab98ff12e2c27265, type: 2}
   PlayerAbilitiesSettings: {fileID: 11400000, guid: 4342022ecd289994281457ab4ab54f1d, type: 2}
   SwingScript: {fileID: 6558970843273908572}
-  LevelLoader: {fileID: 4067423233591614951, guid: f9c4ed6633928754eb69af8dd5745ed8, type: 3}
   _FrameVelocity: {x: 0, y: 0}
   _Stamina: 0
   _IsClimbingLeft: 0
@@ -142,7 +141,7 @@ MonoBehaviour:
   _IsAdjacentToWallRight: 0
   _FacingLeft: 0
   _IsClimbing: 0
-  _IsDead: 0
+  _DeathState: 0
   _Grounded: 0
   _TimeOnGround: 0
 --- !u!114 &6558970843273908572
@@ -225,7 +224,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.005566597, y: 0.70036304}
+  m_Offset: {x: 0.027318954, y: 0.8091158}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -235,7 +234,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.8923969, y: 1.2797306}
+  m_Size: {x: 0.93590164, y: 1.4972361}
   m_EdgeRadius: 0
 --- !u!50 &1544650614272011793
 Rigidbody2D:
@@ -10282,7 +10281,13 @@ MonoBehaviour:
   _AverageSighTime: 5
   _RandomOffsetSighTime: 1
   _WalkSoundsInterval: 0.3
+  _ClimbSoundsInterval: 0.3
+  _DeathAnimationTime: 0.75
   _SoundsVolume: 0.2
+  _DeathPropulsionScalar: 5
+  _DeathPropulsionDirectionVarianceDegrees: 15
+  _DeathAnimationInitialPosition: {x: 0, y: 0, z: 0}
+  _DeathAnimationEndPosition: {x: 0, y: 0, z: 0}
   _SighTime: 0
   _JumpParticles: {fileID: 2969068312619346371}
   _LaunchParticles: {fileID: 2969068312669941334}
@@ -10294,6 +10299,17 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 31cc791a6e56f5446acfcf8c2923efaf, type: 3}
   - {fileID: 8300000, guid: d5870dbd22fea07449d0f16d9e93c8d4, type: 3}
   - {fileID: 8300000, guid: 26e4a4b4587308e408915c409137ef99, type: 3}
+  _ClimbAudioClips:
+  - {fileID: 8300000, guid: 1f10fc7159150c249a87b22728631bd4, type: 3}
+  - {fileID: 8300000, guid: 181ebe5eed9521947b817ae54cc0e424, type: 3}
+  - {fileID: 8300000, guid: e280c7519fc5cef4c8e10f90e9430f44, type: 3}
+  - {fileID: 8300000, guid: a0bf9abb57c3dc543ace16e2b5cda75a, type: 3}
+  - {fileID: 8300000, guid: 348af2f298ea8ce44a1b79147cb36d30, type: 3}
+  _WallJumpLeftAudioClip: {fileID: 8300000, guid: 533f9006bcc57874880adca39cf0c2b3, type: 3}
+  _WallJumpRightAudioClip: {fileID: 8300000, guid: 1efc302b0d8eceb42a8422732f543556, type: 3}
+  _JumpAudioClip: {fileID: 8300000, guid: 7a77d7d04c8d551469e53ef0385bff7f, type: 3}
+  _DeathAudioClip: {fileID: 8300000, guid: d5cbed8c707f5f74489ec47aa775479f, type: 3}
+  _PreDeathAudioClip: {fileID: 8300000, guid: 1302d615716e8f542989eea90ade85eb, type: 3}
 --- !u!1 &2969068312368229159
 GameObject:
   m_ObjectHideFlags: 0
@@ -29889,7 +29905,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -30017,8 +30033,8 @@ TrailRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -628633131
+  m_SortingLayer: -2
   m_SortingOrder: 0
   m_Time: 1
   m_PreviewTimeScale: 1
@@ -35034,7 +35050,7 @@ MonoBehaviour:
   m_Intensity: 1.2
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
-  m_ApplyToSortingLayers: 97c26401c90e2d942faae813f53b955799675e8599675e85
+  m_ApplyToSortingLayers: 97c26401c90e2d942faae813f53b955799675e8599675e859d676c43
   m_LightCookieSprite: {fileID: 0}
   m_DeprecatedPointLightCookieSprite: {fileID: 0}
   m_LightOrder: 0

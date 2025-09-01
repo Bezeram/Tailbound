@@ -17,7 +17,13 @@ namespace TarodevController
         [SerializeField] private float _AverageSighTime = 5;
         [SerializeField] private float _RandomOffsetSighTime = 1;
         [SerializeField] private float _WalkSoundsInterval = 0.3f;
+        [SerializeField] private float _ClimbSoundsInterval = 0.2f;
+        [SerializeField] private float _DeathAnimationTime = 1f;
         [SerializeField] private float _SoundsVolume = 0.2f;
+        [SerializeField] private float _DeathPropulsionScalar = 2;
+        [SerializeField] private float _DeathPropulsionDirectionVarianceDegrees = Mathf.PI / 12;
+        [SerializeField] private Vector3 _DeathAnimationInitialPosition;
+        [SerializeField] private Vector3 _DeathAnimationEndPosition;
         [ReadOnly, SerializeField] private float _SighTime;
 
         [Header("Particles")] [SerializeField] private ParticleSystem _JumpParticles;
@@ -25,11 +31,19 @@ namespace TarodevController
         [SerializeField] private ParticleSystem _MoveParticles;
         [SerializeField] private ParticleSystem _LandParticles;
 
-        [Header("Audio Clips")] [SerializeField]
-        private AudioClip[] _FootstepAudioClips;
+        [Header("Audio Clips")] 
+        [SerializeField] private AudioClip[] _FootstepAudioClips;
+        [SerializeField] private AudioClip[] _ClimbAudioClips;
+        [SerializeField] private AudioClip _WallJumpLeftAudioClip;
+        [SerializeField] private AudioClip _WallJumpRightAudioClip;
+        [SerializeField] private AudioClip _JumpAudioClip;
+        [SerializeField] private AudioClip _DeathAudioClip;
+        [SerializeField] private AudioClip _PreDeathAudioClip;
 
         private float _TimerIdle;
+        private float _TimerDeathAnimation;
         private float _TimerWalkingSounds;
+        private float _TimerClimbingSounds;
         private AudioSource _AudioSource;
         private PlayerController _PlayerController;
         private Swing _Swing;
@@ -49,8 +63,9 @@ namespace TarodevController
         {
             _PlayerController.Jumped += OnJumped;
             _PlayerController.GroundedChanged += OnGroundedChanged;
-            _PlayerController.Died += OnPlayerDeath;
-            _PlayerController.Respawned += OnPlayerRespawn;
+            _PlayerController.Died += OnDeath;
+            _PlayerController.Respawned += OnRespawn;
+            _PlayerController.WallJumped += OnWallJump;
             
             _SighTime = _AverageSighTime + Random.Range(-_RandomOffsetSighTime, _RandomOffsetSighTime);
 
@@ -63,8 +78,8 @@ namespace TarodevController
             {
                 _PlayerController.Jumped -= OnJumped;
                 _PlayerController.GroundedChanged -= OnGroundedChanged;
-                _PlayerController.Died -= OnPlayerDeath;
-                _PlayerController.Respawned -= OnPlayerRespawn;
+                _PlayerController.Died -= OnDeath;
+                _PlayerController.Respawned -= OnRespawn;
             }
 
             _MoveParticles.Stop();
@@ -72,26 +87,74 @@ namespace TarodevController
 
         void Update()
         {
-            if (_PlayerController == null) 
-                return;
-
             HandleSpriteFlip();
 
             HandleIdleSpeed();
+            
+            HandleClimbing();
+            
+            HandlePlayerDeathAnimation();
             
             _Animator.SetBool(IsSwingingKey, _Swing.IsSwinging);
             _Animator.SetBool(SwingingLeftKey, _PlayerController.FacingLeft);
             _Animator.SetFloat(VerticalSpeedKey, _PlayerController.FrameVelocity.y);
         }
 
-        void OnPlayerRespawn()
+        void OnRespawn()
         {
             _Animator.SetTrigger(RespawnedKey);
         }
 
-        void OnPlayerDeath(bool instantly)
+        void OnDeath(bool instantly)
         {
-            _Animator.SetTrigger(DiedKey);
+            AudioClip deathAudioClip = instantly ? _DeathAudioClip : _PreDeathAudioClip; 
+            _AudioSource.PlayOneShot(deathAudioClip, _SoundsVolume);
+
+            _Animator.SetTrigger(instantly ? DiedInstantKey : DiedKey);
+            
+            // Propel Player in the opposite direction they entered.
+            Vector3 propulsionDirection = -_PlayerController.FrameVelocity.normalized;
+            float varianceAngle = Random.Range(0, _DeathPropulsionDirectionVarianceDegrees);
+            Vector3 velocity = Quaternion.Euler(0, 0, varianceAngle) * propulsionDirection * _DeathPropulsionScalar;
+            _DeathAnimationInitialPosition = transform.position;
+            _DeathAnimationEndPosition = _DeathAnimationInitialPosition + velocity;
+            
+            _TimerDeathAnimation = 0;
+        }
+
+        void HandlePlayerDeathAnimation()
+        {
+            // Play death animation
+            if (_PlayerController.DeathState == PlayerController.DeathType.NotInstant)
+            {
+                _TimerDeathAnimation += Time.deltaTime;
+                float t = _TimerDeathAnimation / _DeathAnimationTime;
+                t = Utils.EaseOutCubic(t);
+
+                Vector3 startPos = _DeathAnimationInitialPosition;
+                Vector3 endPos = _DeathAnimationEndPosition;
+                _PlayerController.transform.position = Vector3.Lerp(startPos, endPos, t);
+            }
+        }
+
+        void HandleClimbing()
+        {
+            if (!_PlayerController.IsClimbing)
+                return;
+            
+            _TimerClimbingSounds += Time.deltaTime;
+            if (_TimerClimbingSounds >= _ClimbSoundsInterval)
+            {
+                AudioClip climbClip = _ClimbAudioClips[Random.Range(0, _ClimbAudioClips.Length)];
+                _AudioSource.PlayOneShot(climbClip, _SoundsVolume);
+                _TimerClimbingSounds = 0;
+            }
+        }
+
+        void OnWallJump(bool jumpingLeft)
+        {
+            AudioClip wallJumpClip = jumpingLeft ? _WallJumpLeftAudioClip : _WallJumpRightAudioClip;
+            _AudioSource.PlayOneShot(wallJumpClip, _SoundsVolume);
         }
 
         private void HandleSpriteFlip()
@@ -116,7 +179,7 @@ namespace TarodevController
                 if (_TimerWalkingSounds >= _WalkSoundsInterval)
                 {
                     _AudioSource.PlayOneShot(_FootstepAudioClips[Random.Range(0, _FootstepAudioClips.Length)], _SoundsVolume);
-                    _TimerWalkingSounds = 0 ;
+                    _TimerWalkingSounds = 0;
                 }
             }
             
@@ -148,6 +211,8 @@ namespace TarodevController
                 SetColor(_LaunchParticles);
                 _JumpParticles.Play();
             }
+            
+            _AudioSource.PlayOneShot(_JumpAudioClip, _SoundsVolume);
         }
 
         private void OnGroundedChanged(bool grounded, float impact)
@@ -186,5 +251,6 @@ namespace TarodevController
         private static readonly int RespawnedKey = Animator.StringToHash("Respawned");
         private static readonly int SighedKey = Animator.StringToHash("Sighed");
         private static readonly int VerticalSpeedKey = Animator.StringToHash("VerticalSpeed");
+        private static readonly int DiedInstantKey = Animator.StringToHash("DiedInstant");
     }
 }

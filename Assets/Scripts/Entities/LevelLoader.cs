@@ -1,6 +1,7 @@
 using System.Collections;
 using TarodevController;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class LevelLoader : MonoBehaviour
 {
@@ -37,7 +38,7 @@ public class LevelLoader : MonoBehaviour
         
         // Respawn player after animation is finished.
         // I.e. the player may now move.
-        Player.Respawn();
+        Player.Respawn(LevelManager.CurrentSpawnPosition);
     }
 
     void _ResetScreenForRespawn()
@@ -45,9 +46,6 @@ public class LevelLoader : MonoBehaviour
         // TODO: every entity which must be reset
         //  has its data copied from a clone representing its initial state in the screen.
         //  Also move the player to their current respawn point.
-        Player.transform.position = LevelManager.CurrentSpawnPosition;
-        TrailRenderer trailRenderer = Player.GetComponentInChildren<TrailRenderer>();
-        trailRenderer.Clear();
     }
 
     public void LoadLevel(int level)
