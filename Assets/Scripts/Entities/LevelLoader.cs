@@ -11,41 +11,45 @@ public class LevelLoader : MonoBehaviour
     public Animator Transition;
     public PlayerController Player;
     public LevelManager LevelManager;
+    public AudioClip RespawnAudioClip;
+    
+    private AudioSource _AudioSource;
+    [SerializeField] private float _SoundVolume = 0.3f;
 
-    void Awake()
+    void OnValidate()
     {
-        Player = FindFirstObjectByType<PlayerController>();
-        LevelManager = FindFirstObjectByType<LevelManager>();
+        Player = FindAnyObjectByType<PlayerController>();
+        LevelManager = FindAnyObjectByType<LevelManager>();
+        _AudioSource = Player.GetComponentInChildren<AudioSource>();
     }
 
-    public void RespawnPlayerInstant()
+    public void RespawnPlayer(bool instantDeath)
     {
         Player.Kill(true);
-        StartCoroutine(_Respawn());
+        StartCoroutine(_Respawn(true));
     }
 
-    IEnumerator _Respawn()
+    IEnumerator _Respawn(bool instantDeath)
     {
         Transition.SetTrigger(AnimationTriggerStart);
         
         yield return new WaitForSeconds(1);
         
-        _ResetScreenForRespawn();
+        _ResetScreenForRespawn(instantDeath);
         
         Transition.SetTrigger(AnimationTriggerEnd);
         
         yield return new WaitForSeconds(0.3f);
         
-        // Respawn player after animation is finished.
-        // I.e. the player may now move.
         Player.Respawn(LevelManager.CurrentSpawnPosition);
     }
 
-    void _ResetScreenForRespawn()
+    void _ResetScreenForRespawn(bool instantDeath)
     {
         // TODO: every entity which must be reset
         //  has its data copied from a clone representing its initial state in the screen.
         //  Also move the player to their current respawn point.
+        _AudioSource.PlayOneShot(RespawnAudioClip, _SoundVolume);
     }
 
     public void LoadLevel(int level)

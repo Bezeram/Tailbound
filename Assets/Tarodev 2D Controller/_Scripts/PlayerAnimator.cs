@@ -39,7 +39,6 @@ namespace TarodevController
         [SerializeField] private AudioClip _JumpAudioClip;
         [SerializeField] private AudioClip _DeathAudioClip;
         [SerializeField] private AudioClip _PreDeathAudioClip;
-        [SerializeField] private AudioClip _RespawnAudioClip;
 
         private float _TimerIdle;
         private float _TimerDeathAnimation;
@@ -103,8 +102,6 @@ namespace TarodevController
 
         void OnRespawn()
         {
-            _AudioSource.PlayOneShot(_RespawnAudioClip, _SoundsVolume);
-            
             _Animator.SetTrigger(RespawnedKey);
         }
 
@@ -123,7 +120,10 @@ namespace TarodevController
             _DeathAnimationEndPosition = _DeathAnimationInitialPosition + velocity;
             
             _TimerDeathAnimation = 0;
+            _PlayedDeathSound = false;
         }
+
+        private bool _PlayedDeathSound;
 
         void HandlePlayerDeathAnimation()
         {
@@ -137,12 +137,19 @@ namespace TarodevController
                 Vector3 startPos = _DeathAnimationInitialPosition;
                 Vector3 endPos = _DeathAnimationEndPosition;
                 _PlayerController.transform.position = Vector3.Lerp(startPos, endPos, t);
+
+                if (t > 0.9 && !_PlayedDeathSound)
+                {
+                    _PlayedDeathSound = true;
+                    _AudioSource.PlayOneShot(_DeathAudioClip, _SoundsVolume);
+                }
             }
         }
 
         void HandleClimbing()
         {
-            if (!_PlayerController.IsClimbing)
+            var inputStrength = Mathf.Abs(_PlayerController.FrameInput.y);
+            if (!_PlayerController.IsClimbing || inputStrength == 0)
                 return;
             
             _TimerClimbingSounds += Time.deltaTime;

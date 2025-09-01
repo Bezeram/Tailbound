@@ -121,7 +121,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4209351560993933625}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: Pause_Menu_Script, Assembly-CSharp
         m_MethodName: Menu
         m_Mode: 1
@@ -471,7 +471,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Transition: {fileID: 0}
   Player: {fileID: 0}
-  ScreenManager: {fileID: 0}
+  LevelManager: {fileID: 0}
+  RespawnAudioClip: {fileID: 8300000, guid: 1ed3661fe7379fb4cbc9bb2804be7826, type: 3}
+  _SoundVolume: 0.2
 --- !u!1 &4109289236180999095
 GameObject:
   m_ObjectHideFlags: 0
@@ -909,7 +911,6 @@ GameObject:
   - component: {fileID: 363681665000752543}
   - component: {fileID: 2080919942517990072}
   - component: {fileID: 9138550364027525339}
-  - component: {fileID: 4209351560993933625}
   - component: {fileID: 5647235051171014196}
   m_Layer: 0
   m_Name: Canvas
@@ -1029,19 +1030,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &4209351560993933625
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5988072958679117872}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c0206afd4a5b37e4dbfc8ad586194c2b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pauseMenuUi: {fileID: 3866644506548981666}
 --- !u!114 &5647235051171014196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1177,7 +1165,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4209351560993933625}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: Pause_Menu_Script, Assembly-CSharp
         m_MethodName: Restart
         m_Mode: 1
@@ -1535,7 +1523,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4209351560993933625}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: Pause_Menu_Script, Assembly-CSharp
         m_MethodName: Resume
         m_Mode: 1

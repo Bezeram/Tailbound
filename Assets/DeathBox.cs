@@ -57,7 +57,7 @@ public class DeathBox : MonoBehaviour
             if (_PlayerController.transform.position.y < transform.position.y)
             {
                 // Death
-                _LevelLoader.RespawnPlayerInstant();
+                _LevelLoader.RespawnPlayer(false);
             }
         }
     }

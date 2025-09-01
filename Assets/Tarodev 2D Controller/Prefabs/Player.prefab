@@ -10282,7 +10282,7 @@ MonoBehaviour:
   _RandomOffsetSighTime: 1
   _WalkSoundsInterval: 0.3
   _ClimbSoundsInterval: 0.3
-  _DeathAnimationTime: 0.75
+  _DeathAnimationTime: 1
   _SoundsVolume: 0.2
   _DeathPropulsionScalar: 5
   _DeathPropulsionDirectionVarianceDegrees: 15
@@ -10310,7 +10310,6 @@ MonoBehaviour:
   _JumpAudioClip: {fileID: 8300000, guid: 7a77d7d04c8d551469e53ef0385bff7f, type: 3}
   _DeathAudioClip: {fileID: 8300000, guid: d5cbed8c707f5f74489ec47aa775479f, type: 3}
   _PreDeathAudioClip: {fileID: 8300000, guid: 1302d615716e8f542989eea90ade85eb, type: 3}
-  _RespawnAudioClip: {fileID: 8300000, guid: 1ed3661fe7379fb4cbc9bb2804be7826, type: 3}
 --- !u!1 &2969068312368229159
 GameObject:
   m_ObjectHideFlags: 0

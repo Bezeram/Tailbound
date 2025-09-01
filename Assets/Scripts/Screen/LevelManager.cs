@@ -245,12 +245,12 @@ public class LevelManager : MonoBehaviour
     public void Restart()
     {
         Resume();
-        _LevelLoader.RespawnPlayerInstant();
+        _LevelLoader.RespawnPlayer(true);
     }
 
     void OnPlayerDeath(bool instantly)
     {
-        _LevelLoader.RespawnPlayerInstant();
+        _LevelLoader.RespawnPlayer(instantly);
     }
 
     public void Menu()
