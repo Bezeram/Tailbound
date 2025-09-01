@@ -46,9 +46,6 @@ public class LevelLoader : MonoBehaviour
 
     void _ResetScreenForRespawn(bool instantDeath)
     {
-        // TODO: every entity which must be reset
-        //  has its data copied from a clone representing its initial state in the screen.
-        //  Also move the player to their current respawn point.
         _AudioSource.PlayOneShot(RespawnAudioClip, _SoundVolume);
     }
 
