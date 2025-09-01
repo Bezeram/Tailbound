@@ -49,7 +49,7 @@ namespace TarodevController
         public Vector2 FrameInput => _FrameInput.Move;
         public event Action<bool, float> GroundedChanged;
         public event Action Climbed;
-        public event Action Died;
+        public event Action<bool> Died;
         public event Action Respawned;
         public event Action Jumped;
 
@@ -490,8 +490,10 @@ namespace TarodevController
                 _FrameVelocity.y = Mathf.MoveTowards(_FrameVelocity.y, -Stats.MaxFallSpeed, inAirGravity * Time.fixedDeltaTime);
             }
         }
-
-        public void Kill()
+        
+        // Instant kill skips the animation of Benjey
+        // being propelled back by the ouchie.
+        public void Kill(bool instantly)
         {
             if (_IsDead)
                 return;
@@ -501,7 +503,7 @@ namespace TarodevController
             _FrameVelocity = Vector2.zero;
             ApplyMovement();
             
-            Died?.Invoke();
+            Died?.Invoke(instantly);
         }
 
         public void Respawn()

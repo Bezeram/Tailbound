@@ -17,9 +17,9 @@ public class LevelLoader : MonoBehaviour
         LevelManager = FindFirstObjectByType<LevelManager>();
     }
 
-    public void RespawnPlayer()
+    public void RespawnPlayerInstant()
     {
-        Player.Kill();
+        Player.Kill(true);
         StartCoroutine(_Respawn());
     }
 

@@ -10277,19 +10277,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb09df9db553ffc4ab6600e3070de9eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _anim: {fileID: 2969068313154050966}
-  _sprite: {fileID: 2969068313154050967}
-  _maxIdleSpeed: 2
-  _maxTilt: 5
-  _tiltSpeed: 20
-  _jumpParticles: {fileID: 2969068312619346371}
-  _launchParticles: {fileID: 2969068312669941334}
-  _moveParticles: {fileID: 2969068311631949152}
-  _landParticles: {fileID: 2969068312368229178}
-  _footsteps:
-  - {fileID: 8300000, guid: 5d94063f45167b04ab62585e436da58c, type: 3}
-  - {fileID: 8300000, guid: b5803c17557c59c40bf3a6d69cb46cb3, type: 3}
-  - {fileID: 8300000, guid: 1876767bf7cbf284394dc3817af9593c, type: 3}
+  _Animator: {fileID: 2969068313154050966}
+  _SpriteRenderer: {fileID: 2969068313154050967}
+  _AverageSighTime: 5
+  _RandomOffsetSighTime: 1
+  _WalkSoundsInterval: 0.3
+  _SoundsVolume: 0.2
+  _SighTime: 0
+  _JumpParticles: {fileID: 2969068312619346371}
+  _LaunchParticles: {fileID: 2969068312669941334}
+  _MoveParticles: {fileID: 2969068311631949152}
+  _LandParticles: {fileID: 2969068312368229178}
+  _FootstepAudioClips:
+  - {fileID: 8300000, guid: c08f9e625c6960b4e8e08c2ff0cf4c96, type: 3}
+  - {fileID: 8300000, guid: 76b5969eff86bb84c9eeb8041379834e, type: 3}
+  - {fileID: 8300000, guid: 31cc791a6e56f5446acfcf8c2923efaf, type: 3}
+  - {fileID: 8300000, guid: d5870dbd22fea07449d0f16d9e93c8d4, type: 3}
+  - {fileID: 8300000, guid: 26e4a4b4587308e408915c409137ef99, type: 3}
 --- !u!1 &2969068312368229159
 GameObject:
   m_ObjectHideFlags: 0

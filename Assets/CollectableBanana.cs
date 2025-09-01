@@ -284,7 +284,7 @@ public class CollectableBanana : MonoBehaviour
             State = BananaState.Idle;
     }
 
-    void OnPlayerDeath()
+    void OnPlayerDeath(bool instantDeath)
     {
         if (State is BananaState.Collected or BananaState.Disable)
             return;

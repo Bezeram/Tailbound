@@ -1,6 +1,5 @@
-using TMPro;
+using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace TarodevController
 {
@@ -9,40 +8,39 @@ namespace TarodevController
     /// </summary>
     public class PlayerAnimator : MonoBehaviour
     {
-        [FormerlySerializedAs("_anim")] [Header("References")] [SerializeField]
+        [Header("References")] [SerializeField]
         private Animator _Animator;
 
-        [SerializeField] private SpriteRenderer _sprite;
+        [SerializeField] private SpriteRenderer _SpriteRenderer;
 
         [Header("Settings")] 
-        [SerializeField, Range(1f, 3f)] private float _maxIdleSpeed = 2;
-        [SerializeField] private float _TimerIdle = 0;
         [SerializeField] private float _AverageSighTime = 5;
         [SerializeField] private float _RandomOffsetSighTime = 1;
+        [SerializeField] private float _WalkSoundsInterval = 0.3f;
+        [SerializeField] private float _SoundsVolume = 0.2f;
+        [ReadOnly, SerializeField] private float _SighTime;
 
-        [SerializeField] private float _maxTilt = 5;
-        [SerializeField] private float _tiltSpeed = 20;
-
-        [Header("Particles")] [SerializeField] private ParticleSystem _jumpParticles;
-        [SerializeField] private ParticleSystem _launchParticles;
-        [SerializeField] private ParticleSystem _moveParticles;
-        [SerializeField] private ParticleSystem _landParticles;
+        [Header("Particles")] [SerializeField] private ParticleSystem _JumpParticles;
+        [SerializeField] private ParticleSystem _LaunchParticles;
+        [SerializeField] private ParticleSystem _MoveParticles;
+        [SerializeField] private ParticleSystem _LandParticles;
 
         [Header("Audio Clips")] [SerializeField]
-        private AudioClip[] _footsteps;
+        private AudioClip[] _FootstepAudioClips;
 
-        private AudioSource _source;
+        private float _TimerIdle;
+        private float _TimerWalkingSounds;
+        private AudioSource _AudioSource;
         private PlayerController _PlayerController;
         private Swing _Swing;
-        private bool _grounded;
-        private ParticleSystem.MinMaxGradient _currentGradient;
+        private bool _Grounded;
+        private ParticleSystem.MinMaxGradient _CurrentColorGradient;
 
         private bool _IsRunning;
-        public float _SighTime;
 
         void OnValidate()
         {
-            _source = GetComponent<AudioSource>();
+            _AudioSource = GetComponent<AudioSource>();
             _PlayerController = GetComponentInParent<PlayerController>();
             _Swing = GetComponentInParent<Swing>();
         }
@@ -56,7 +54,7 @@ namespace TarodevController
             
             _SighTime = _AverageSighTime + Random.Range(-_RandomOffsetSighTime, _RandomOffsetSighTime);
 
-            _moveParticles.Play();
+            _MoveParticles.Play();
         }
 
         void OnDisable()
@@ -69,7 +67,7 @@ namespace TarodevController
                 _PlayerController.Respawned -= OnPlayerRespawn;
             }
 
-            _moveParticles.Stop();
+            _MoveParticles.Stop();
         }
 
         void Update()
@@ -91,7 +89,7 @@ namespace TarodevController
             _Animator.SetTrigger(RespawnedKey);
         }
 
-        void OnPlayerDeath()
+        void OnPlayerDeath(bool instantly)
         {
             _Animator.SetTrigger(DiedKey);
         }
@@ -99,19 +97,30 @@ namespace TarodevController
         private void HandleSpriteFlip()
         {
             if (_PlayerController.FrameInput.x != 0) 
-                _sprite.flipX = _PlayerController.FrameInput.x < 0;
+                _SpriteRenderer.flipX = _PlayerController.FrameInput.x < 0;
         }
 
         private void HandleIdleSpeed()
         {
             var inputStrength = Mathf.Abs(_PlayerController.FrameInput.x);
-            _moveParticles.transform.localScale = Vector3.MoveTowards(_moveParticles.transform.localScale, Vector3.one * inputStrength, 2 * Time.deltaTime);
+            _MoveParticles.transform.localScale = Vector3.MoveTowards(_MoveParticles.transform.localScale, 
+                Vector3.one * inputStrength, 2 * Time.deltaTime);
             
             // Set isRunning based on input
-            _IsRunning = inputStrength > 0;
+            _IsRunning = inputStrength > 0 && _PlayerController.IsGrounded;
             _Animator.SetBool(IsRunningKey, _IsRunning);
+
+            if (_IsRunning)
+            {
+                _TimerWalkingSounds += Time.deltaTime;
+                if (_TimerWalkingSounds >= _WalkSoundsInterval)
+                {
+                    _AudioSource.PlayOneShot(_FootstepAudioClips[Random.Range(0, _FootstepAudioClips.Length)], _SoundsVolume);
+                    _TimerWalkingSounds = 0 ;
+                }
+            }
             
-            if (_PlayerController.IsGrounded && !_IsRunning)
+            if (_PlayerController.IsGrounded && inputStrength == 0)
             {
                 // Idle state    
                 _TimerIdle += Time.deltaTime;
@@ -133,39 +142,39 @@ namespace TarodevController
             _Animator.SetTrigger(JumpKey);
             _Animator.ResetTrigger(GroundedKey);
 
-            if (_grounded) // Avoid coyote
+            if (_Grounded) // Avoid coyote
             {
-                SetColor(_jumpParticles);
-                SetColor(_launchParticles);
-                _jumpParticles.Play();
+                SetColor(_JumpParticles);
+                SetColor(_LaunchParticles);
+                _JumpParticles.Play();
             }
         }
 
         private void OnGroundedChanged(bool grounded, float impact)
         {
-            _grounded = grounded;
+            _Grounded = grounded;
             
             if (grounded)
             {
-                SetColor(_landParticles);
+                SetColor(_LandParticles);
 
                 _Animator.SetTrigger(GroundedKey);
-                _source.PlayOneShot(_footsteps[Random.Range(0, _footsteps.Length)]);
-                _moveParticles.Play();
+                _AudioSource.PlayOneShot(_FootstepAudioClips[Random.Range(0, _FootstepAudioClips.Length)], _SoundsVolume);
+                _MoveParticles.Play();
 
-                _landParticles.transform.localScale = Vector3.one * Mathf.InverseLerp(0, 40, impact);
-                _landParticles.Play();
+                _LandParticles.transform.localScale = Vector3.one * Mathf.InverseLerp(0, 40, impact);
+                _LandParticles.Play();
             }
             else
             {
-                _moveParticles.Stop();
+                _MoveParticles.Stop();
             }
         }
 
         private void SetColor(ParticleSystem ps)
         {
             var main = ps.main;
-            main.startColor = _currentGradient;
+            main.startColor = _CurrentColorGradient;
         }
 
         private static readonly int IsRunningKey = Animator.StringToHash("IsRunning");
