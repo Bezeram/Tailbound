@@ -66,7 +66,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.0043697357, y: 0.5189967}
+  m_Offset: {x: 0.030467987, y: 0.5189967}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -76,7 +76,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.8863945, y: 0.7735014}
+  m_Size: {x: 0.938591, y: 0.7735014}
   m_EdgeRadius: 0
 --- !u!1 &1544650614272011804
 GameObject:
@@ -305,8 +305,8 @@ LineRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -713473481
+  m_SortingLayer: -2
   m_SortingOrder: 0
   m_Positions:
   - {x: 0, y: 0, z: 0}
@@ -331,21 +331,21 @@ LineRenderer:
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 0, g: 0, b: 0, a: 1}
-      key1: {r: 0, g: 0, b: 0, a: 1}
-      key2: {r: 0, g: 0, b: 0, a: 0}
-      key3: {r: 0, g: 0, b: 0, a: 0}
-      key4: {r: 0, g: 0, b: 0, a: 0}
-      key5: {r: 0, g: 0, b: 0, a: 0}
-      key6: {r: 0, g: 0, b: 0, a: 0}
+      key0: {r: 0.60784316, g: 0.45882353, b: 0.25490198, a: 1}
+      key1: {r: 0.5019608, g: 0.37254903, b: 0.2, a: 1}
+      key2: {r: 0.60784316, g: 0.45882353, b: 0.25490198, a: 0}
+      key3: {r: 0.5019608, g: 0.37254903, b: 0.2, a: 0}
+      key4: {r: 0.60784316, g: 0.45882353, b: 0.25490198, a: 0}
+      key5: {r: 0.5019608, g: 0.37254903, b: 0.2, a: 0}
+      key6: {r: 0.7433963, g: 0.56395257, b: 0.31839803, a: 0}
       key7: {r: 0, g: 0, b: 0, a: 0}
       ctime0: 0
-      ctime1: 65535
-      ctime2: 0
-      ctime3: 0
-      ctime4: 0
-      ctime5: 0
-      ctime6: 0
+      ctime1: 18119
+      ctime2: 26445
+      ctime3: 33076
+      ctime4: 39861
+      ctime5: 49575
+      ctime6: 65535
       ctime7: 0
       atime0: 0
       atime1: 65535
@@ -357,7 +357,7 @@ LineRenderer:
       atime7: 0
       m_Mode: 0
       m_ColorSpace: 0
-      m_NumColorKeys: 2
+      m_NumColorKeys: 7
       m_NumAlphaKeys: 2
     numCornerVertices: 0
     numCapVertices: 0
@@ -30034,7 +30034,7 @@ TrailRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -628633131
-  m_SortingLayer: -2
+  m_SortingLayer: -3
   m_SortingOrder: 0
   m_Time: 1
   m_PreviewTimeScale: 1

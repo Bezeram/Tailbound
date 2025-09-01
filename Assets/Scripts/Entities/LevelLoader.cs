@@ -37,16 +37,19 @@ public class LevelLoader : MonoBehaviour
         
         _ResetScreenForRespawn(instantDeath);
         
+        yield return new WaitForSeconds(0.1f);
+        
+        _AudioSource.PlayOneShot(RespawnAudioClip, _SoundVolume);
         Transition.SetTrigger(AnimationTriggerEnd);
         
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.1f);
         
         Player.Respawn(LevelManager.CurrentSpawnPosition);
     }
 
     void _ResetScreenForRespawn(bool instantDeath)
     {
-        _AudioSource.PlayOneShot(RespawnAudioClip, _SoundVolume);
+        
     }
 
     public void LoadLevel(int level)

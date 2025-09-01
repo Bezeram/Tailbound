@@ -65,6 +65,9 @@ TagManager:
   - name: PlayerTrailRenderer
     uniqueID: 3666334165
     locked: 0
+  - name: Tail
+    uniqueID: 3581493815
+    locked: 0
   - name: Player
     uniqueID: 2237556633
     locked: 0
