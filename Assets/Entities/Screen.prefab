@@ -31,8 +31,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 94048828833028347}
   - {fileID: 1016023135893463115}
+  - {fileID: 94048828833028347}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7292466643733622567
@@ -52,7 +52,6 @@ MonoBehaviour:
   PlayerLayer:
     serializedVersion: 2
     m_Bits: 128
-  ColliderMargin: 0.2
   CurrentSpawnPoint: {fileID: 0}
   IsTransitioning: 0
   _CurrentSpawnPointID: 0
@@ -104,7 +103,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 29.6, y: 16.45}
+  m_Size: {x: 30, y: 16.85}
   m_EdgeRadius: 0
 --- !u!1 &2840836457571485977
 GameObject:
@@ -183,7 +182,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 30, y: 16.85}
+  m_Size: {x: 30.5, y: 17.35}
   m_EdgeRadius: 0
 --- !u!114 &7322793563681209714
 MonoBehaviour:
@@ -197,6 +196,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf53f9e826e045d42a52e28d226b2d7f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ColliderMargin: -0.5
 --- !u!1 &4311913037885786212
 GameObject:
   m_ObjectHideFlags: 0

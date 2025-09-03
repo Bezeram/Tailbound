@@ -25,8 +25,8 @@ public class LevelLoader : MonoBehaviour
 
     public void RespawnPlayer(bool instantDeath)
     {
-        Player.Kill(true);
-        StartCoroutine(_Respawn(true));
+        Player.Kill(instantDeath);
+        StartCoroutine(_Respawn(instantDeath));
     }
 
     IEnumerator _Respawn(bool instantDeath)

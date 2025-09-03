@@ -1,3 +1,4 @@
+using Sirenix.OdinInspector;
 using TarodevController;
 using UnityEngine;
 
@@ -8,12 +9,14 @@ public class DeathBox : MonoBehaviour
     private LevelLoader _LevelLoader;
     private BoxCollider2D _DeathCollider;
     private PlayerController _PlayerController;
+    
+    [TitleGroup("Input")] public float ColliderMargin = 0.2f;
 
     void OnValidate()
     {
         _ParentScreen = transform.parent.GetComponent<ScreenBox>();
-        _DeathCollider = GetComponent<BoxCollider2D>();
         _PlayerController = FindAnyObjectByType<PlayerController>();
+        _DeathCollider = GetComponent<BoxCollider2D>();
 
         if (_ParentScreen == null)
             Debug.LogError("DeathBox is not a direct child of a ScreenBox!", context: this);
@@ -22,7 +25,7 @@ public class DeathBox : MonoBehaviour
     void UpdateDeathCollider()
     {
         _DeathCollider.offset = _ParentScreen.Size / 2;
-        _DeathCollider.size = _ParentScreen.Size;
+        _DeathCollider.size = _ParentScreen.Size - Vector2.one * ColliderMargin;
     }
 
     void Start()
@@ -57,7 +60,7 @@ public class DeathBox : MonoBehaviour
             if (_PlayerController.transform.position.y < transform.position.y)
             {
                 // Death
-                _LevelLoader.RespawnPlayer(false);
+                _LevelLoader.RespawnPlayer(true);
             }
         }
     }
