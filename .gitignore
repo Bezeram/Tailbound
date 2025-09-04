@@ -27,7 +27,7 @@
 /[Aa]ssets/Plugins/Editor/JetBrains*
 
 # PDB Files
-*.pdb*
+Assets/Plugins/Sirenix/Demos/
 
 # IDEs cache directory
 .vs/
