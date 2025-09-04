@@ -98,7 +98,10 @@ public class CheckpointTrigger : MonoBehaviour
         {
             // Set parent to the screen area.
             if (ScreenBox != null)
-                transform.SetParent(ScreenBox.transform);
+            {
+                Transform screenContent = ScreenBox.transform.Find("Content");
+                transform.SetParent(screenContent);
+            }
             
             UpdateScreenParent();
             _UpdateTimer -= 0.5f;
