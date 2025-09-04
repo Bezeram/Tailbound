@@ -47,6 +47,7 @@ MonoBehaviour:
   PauseMenuUI: {fileID: 4883703988382704444, guid: 67631e27d55682e48b75bb9f34af2c6d, type: 3}
   BananaChannel: {fileID: 11400000, guid: cd599e7fa6c2c4b4680109d053d75af1, type: 2}
   _StartScreen: {fileID: 0}
+  _UseSaveFile: 1
   _Screens: []
   _Bananas: []
   _SpawnPoints: []

@@ -10,6 +10,7 @@ public class LevelManager : MonoBehaviour
     public BananaChannel BananaChannel;
 
     [SerializeField] private ScreenBox _StartScreen;
+    [SerializeField] private bool _UseSaveFile = true;
     
     // Store IDs to banana positions.
     private readonly List<int> _CollectedBananas = new();
@@ -85,7 +86,7 @@ public class LevelManager : MonoBehaviour
         
         // Load and use file data
         PlayerData data = SaveSystem.LoadGame();
-        if (data != null)
+        if (data != null && _UseSaveFile)
         {
             _CurrentScreenID = data.ScreenID;
             CurrentScreen.CurrentSpawnPoint = _SpawnPoints[data.SpawnPointID];
@@ -99,15 +100,6 @@ public class LevelManager : MonoBehaviour
             }
         }
         else
-        {
-            // Assume new game
-            _CurrentScreenID = 0;
-            CurrentScreen.CurrentSpawnPoint = CurrentScreen.FirstSpawnPoint;
-        }
-
-        // Override screen from save file if a specfic one was provided
-        // in the editor.
-        if (_StartScreen != null)
         {
             _CurrentScreenID = _StartScreen.ID;
         }

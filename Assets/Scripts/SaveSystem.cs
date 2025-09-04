@@ -18,7 +18,7 @@ public static class SaveSystem
         if (File.Exists(SaveFilePath))
             Debug.Log("Save file has been updated successfully.");
         else
-            Debug.LogWarning("Could not create save file.");
+            Debug.LogError("Could not create save file.");
     }
 
     public static PlayerData LoadGame()
