@@ -20,7 +20,7 @@ public class LevelLoader : MonoBehaviour
     {
         Player = FindAnyObjectByType<PlayerController>();
         LevelManager = FindAnyObjectByType<LevelManager>();
-        //_AudioSource = Player.GetComponentInChildren<AudioSource>();
+        _AudioSource = Player.GetComponentInChildren<AudioSource>();
     }
 
     public void RespawnPlayer(bool instantDeath)
@@ -39,7 +39,7 @@ public class LevelLoader : MonoBehaviour
         
         yield return new WaitForSeconds(0.1f);
         
-        //_AudioSource.PlayOneShot(RespawnAudioClip, _SoundVolume);
+        _AudioSource.PlayOneShot(RespawnAudioClip, _SoundVolume);
         Transition.SetTrigger(AnimationTriggerEnd);
         
         yield return new WaitForSeconds(0.1f);

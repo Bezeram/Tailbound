@@ -88,6 +88,7 @@ public class LevelManager : MonoBehaviour
         if (data != null)
         {
             _CurrentScreenID = data.ScreenID;
+            CurrentScreen.CurrentSpawnPoint = _SpawnPoints[data.SpawnPointID];
             // Stylize bananas collected in another session
             var collectedBananasIDs = data.CollectedBananaIDs;
             foreach (var id in collectedBananasIDs)

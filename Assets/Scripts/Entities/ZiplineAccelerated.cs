@@ -84,12 +84,10 @@ public class ZiplineAccelerated : ActivatableEntity
     public override void ReceiveActivation()
     {
         IsActive = true;
-        print("WOW");
     }
 
     public override void ReceiveDeactivation()
     {
-        print("NOTWOW");
         IsActive = false;
     }
 
@@ -120,15 +118,9 @@ public class ZiplineAccelerated : ActivatableEntity
                 {
                     _TimerReset += Time.deltaTime;
 
-                    if (IsActive)
-                    {
-                        print(_TimerReset);
-                        print(Settings.Zipline.DelayResetSeconds);
-                    }
                     // Start moving if active
                     if (IsActive && _TimerReset > Settings.Zipline.DelayResetSeconds)
                     {
-                        print("WOW2");
                         CurrentState = State.Forward;
                         // Play sound
                         _AudioSource.clip = _ForwardAudioClip;
