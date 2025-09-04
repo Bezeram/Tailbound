@@ -48,7 +48,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Count: 1
   Direction: 0
-  _DefaultColliderSize: {x: 0.88, y: 0.1209}
+  _DefaultColliderSize: {x: 1, y: 0.1209}
   _DefaultColliderOffset: {x: 0.5, y: 0.06379867}
   PlayerLayer:
     serializedVersion: 2
@@ -152,5 +152,5 @@ BoxCollider2D:
     drawMode: 2
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.88, y: 0.1209}
+  m_Size: {x: 1, y: 0.1209}
   m_EdgeRadius: 0
