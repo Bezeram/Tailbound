@@ -26,7 +26,7 @@ public class ScreenBox : MonoBehaviour
         transform.Find("DeathBox").gameObject.SetActive(active);
     }
 
-    void Start()
+    void OnEnable()
     {
         CurrentSpawnPoint = FirstSpawnPoint;
     }
