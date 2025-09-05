@@ -9,23 +9,23 @@ public class LevelLoader : MonoBehaviour
     private static readonly int AnimationTriggerEnd = Animator.StringToHash("End");
     
     public Animator Transition;
-    public PlayerController Player;
-    public LevelManager LevelManager;
     public AudioClip RespawnAudioClip;
-    
-    private AudioSource _AudioSource;
     [SerializeField] private float _SoundVolume = 0.3f;
 
-    void OnValidate()
+    private PlayerController _Player;
+    private LevelManager _LevelManager;
+    private AudioSource _AudioSource;
+
+    void Start()
     {
-        Player = FindAnyObjectByType<PlayerController>();
-        LevelManager = FindAnyObjectByType<LevelManager>();
-        _AudioSource = Player.GetComponentInChildren<AudioSource>();
+        _Player = FindAnyObjectByType<PlayerController>();
+        _LevelManager = FindAnyObjectByType<LevelManager>();
+        _AudioSource = _Player.GetComponentInChildren<AudioSource>();
     }
 
     public void RespawnPlayer(bool instantDeath)
     {
-        Player.Kill(instantDeath);
+        _Player.Kill(instantDeath);
         StartCoroutine(RespawnCoroutine(instantDeath));
     }
 
@@ -44,7 +44,7 @@ public class LevelLoader : MonoBehaviour
         
         yield return new WaitForSeconds(0.1f);
         
-        Player.Respawn(LevelManager.CurrentSpawnPosition);
+        _Player.Respawn(_LevelManager.CurrentSpawnPosition);
     }
 
     void _ResetScreenForRespawn(bool instantDeath)

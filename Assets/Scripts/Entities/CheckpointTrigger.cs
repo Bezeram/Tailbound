@@ -1,15 +1,15 @@
-using System.Linq;
 using Sirenix.OdinInspector;
-using TarodevController;
-using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.Serialization;
+
+#if UNITY_EDITOR
+    using UnityEditor;
+    using UnityEditor.SceneManagement;
+#endif
 
 [ExecuteAlways]
 public class CheckpointTrigger : MonoBehaviour
 {
-    [FormerlySerializedAs("ScreenArea")] [TitleGroup("Input"), ReadOnly] public ScreenBox ScreenBox;
+    [TitleGroup("Input"), ReadOnly] public ScreenBox ScreenBox;
     
     private BoxCollider2D _Collider;
     private float _UpdateTimer;
@@ -84,12 +84,14 @@ public class CheckpointTrigger : MonoBehaviour
     void Update()
     {
         // Do not run while in prefab editing mode.
+#if UNITY_EDITOR
         if (EditorUtility.IsPersistent(this)) 
             return;
         if (PrefabUtility.IsPartOfPrefabAsset(this))
             return;
         if (PrefabStageUtility.GetCurrentPrefabStage() != null)
             return;
+#endif
         if (Application.isPlaying)
             return;
         
