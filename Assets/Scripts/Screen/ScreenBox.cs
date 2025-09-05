@@ -1,7 +1,5 @@
 using Sirenix.OdinInspector;
-using TarodevController;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class ScreenBox : MonoBehaviour
 {
@@ -17,16 +15,18 @@ public class ScreenBox : MonoBehaviour
     
     public Vector3 Center => transform.position + new Vector3(Size.x * 0.5f, Size.y * 0.5f, 0f);
     public Vector3 CurrentSpawnPosition => CurrentSpawnPoint.transform.position;
-    
+    public Vector3 BottomLeft => transform.position;
+
     private BoxCollider2D _TransitionCollider;
     private LevelManager _LevelManager;
     
     public void ToggleScreenContent(bool active)
     {
         transform.Find("Content").gameObject.SetActive(active);
+        transform.Find("DeathBox").gameObject.SetActive(active);
     }
 
-    void Start()
+    void OnEnable()
     {
         CurrentSpawnPoint = FirstSpawnPoint;
     }
@@ -60,7 +60,7 @@ public class ScreenBox : MonoBehaviour
             _LevelManager.RunScreenTransition(ID);
         }
     }
-
+        
     void OnTransformChildrenChanged()
     {
         // If no spawn point has been set, automatically choose one.

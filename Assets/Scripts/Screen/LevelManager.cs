@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Sirenix.OdinInspector;
 using TarodevController;
 using UnityEngine;
@@ -10,6 +11,7 @@ public class LevelManager : MonoBehaviour
     public BananaChannel BananaChannel;
 
     [SerializeField] private ScreenBox _StartScreen;
+    [SerializeField] private bool _UseSaveFile = true;
     
     // Store IDs to banana positions.
     private readonly List<int> _CollectedBananas = new();
@@ -85,7 +87,7 @@ public class LevelManager : MonoBehaviour
         
         // Load and use file data
         PlayerData data = SaveSystem.LoadGame();
-        if (data != null)
+        if (data != null && _UseSaveFile)
         {
             _CurrentScreenID = data.ScreenID;
             CurrentScreen.CurrentSpawnPoint = _SpawnPoints[data.SpawnPointID];
@@ -99,15 +101,6 @@ public class LevelManager : MonoBehaviour
             }
         }
         else
-        {
-            // Assume new game
-            _CurrentScreenID = 0;
-            CurrentScreen.CurrentSpawnPoint = CurrentScreen.FirstSpawnPoint;
-        }
-
-        // Override screen from save file if a specfic one was provided
-        // in the editor.
-        if (_StartScreen != null)
         {
             _CurrentScreenID = _StartScreen.ID;
         }
@@ -188,13 +181,29 @@ public class LevelManager : MonoBehaviour
         CurrentScreen.ToggleScreenContent(true);
         _CameraFollow.Screen = CurrentScreen;
 
-        // Screen and player movement
-        Vector2 moveDirection = (CurrentScreen.Center - TransitionPreviousScreen.Center).normalized;
-        // Only keep the most dominant direction
-        if (Mathf.Abs(moveDirection.x) > Mathf.Abs(moveDirection.y))
+        // Calculate closest wall to player
+        float bottomWall = TransitionPreviousScreen.BottomLeft.y - _PlayerController.transform.position.y;
+        float upWall = (TransitionPreviousScreen.BottomLeft.y + TransitionPreviousScreen.Size.y) - _PlayerController.transform.position.y;
+        float leftWall = TransitionPreviousScreen.BottomLeft.x - _PlayerController.transform.position.x;
+        float rightWall = (TransitionPreviousScreen.BottomLeft.x + TransitionPreviousScreen.Size.x) - _PlayerController.transform.position.x;
+        bottomWall = Mathf.Abs(bottomWall);
+        upWall = Mathf.Abs(upWall);
+        leftWall = Mathf.Abs(leftWall);
+        rightWall = Mathf.Abs(rightWall);
+        float[] walls = { (bottomWall), (upWall), (leftWall), (rightWall) };
+        float minDistance = walls.Min();
+
+        Vector2 moveDirection = Vector2.one;
+        if (minDistance == leftWall || minDistance == rightWall)
+        {
             moveDirection.y = 0;
+            moveDirection.x = minDistance == leftWall ? -1 : 1;
+        }
         else
+        {
             moveDirection.x = 0;
+            moveDirection.y = minDistance == bottomWall ? -1 : 1;
+        }
         float transitionScalar = (moveDirection.x != 0) ? _TransitionMoveScalarHorizontal :
             (moveDirection.y > 0) ? _TransitionMoveScalarUpwards : _TransitionMoveScalarDownwards;
 
@@ -210,6 +219,9 @@ public class LevelManager : MonoBehaviour
         
         // Disable camera follow script during transition
         _CameraFollow.enabled = false;
+        // Stop player immediately.
+        // Current speed is stored internally in another variable, so the speed is not lost.
+        _PlayerController.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
         
         _TransitionTimer = 0;
     }
