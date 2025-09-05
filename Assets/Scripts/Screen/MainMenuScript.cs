@@ -7,12 +7,12 @@ public class MainMenuScript : MonoBehaviour
     {
         // Delete save file
         File.Delete(SaveSystem.SaveFilePath); 
-        StartGame(1);
+        StartGame("Level_1");
     }
 
     public void Continue()
     {
-        StartGame(1);
+        StartGame("Level_1");
     }
 
     public void Exit()
@@ -20,7 +20,7 @@ public class MainMenuScript : MonoBehaviour
         Application.Quit();
     }
     
-    void StartGame(int level)
+    void StartGame(string level)
     {
         LevelLoader.StartLevel(level);
     }

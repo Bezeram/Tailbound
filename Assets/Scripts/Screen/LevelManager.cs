@@ -270,6 +270,6 @@ public class LevelManager : MonoBehaviour
         PlayerData playerData = new PlayerData(_CurrentScreenID, CurrentScreen.CurrentSpawnPoint.ID, _CollectedBananas);
         SaveSystem.SaveGame(playerData);
         Resume();
-        _LevelLoader.LoadLevel(0);
+        _LevelLoader.LoadLevel("Start Menu");
     }
 }

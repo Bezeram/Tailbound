@@ -26,10 +26,10 @@ public class LevelLoader : MonoBehaviour
     public void RespawnPlayer(bool instantDeath)
     {
         Player.Kill(instantDeath);
-        StartCoroutine(_Respawn(instantDeath));
+        StartCoroutine(RespawnCoroutine(instantDeath));
     }
 
-    IEnumerator _Respawn(bool instantDeath)
+    IEnumerator RespawnCoroutine(bool instantDeath)
     {
         Transition.SetTrigger(AnimationTriggerStart);
         
@@ -52,9 +52,9 @@ public class LevelLoader : MonoBehaviour
         
     }
 
-    public void LoadLevel(int level)
+    public void LoadLevel(string level)
     {
-        StartCoroutine(Load_Level(level));
+        StartCoroutine(LoadLevelCoroutine(level));
     }
 
     public void ReloadLevelNoTransition()
@@ -62,17 +62,17 @@ public class LevelLoader : MonoBehaviour
         StartCoroutine(Reload_Level_No_Transition());
     }
 
-    public void FinishLevel(int level)
+    public void FinishLevel(string level)
     {
         StartCoroutine(Finish_Level(level));
     }
 
-    public static void StartLevel(int level)
+    public static void StartLevel(string level)
     {
         UnityEngine.SceneManagement.SceneManager.LoadScene(level);
     }
 
-    IEnumerator Load_Level(int level)
+    IEnumerator LoadLevelCoroutine(string level)
     {
         Transition.SetTrigger(AnimationTriggerStart);
 
@@ -87,7 +87,7 @@ public class LevelLoader : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
     }
 
-    IEnumerator Finish_Level(int level)
+    IEnumerator Finish_Level(string level)
     {
         Transition.SetTrigger(AnimationTriggerStart);
 
