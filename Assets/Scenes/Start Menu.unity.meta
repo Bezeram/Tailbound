@@ -1,10 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/Scenes/Start Menu.unity.meta
-guid: dfee233676e601e47bacd0a49703a01f
-========
-guid: a70e45ddf4fba1f48b7a2ef49f04ba8e
-folderAsset: yes
->>>>>>>> b1b9b25 (added the monkey but still some bugs):Assets/Animations/Monkey/Idle.meta
+guid: bd4c338844947ec42ab5cca91964aeca
 DefaultImporter:
   externalObjects: {}
   userData: 
