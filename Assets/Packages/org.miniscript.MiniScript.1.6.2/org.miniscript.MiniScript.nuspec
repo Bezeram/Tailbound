@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>org.miniscript.MiniScript</id>
+    <version>1.6.2</version>
+    <title>MiniScript</title>
+    <authors>Joe Strout</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <icon>Icon.png</icon>
+    <readme>README.md</readme>
+    <projectUrl>https://miniscript.org/</projectUrl>
+    <description>C# implementation of the MiniScript scripting language</description>
+    <releaseNotes>Please visit https://github.com/JoeStrout/miniscript/blob/master/MiniScript-Release-Notes.txt to read the release notes.</releaseNotes>
+    <copyright>Copyright © 2024 Joe Strout (2024-04-28T17:53:41)</copyright>
+    <tags>miniscript programming language</tags>
+    <repository url="https://github.com/JoeStrout/miniscript" branch="master" commit="e85ec618a6ed11eb04d02a973e42315c19d426d5" />
+    <dependencies>
+      <group targetFramework="net6.0" />
+    </dependencies>
+  </metadata>
+</package>
