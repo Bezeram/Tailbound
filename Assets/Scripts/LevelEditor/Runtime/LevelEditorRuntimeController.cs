@@ -1,0 +1,291 @@
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+/// <summary>
+/// Entry point for the runtime level editor. Bootstraps a Canvas and
+/// EventSystem if the scene doesn't already have one, owns the current
+/// in-memory LevelAsset, and wires the toolbar (New / Save / Load /
+/// + Screen / Delete Screen) to the ScreenCanvasView.
+///
+/// Attach this to a single empty GameObject in the Level Editor scene -
+/// everything else is built at runtime, no prefab required.
+/// </summary>
+public class LevelEditorRuntimeController : MonoBehaviour
+{
+    private const float ToolbarHeight = 44f;
+
+    private LevelAsset _Level;
+    private ScreenCanvasView _CanvasView;
+    private TMP_InputField _NameField;
+    private RectTransform _LoadListContent;
+    private GameObject _LoadPanel;
+
+    private void Awake()
+    {
+        EnsureEventSystem();
+        Canvas canvas = EnsureCanvas();
+
+        // ScreenCanvasView is created first (and so sits behind, in sibling
+        // order) so the toolbar and its Load dropdown - built after, below -
+        // render on top of it instead of being hidden underneath.
+        _CanvasView = ScreenCanvasView.Create(canvas.transform);
+        var canvasRect = (RectTransform)_CanvasView.transform;
+        canvasRect.offsetMax = new Vector2(0, -ToolbarHeight);
+
+        BuildToolbar(canvas.transform);
+
+        NewLevel();
+    }
+
+    private static void EnsureEventSystem()
+    {
+        if (EventSystem.current != null)
+            return;
+
+        // activeInputHandler is "Both" for this project, so the legacy
+        // StandaloneInputModule (no InputActionAsset wiring required) works.
+        new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+    }
+
+    private static Canvas EnsureCanvas()
+    {
+        var existing = FindAnyObjectByType<Canvas>();
+        if (existing != null)
+            return existing;
+
+        var go = new GameObject("LevelEditorCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+
+        var canvas = go.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+        var scaler = go.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+
+        return canvas;
+    }
+
+    // ------------------------------------------------------------------
+    // Toolbar
+    // ------------------------------------------------------------------
+
+    private void BuildToolbar(Transform parent)
+    {
+        var barGO = new GameObject("Toolbar", typeof(RectTransform), typeof(Image));
+        barGO.transform.SetParent(parent, false);
+
+        var barRect = (RectTransform)barGO.transform;
+        barRect.anchorMin = new Vector2(0, 1);
+        barRect.anchorMax = new Vector2(1, 1);
+        barRect.pivot = new Vector2(0, 1);
+        barRect.anchoredPosition = Vector2.zero;
+        barRect.sizeDelta = new Vector2(0, ToolbarHeight);
+        barGO.GetComponent<Image>().color = new Color(0.15f, 0.15f, 0.15f, 1f);
+
+        var layout = barGO.AddComponent<HorizontalLayoutGroup>();
+        layout.padding = new RectOffset(8, 8, 6, 6);
+        layout.spacing = 6;
+        layout.childAlignment = TextAnchor.MiddleLeft;
+        layout.childForceExpandHeight = true;
+        layout.childForceExpandWidth = false;
+
+        _NameField = CreateInputField(barRect, "Level Name", 180);
+        _NameField.text = "New Level";
+
+        CreateButton(barRect, "New", NewLevel, 60);
+        CreateButton(barRect, "Save", SaveLevel, 60);
+        CreateButton(barRect, "Load", ToggleLoadPanel, 60);
+        CreateButton(barRect, "+ Screen", AddScreen, 80);
+        CreateButton(barRect, "Delete Screen", DeleteScreen, 110);
+
+        _LoadPanel = CreateLoadPanel(parent);
+    }
+
+    private static TMP_InputField CreateInputField(Transform parent, string placeholder, float width)
+    {
+        var go = new GameObject("NameField", typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
+        go.transform.SetParent(parent, false);
+        go.AddComponent<LayoutElement>().preferredWidth = width;
+        go.GetComponent<Image>().color = new Color(0.25f, 0.25f, 0.25f, 1f);
+
+        // TMP_InputField expects textViewport to be a distinct child (with its
+        // own RectMask2D), not the input field's own rect - matching Unity's
+        // own TMP_InputField prefab structure here rather than the shortcut
+        // used before, which could make typed input behave unreliably.
+        var viewportGO = new GameObject("Text Area", typeof(RectTransform), typeof(RectMask2D));
+        viewportGO.transform.SetParent(go.transform, false);
+        var viewportRect = (RectTransform)viewportGO.transform;
+        StretchFull(viewportRect, 6);
+
+        var textGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        textGO.transform.SetParent(viewportGO.transform, false);
+        StretchFull((RectTransform)textGO.transform, 0);
+        var text = textGO.GetComponent<TextMeshProUGUI>();
+        text.fontSize = 16;
+        text.color = Color.white;
+        text.enableWordWrapping = false;
+
+        var placeholderGO = new GameObject("Placeholder", typeof(RectTransform), typeof(TextMeshProUGUI));
+        placeholderGO.transform.SetParent(viewportGO.transform, false);
+        StretchFull((RectTransform)placeholderGO.transform, 0);
+        var placeholderText = placeholderGO.GetComponent<TextMeshProUGUI>();
+        placeholderText.text = placeholder;
+        placeholderText.fontSize = 16;
+        placeholderText.fontStyle = FontStyles.Italic;
+        placeholderText.color = new Color(1f, 1f, 1f, 0.4f);
+
+        var field = go.GetComponent<TMP_InputField>();
+        field.textViewport = viewportRect;
+        field.textComponent = text;
+        field.placeholder = placeholderText;
+
+        return field;
+    }
+
+    private static void CreateButton(Transform parent, string label, UnityEngine.Events.UnityAction onClick, float width)
+    {
+        var go = new GameObject(label + " Button", typeof(RectTransform), typeof(Image), typeof(Button));
+        go.transform.SetParent(parent, false);
+
+        var layoutElement = go.AddComponent<LayoutElement>();
+        layoutElement.preferredWidth = width;
+        // Without an explicit preferredHeight, a VerticalLayoutGroup with
+        // childForceExpandHeight = false (the Load list) collapses this
+        // button to zero height - visible label, but nothing clickable.
+        // The toolbar's HorizontalLayoutGroup masks the same gap by force-
+        // expanding height, which is why only the Load list showed this.
+        layoutElement.preferredHeight = 28f;
+
+        go.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 1f);
+        go.GetComponent<Button>().onClick.AddListener(onClick);
+
+        var textGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        textGO.transform.SetParent(go.transform, false);
+        StretchFull((RectTransform)textGO.transform, 4);
+        var text = textGO.GetComponent<TextMeshProUGUI>();
+        text.text = label;
+        text.fontSize = 14;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+        text.raycastTarget = false;
+    }
+
+    private static void CreateLabel(Transform parent, string label)
+    {
+        var go = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(parent, false);
+        var text = go.GetComponent<TextMeshProUGUI>();
+        text.text = label;
+        text.fontSize = 14;
+        text.color = new Color(1f, 1f, 1f, 0.6f);
+    }
+
+    private static void StretchFull(RectTransform rect, float inset)
+    {
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = new Vector2(inset, inset);
+        rect.offsetMax = new Vector2(-inset, -inset);
+    }
+
+    private GameObject CreateLoadPanel(Transform parent)
+    {
+        var go = new GameObject(
+            "LoadPanel", typeof(RectTransform), typeof(Image),
+            typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+        go.transform.SetParent(parent, false);
+
+        var rect = (RectTransform)go.transform;
+        rect.anchorMin = new Vector2(0, 1);
+        rect.anchorMax = new Vector2(0, 1);
+        rect.pivot = new Vector2(0, 1);
+        rect.anchoredPosition = new Vector2(8, -ToolbarHeight - 4);
+        rect.sizeDelta = new Vector2(220, 0);
+        go.GetComponent<Image>().color = new Color(0.18f, 0.18f, 0.18f, 0.97f);
+
+        var layout = go.GetComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(6, 6, 6, 6);
+        layout.spacing = 4;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+
+        go.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        _LoadListContent = rect;
+        go.SetActive(false);
+        return go;
+    }
+
+    private void ToggleLoadPanel()
+    {
+        bool show = !_LoadPanel.activeSelf;
+        _LoadPanel.SetActive(show);
+        if (show)
+            RefreshLoadList();
+    }
+
+    private void RefreshLoadList()
+    {
+        for (int i = _LoadListContent.childCount - 1; i >= 0; i--)
+            Destroy(_LoadListContent.GetChild(i).gameObject);
+
+        var levels = LevelIO.ListLevels();
+        Debug.Log($"[LevelEditor] Found {levels.Count} saved level(s) under {Application.persistentDataPath}/Levels");
+        if (levels.Count == 0)
+        {
+            CreateLabel(_LoadListContent, "No saved levels.");
+            return;
+        }
+
+        foreach (var name in levels)
+        {
+            string captured = name;
+            CreateButton(_LoadListContent, captured, () => LoadLevel(captured), 200);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Actions
+    // ------------------------------------------------------------------
+
+    private void NewLevel()
+    {
+        _Level = new LevelAsset();
+        _CanvasView.SetLevel(_Level);
+    }
+
+    private void SaveLevel()
+    {
+        if (_Level == null)
+        {
+            Debug.LogWarning("[LevelEditor] No level loaded, nothing to save.");
+            return;
+        }
+
+        string name = string.IsNullOrWhiteSpace(_NameField.text) ? "New Level" : _NameField.text.Trim();
+        Debug.Log($"[LevelEditor] Saving as '{name}' ({_Level.Screens.Count} screen(s))...");
+        LevelIO.Save(_Level, name);
+    }
+
+    private void LoadLevel(string name)
+    {
+        Debug.Log($"[LevelEditor] Loading '{name}'...");
+        var loaded = LevelIO.Load(name);
+        if (loaded == null)
+        {
+            Debug.LogWarning($"[LevelEditor] LevelIO.Load('{name}') returned null.");
+            return;
+        }
+
+        Debug.Log($"[LevelEditor] Loaded '{name}' ({loaded.Screens.Count} screen(s)).");
+        _Level = loaded;
+        _NameField.text = name;
+        _CanvasView.SetLevel(_Level);
+        _LoadPanel.SetActive(false);
+    }
+
+    private void AddScreen() => _CanvasView.AddScreen();
+    private void DeleteScreen() => _CanvasView.DeleteSelectedScreen();
+}
