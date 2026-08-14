@@ -21,11 +21,18 @@ public class LevelAsset
     public List<Tileset> UsedTilesets = new();
 
     [SerializeField] private int _LastScreenId = -1;
+    [SerializeField] private int _LastEntityId = -1;
 
     public int NewScreenId()
     {
         _LastScreenId++;
         return _LastScreenId;
+    }
+
+    public int NewEntityId()
+    {
+        _LastEntityId++;
+        return _LastEntityId;
     }
 
     public ScreenDef GetScreen(int id)

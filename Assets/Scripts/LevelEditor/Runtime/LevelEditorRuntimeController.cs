@@ -22,6 +22,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
     private RectTransform _LoadListContent;
     private GameObject _LoadPanel;
     private GameObject _PalettePanel;
+    private GameObject _EntityPalettePanel;
     private TMP_Text _StatusLabel;
 
     private void Awake()
@@ -103,10 +104,51 @@ public class LevelEditorRuntimeController : MonoBehaviour
         CreateButton(barRect, "Delete Screen", DeleteScreen, 110);
         CreateButton(barRect, "Screens Mode", () => SetMode(ScreenCanvasView.InteractionMode.Screens), 110);
         CreateButton(barRect, "Paint Mode", () => SetMode(ScreenCanvasView.InteractionMode.Paint), 100);
+        CreateButton(barRect, "Entities Mode", () => SetMode(ScreenCanvasView.InteractionMode.Entities), 120);
+        CreateButton(barRect, "Delete Entity", DeleteEntity, 110);
+        CreateButton(barRect, "Toggle Snap", ToggleSnapToGrid, 100);
 
         _LoadPanel = CreateLoadPanel(parent);
         _PalettePanel = CreatePalettePanel(parent);
+        _EntityPalettePanel = CreateEntityPalettePanel(parent);
+        CreateStatusPanel(parent);
         UpdateStatusLabel();
+    }
+
+    // Always visible regardless of mode (unlike the two palette panels) -
+    // snap state in particular needs to be readable while placing entities.
+    // Anchored bottom-left: top-left is the Load dropdown's spot and
+    // top-right is the two palette panels', so bottom-left is the one
+    // corner nothing else ever occupies.
+    private void CreateStatusPanel(Transform parent)
+    {
+        var go = new GameObject(
+            "StatusPanel", typeof(RectTransform), typeof(Image),
+            typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+        go.transform.SetParent(parent, false);
+
+        var rect = (RectTransform)go.transform;
+        rect.anchorMin = new Vector2(0, 0);
+        rect.anchorMax = new Vector2(0, 0);
+        rect.pivot = new Vector2(0, 0);
+        rect.anchoredPosition = new Vector2(8, 8);
+        rect.sizeDelta = new Vector2(260, 0);
+        go.GetComponent<Image>().color = new Color(0.18f, 0.18f, 0.18f, 0.97f);
+
+        var layout = go.GetComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(6, 6, 6, 6);
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+
+        go.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        var statusGO = new GameObject("Status", typeof(RectTransform), typeof(TextMeshProUGUI));
+        statusGO.transform.SetParent(go.transform, false);
+        statusGO.AddComponent<LayoutElement>().preferredHeight = 72f;
+        _StatusLabel = statusGO.GetComponent<TextMeshProUGUI>();
+        _StatusLabel.fontSize = 12;
+        _StatusLabel.color = new Color(1f, 1f, 1f, 0.8f);
+        _StatusLabel.enableWordWrapping = true;
     }
 
     private static TMP_InputField CreateInputField(Transform parent, string placeholder, float width)
@@ -275,14 +317,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
 
         go.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        var statusGO = new GameObject("Status", typeof(RectTransform), typeof(TextMeshProUGUI));
-        statusGO.transform.SetParent(go.transform, false);
-        statusGO.AddComponent<LayoutElement>().preferredHeight = 46f;
-        _StatusLabel = statusGO.GetComponent<TextMeshProUGUI>();
-        _StatusLabel.fontSize = 12;
-        _StatusLabel.color = new Color(1f, 1f, 1f, 0.8f);
-        _StatusLabel.enableWordWrapping = true;
-
         var layerRowGO = new GameObject("LayerRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
         layerRowGO.transform.SetParent(go.transform, false);
         layerRowGO.AddComponent<LayoutElement>().preferredHeight = 28f;
@@ -344,6 +378,78 @@ public class LevelEditorRuntimeController : MonoBehaviour
         text.raycastTarget = false;
     }
 
+    private GameObject CreateEntityPalettePanel(Transform parent)
+    {
+        var go = new GameObject(
+            "EntityPalettePanel", typeof(RectTransform), typeof(Image),
+            typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+        go.transform.SetParent(parent, false);
+
+        var rect = (RectTransform)go.transform;
+        rect.anchorMin = new Vector2(1, 1);
+        rect.anchorMax = new Vector2(1, 1);
+        rect.pivot = new Vector2(1, 1);
+        rect.anchoredPosition = new Vector2(-8, -ToolbarHeight - 4);
+        rect.sizeDelta = new Vector2(240, 0);
+        go.GetComponent<Image>().color = new Color(0.18f, 0.18f, 0.18f, 0.97f);
+
+        var layout = go.GetComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(6, 6, 6, 6);
+        layout.spacing = 4;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+
+        go.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        foreach (var def in EntityCatalog.All)
+        {
+            string typeId = def.TypeId;
+            CreateEntityButton(go.transform, def, () => SetActiveEntityType(typeId));
+        }
+
+        if (EntityCatalog.All.Count == 0)
+            CreateLabel(go.transform, "No entity types found. Add an Entity Definition asset under Assets/Resources.");
+
+        go.SetActive(false);
+        return go;
+    }
+
+    private static void CreateEntityButton(Transform parent, EntityDefinition def, UnityEngine.Events.UnityAction onClick)
+    {
+        var go = new GameObject(def.TypeId + " Entity Button", typeof(RectTransform), typeof(Image), typeof(Button));
+        go.transform.SetParent(parent, false);
+        go.AddComponent<LayoutElement>().preferredHeight = 36f;
+        go.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 1f);
+        go.GetComponent<Button>().onClick.AddListener(onClick);
+
+        var iconGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+        iconGO.transform.SetParent(go.transform, false);
+        var iconRect = (RectTransform)iconGO.transform;
+        iconRect.anchorMin = new Vector2(0, 0);
+        iconRect.anchorMax = new Vector2(0, 1);
+        iconRect.pivot = new Vector2(0, 0.5f);
+        iconRect.anchoredPosition = new Vector2(4, 0);
+        iconRect.sizeDelta = new Vector2(28, -6);
+        var icon = iconGO.GetComponent<Image>();
+        icon.sprite = def.Icon;
+        icon.preserveAspect = true;
+        icon.raycastTarget = false;
+
+        var textGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        textGO.transform.SetParent(go.transform, false);
+        var textRect = (RectTransform)textGO.transform;
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(38, 2);
+        textRect.offsetMax = new Vector2(-4, -2);
+        var text = textGO.GetComponent<TextMeshProUGUI>();
+        text.text = string.IsNullOrEmpty(def.DisplayName) ? def.TypeId : def.DisplayName;
+        text.fontSize = 12;
+        text.color = Color.white;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.raycastTarget = false;
+    }
+
     // ------------------------------------------------------------------
     // Actions
     // ------------------------------------------------------------------
@@ -391,6 +497,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
     {
         _CanvasView.SetMode(mode);
         _PalettePanel.SetActive(mode == ScreenCanvasView.InteractionMode.Paint);
+        _EntityPalettePanel.SetActive(mode == ScreenCanvasView.InteractionMode.Entities);
         UpdateStatusLabel();
     }
 
@@ -406,12 +513,28 @@ public class LevelEditorRuntimeController : MonoBehaviour
         UpdateStatusLabel();
     }
 
+    private void SetActiveEntityType(string typeId)
+    {
+        _CanvasView.SetActiveEntityType(typeId);
+        UpdateStatusLabel();
+    }
+
+    private void DeleteEntity() => _CanvasView.DeleteSelectedEntity();
+
+    private void ToggleSnapToGrid()
+    {
+        _CanvasView.SetSnapToGridEnabled(!_CanvasView.SnapToGridEnabled);
+        UpdateStatusLabel();
+    }
+
     private void UpdateStatusLabel()
     {
         if (_StatusLabel == null)
             return;
 
         string tile = string.IsNullOrEmpty(_CanvasView.ActiveTileId) ? "(eraser)" : _CanvasView.ActiveTileId;
-        _StatusLabel.text = $"Mode: {_CanvasView.Mode}\nLayer: {_CanvasView.ActiveLayer}\nTile: {tile}";
+        string entityType = string.IsNullOrEmpty(_CanvasView.ActiveEntityTypeId) ? "(none)" : _CanvasView.ActiveEntityTypeId;
+        string snap = _CanvasView.SnapToGridEnabled ? "ON (hold Ctrl to disable)" : "OFF (hold Ctrl to enable)";
+        _StatusLabel.text = $"Mode: {_CanvasView.Mode}\nLayer: {_CanvasView.ActiveLayer}\nTile: {tile}\nEntity: {entityType}\nSnap: {snap}";
     }
 }

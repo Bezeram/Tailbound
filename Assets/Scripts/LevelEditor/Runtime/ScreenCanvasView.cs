@@ -13,7 +13,7 @@ using UnityEngine.UI;
 /// </summary>
 public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public enum InteractionMode { Screens, Paint }
+    public enum InteractionMode { Screens, Paint, Entities }
     public enum TileLayerKind { Background, Foreground }
 
     public const float HandleSize = 14f;
@@ -26,6 +26,9 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
     public TileLayerKind ActiveLayer { get; private set; } = TileLayerKind.Foreground;
     // Empty string means the eraser is selected.
     public string ActiveTileId { get; private set; } = "";
+    public string ActiveEntityTypeId { get; private set; } = "";
+    public int SelectedEntityId { get; private set; } = -1;
+    public bool SnapToGridEnabled { get; private set; } = true;
 
     private RectTransform _Rect;
     private RectTransform _Content;
@@ -71,6 +74,7 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
     {
         Level = level;
         _SelectedScreenId = -1;
+        SelectedEntityId = -1;
         _Pan = Vector2.zero;
         _Zoom = 1f;
         RebuildScreenViews();
@@ -127,6 +131,31 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
         return ActiveLayer == TileLayerKind.Background ? Level.Background : Level.Foreground;
     }
 
+    public void SetActiveEntityType(string typeId)
+    {
+        ActiveEntityTypeId = typeId ?? "";
+    }
+
+    public void SetSnapToGridEnabled(bool enabled)
+    {
+        SnapToGridEnabled = enabled;
+    }
+
+    public void SelectEntity(int entityId)
+    {
+        SelectedEntityId = entityId;
+    }
+
+    public void DeleteSelectedEntity()
+    {
+        if (Level == null || SelectedEntityId < 0)
+            return;
+
+        Level.Entities.RemoveAll(e => e.Id == SelectedEntityId);
+        SelectedEntityId = -1;
+        RebuildScreenViews();
+    }
+
     /// <summary>
     /// Converts a pointer position into Content-local pixel space. Content
     /// doesn't move during a screen drag (only panning moves it, and that's
@@ -151,6 +180,7 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
         {
             var view = ScreenView.Create(_Content, this, screen.Id);
             view.RefreshTiles();
+            view.RefreshEntities();
             _ScreenViews[screen.Id] = view;
         }
     }

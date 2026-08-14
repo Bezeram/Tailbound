@@ -16,8 +16,9 @@ public class EntityDefinition : SerializedScriptableObject
     public Sprite Icon;
     public string Category;
 
-    [Tooltip("Whether placing this entity type defaults to snapping to the grid.")]
-    public bool DefaultGridSnap;
+    // Grid snapping is a global editor mode (ScreenCanvasView.SnapToGridEnabled,
+    // toggled in the toolbar, Ctrl inverts) rather than a per-type default -
+    // no field here for it.
 
     public List<ComponentSpec> Components = new();
 }

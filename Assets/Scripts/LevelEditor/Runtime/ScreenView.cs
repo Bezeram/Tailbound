@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -22,6 +23,9 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     private TileCellPool _BackgroundTiles;
     private TileCellPool _ForegroundTiles;
+
+    private Transform _EntitiesRoot;
+    private readonly List<EntityMarkerView> _EntityMarkers = new();
 
     private RectInt _DragStartBounds;
     private RectInt _DragPreviewBounds;
@@ -65,6 +69,13 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         SetBottomLeftAnchor((RectTransform)foregroundRoot.transform);
         view._ForegroundTiles = new TileCellPool(foregroundRoot.transform);
 
+        // Entities render above tiles, same bottom-left anchor so they move
+        // with the screen correctly (the same anchor bug fixed for tiles).
+        var entitiesRootGO = new GameObject("Entities", typeof(RectTransform));
+        entitiesRootGO.transform.SetParent(go.transform, false);
+        SetBottomLeftAnchor((RectTransform)entitiesRootGO.transform);
+        view._EntitiesRoot = entitiesRootGO.transform;
+
         var labelGO = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
         labelGO.transform.SetParent(go.transform, false);
         var labelRect = (RectTransform)labelGO.transform;
@@ -92,6 +103,30 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         view._HandleObject = handleGO;
 
         return view;
+    }
+
+    /// <summary>
+    /// Snaps a cell-space position to the bottom-center of whichever cell it
+    /// falls within. Deliberately Floor, not Round: rounding picks whichever
+    /// grid line is numerically closest, which lands on a corner shared by
+    /// 4 cells and flips inconsistently depending on which half of the cell
+    /// was clicked. Floor always resolves to the cell actually clicked in.
+    /// Shared with EntityMarkerView's drag-move snapping.
+    /// </summary>
+    public static Vector2 SnapToCellBottomCenter(Vector2 cellPos)
+    {
+        return new Vector2(Mathf.Floor(cellPos.x) + 0.5f, Mathf.Floor(cellPos.y));
+    }
+
+    /// <summary>
+    /// Grid snapping is a global editor mode, not a per-entity-type default -
+    /// holding Ctrl inverts whatever the toolbar toggle is currently set to,
+    /// for both placement and dragging an existing entity.
+    /// </summary>
+    public static bool IsGridSnapActive(ScreenCanvasView owner)
+    {
+        bool ctrlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        return owner.SnapToGridEnabled ^ ctrlHeld;
     }
 
     private static void SetBottomLeftAnchor(RectTransform rect)
@@ -146,12 +181,34 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         _ForegroundTiles.SetCells(foregroundCells, lookup);
     }
 
+    /// <summary>Structural rebuild of which entity markers exist - call after any placement/deletion, and once after creation.</summary>
+    public void RefreshEntities()
+    {
+        foreach (var marker in _EntityMarkers)
+            if (marker != null)
+                Destroy(marker.gameObject);
+        _EntityMarkers.Clear();
+
+        if (_Owner.Level == null)
+            return;
+
+        foreach (var instance in _Owner.Level.Entities)
+        {
+            if (instance.ScreenId != ScreenId)
+                continue;
+
+            _EntityMarkers.Add(EntityMarkerView.Create(_EntitiesRoot, _Owner, instance));
+        }
+    }
+
     public void OnPointerClick(PointerEventData eventData)
     {
         _Owner.Select(ScreenId);
 
         if (_Owner.Mode == ScreenCanvasView.InteractionMode.Paint)
             PaintAtPointer(eventData);
+        else if (_Owner.Mode == ScreenCanvasView.InteractionMode.Entities)
+            PlaceEntityAtPointer(eventData);
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -162,6 +219,12 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             PaintAtPointer(eventData);
             return;
         }
+
+        // Placement is click-only (one click = one entity); the screen body
+        // itself has no drag behavior in Entities mode - only individual
+        // markers (moving an existing entity) do.
+        if (_Owner.Mode == ScreenCanvasView.InteractionMode.Entities)
+            return;
 
         BeginDrag(eventData, isHandle: false);
     }
@@ -174,6 +237,9 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             return;
         }
 
+        if (_Owner.Mode == ScreenCanvasView.InteractionMode.Entities)
+            return;
+
         Drag(eventData, isHandle: false);
     }
 
@@ -184,6 +250,9 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             _LastPaintedCell = null;
             return;
         }
+
+        if (_Owner.Mode == ScreenCanvasView.InteractionMode.Entities)
+            return;
 
         EndDrag();
     }
@@ -223,6 +292,51 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             cells[cell] = new TileRef(_Owner.ActiveTileId);
 
         RefreshTiles();
+    }
+
+    private void PlaceEntityAtPointer(PointerEventData eventData)
+    {
+        var screen = _Owner.Level?.GetScreen(ScreenId);
+        if (screen == null)
+            return;
+
+        string typeId = _Owner.ActiveEntityTypeId;
+        if (string.IsNullOrEmpty(typeId))
+            return;
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_Rect, eventData.position, null, out Vector2 local))
+            return;
+
+        Vector2 localCellPos = local / _Owner.CellPixelSize;
+
+        bool snap = IsGridSnapActive(_Owner);
+        if (snap)
+        {
+            localCellPos = SnapToCellBottomCenter(localCellPos);
+
+            // Snapping means positions are exact matches, not approximate -
+            // don't stack a second entity on a cell that's already occupied.
+            var existing = _Owner.Level.Entities.Find(
+                e => e.ScreenId == ScreenId && e.LocalPosition == localCellPos);
+            if (existing != null)
+            {
+                _Owner.SelectEntity(existing.Id);
+                return;
+            }
+        }
+
+        var instance = new EntityInstance
+        {
+            Id = _Owner.Level.NewEntityId(),
+            ScreenId = ScreenId,
+            TypeId = typeId,
+            LocalPosition = localCellPos,
+            SnappedToGrid = snap,
+        };
+        _Owner.Level.Entities.Add(instance);
+        _Owner.SelectEntity(instance.Id);
+
+        RefreshEntities();
     }
 
     private void BeginDrag(PointerEventData eventData, bool isHandle)
