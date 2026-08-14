@@ -21,6 +21,8 @@ public class LevelEditorRuntimeController : MonoBehaviour
     private TMP_InputField _NameField;
     private RectTransform _LoadListContent;
     private GameObject _LoadPanel;
+    private GameObject _PalettePanel;
+    private TMP_Text _StatusLabel;
 
     private void Awake()
     {
@@ -99,8 +101,12 @@ public class LevelEditorRuntimeController : MonoBehaviour
         CreateButton(barRect, "Load", ToggleLoadPanel, 60);
         CreateButton(barRect, "+ Screen", AddScreen, 80);
         CreateButton(barRect, "Delete Screen", DeleteScreen, 110);
+        CreateButton(barRect, "Screens Mode", () => SetMode(ScreenCanvasView.InteractionMode.Screens), 110);
+        CreateButton(barRect, "Paint Mode", () => SetMode(ScreenCanvasView.InteractionMode.Paint), 100);
 
         _LoadPanel = CreateLoadPanel(parent);
+        _PalettePanel = CreatePalettePanel(parent);
+        UpdateStatusLabel();
     }
 
     private static TMP_InputField CreateInputField(Transform parent, string placeholder, float width)
@@ -246,6 +252,98 @@ public class LevelEditorRuntimeController : MonoBehaviour
         }
     }
 
+    private GameObject CreatePalettePanel(Transform parent)
+    {
+        var go = new GameObject(
+            "PalettePanel", typeof(RectTransform), typeof(Image),
+            typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+        go.transform.SetParent(parent, false);
+
+        var rect = (RectTransform)go.transform;
+        rect.anchorMin = new Vector2(1, 1);
+        rect.anchorMax = new Vector2(1, 1);
+        rect.pivot = new Vector2(1, 1);
+        rect.anchoredPosition = new Vector2(-8, -ToolbarHeight - 4);
+        rect.sizeDelta = new Vector2(240, 0);
+        go.GetComponent<Image>().color = new Color(0.18f, 0.18f, 0.18f, 0.97f);
+
+        var layout = go.GetComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(6, 6, 6, 6);
+        layout.spacing = 4;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+
+        go.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        var statusGO = new GameObject("Status", typeof(RectTransform), typeof(TextMeshProUGUI));
+        statusGO.transform.SetParent(go.transform, false);
+        statusGO.AddComponent<LayoutElement>().preferredHeight = 46f;
+        _StatusLabel = statusGO.GetComponent<TextMeshProUGUI>();
+        _StatusLabel.fontSize = 12;
+        _StatusLabel.color = new Color(1f, 1f, 1f, 0.8f);
+        _StatusLabel.enableWordWrapping = true;
+
+        var layerRowGO = new GameObject("LayerRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+        layerRowGO.transform.SetParent(go.transform, false);
+        layerRowGO.AddComponent<LayoutElement>().preferredHeight = 28f;
+        var layerRowLayout = layerRowGO.GetComponent<HorizontalLayoutGroup>();
+        layerRowLayout.spacing = 4;
+        layerRowLayout.childForceExpandWidth = true;
+        layerRowLayout.childForceExpandHeight = true;
+        CreateButton(layerRowGO.transform, "Background", () => SetActiveLayer(ScreenCanvasView.TileLayerKind.Background), 110);
+        CreateButton(layerRowGO.transform, "Foreground", () => SetActiveLayer(ScreenCanvasView.TileLayerKind.Foreground), 110);
+
+        CreateButton(go.transform, "Eraser", () => SetActiveTile(""), 200);
+
+        foreach (var tileDef in TileCatalog.All)
+        {
+            string tileId = tileDef.Id;
+            CreateTileButton(go.transform, tileDef, () => SetActiveTile(tileId));
+        }
+
+        if (TileCatalog.All.Count == 0)
+            CreateLabel(go.transform, "No tiles found. Add a Tileset asset under Assets/Resources.");
+
+        go.SetActive(false);
+        return go;
+    }
+
+    private static void CreateTileButton(Transform parent, TileDef tileDef, UnityEngine.Events.UnityAction onClick)
+    {
+        var go = new GameObject(tileDef.Id + " Tile Button", typeof(RectTransform), typeof(Image), typeof(Button));
+        go.transform.SetParent(parent, false);
+        go.AddComponent<LayoutElement>().preferredHeight = 36f;
+        go.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 1f);
+        go.GetComponent<Button>().onClick.AddListener(onClick);
+
+        var iconGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+        iconGO.transform.SetParent(go.transform, false);
+        var iconRect = (RectTransform)iconGO.transform;
+        iconRect.anchorMin = new Vector2(0, 0);
+        iconRect.anchorMax = new Vector2(0, 1);
+        iconRect.pivot = new Vector2(0, 0.5f);
+        iconRect.anchoredPosition = new Vector2(4, 0);
+        iconRect.sizeDelta = new Vector2(28, -6);
+        var icon = iconGO.GetComponent<Image>();
+        icon.sprite = tileDef.Sprite;
+        icon.preserveAspect = true;
+        icon.raycastTarget = false;
+
+        var textGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        textGO.transform.SetParent(go.transform, false);
+        var textRect = (RectTransform)textGO.transform;
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(38, 2);
+        textRect.offsetMax = new Vector2(-4, -2);
+        var text = textGO.GetComponent<TextMeshProUGUI>();
+        text.text = string.IsNullOrEmpty(tileDef.DisplayName) ? tileDef.Id : tileDef.DisplayName;
+        text.fontSize = 12;
+        text.color = Color.white;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.raycastTarget = false;
+    }
+
     // ------------------------------------------------------------------
     // Actions
     // ------------------------------------------------------------------
@@ -288,4 +386,32 @@ public class LevelEditorRuntimeController : MonoBehaviour
 
     private void AddScreen() => _CanvasView.AddScreen();
     private void DeleteScreen() => _CanvasView.DeleteSelectedScreen();
+
+    private void SetMode(ScreenCanvasView.InteractionMode mode)
+    {
+        _CanvasView.SetMode(mode);
+        _PalettePanel.SetActive(mode == ScreenCanvasView.InteractionMode.Paint);
+        UpdateStatusLabel();
+    }
+
+    private void SetActiveLayer(ScreenCanvasView.TileLayerKind layer)
+    {
+        _CanvasView.SetActiveLayer(layer);
+        UpdateStatusLabel();
+    }
+
+    private void SetActiveTile(string tileId)
+    {
+        _CanvasView.SetActiveTile(tileId);
+        UpdateStatusLabel();
+    }
+
+    private void UpdateStatusLabel()
+    {
+        if (_StatusLabel == null)
+            return;
+
+        string tile = string.IsNullOrEmpty(_CanvasView.ActiveTileId) ? "(eraser)" : _CanvasView.ActiveTileId;
+        _StatusLabel.text = $"Mode: {_CanvasView.Mode}\nLayer: {_CanvasView.ActiveLayer}\nTile: {tile}";
+    }
 }

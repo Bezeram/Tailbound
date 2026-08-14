@@ -22,9 +22,9 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   Tiles:
-  - Id: 
-    DisplayName: 
-    Sprite: {fileID: 0}
+  - Id: 1
+    DisplayName: Default Brick
+    Sprite: {fileID: -8255023528785730161, guid: 99a0526665290c14ab8e007005c34f1e, type: 3}
     RuleTile: {fileID: 0}
-    CollisionType: 2
+    CollisionType: 1
     Category: 

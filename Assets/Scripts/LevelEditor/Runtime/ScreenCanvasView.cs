@@ -13,11 +13,19 @@ using UnityEngine.UI;
 /// </summary>
 public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
+    public enum InteractionMode { Screens, Paint }
+    public enum TileLayerKind { Background, Foreground }
+
     public const float HandleSize = 14f;
     private const float BaseCellPixelSize = 24f;
 
     public LevelAsset Level { get; private set; }
     public float CellPixelSize => BaseCellPixelSize * _Zoom;
+
+    public InteractionMode Mode { get; private set; } = InteractionMode.Screens;
+    public TileLayerKind ActiveLayer { get; private set; } = TileLayerKind.Foreground;
+    // Empty string means the eraser is selected.
+    public string ActiveTileId { get; private set; } = "";
 
     private RectTransform _Rect;
     private RectTransform _Content;
@@ -99,6 +107,26 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
         _SelectedScreenId = screenId;
     }
 
+    public void SetMode(InteractionMode mode)
+    {
+        Mode = mode;
+    }
+
+    public void SetActiveLayer(TileLayerKind layer)
+    {
+        ActiveLayer = layer;
+    }
+
+    public void SetActiveTile(string tileId)
+    {
+        ActiveTileId = tileId ?? "";
+    }
+
+    public TileLayer GetActiveTileLayer()
+    {
+        return ActiveLayer == TileLayerKind.Background ? Level.Background : Level.Foreground;
+    }
+
     /// <summary>
     /// Converts a pointer position into Content-local pixel space. Content
     /// doesn't move during a screen drag (only panning moves it, and that's
@@ -120,7 +148,11 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
             return;
 
         foreach (var screen in Level.Screens)
-            _ScreenViews[screen.Id] = ScreenView.Create(_Content, this, screen.Id);
+        {
+            var view = ScreenView.Create(_Content, this, screen.Id);
+            view.RefreshTiles();
+            _ScreenViews[screen.Id] = view;
+        }
     }
 
     private void Update()
@@ -132,7 +164,10 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
             foreach (var screen in Level.Screens)
             {
                 if (_ScreenViews.TryGetValue(screen.Id, out var view))
+                {
                     view.UpdateVisual(screen, screen.Id == _SelectedScreenId, CellPixelSize);
+                    view.RepositionTiles(CellPixelSize);
+                }
             }
         }
 
