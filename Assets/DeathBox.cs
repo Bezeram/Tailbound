@@ -12,16 +12,37 @@ public class DeathBox : MonoBehaviour
     
     [TitleGroup("Input")] public float ColliderMargin = 0.2f;
 
-    void OnValidate()
+    /// <summary>
+    /// Caches references and sizes the death collider from the parent
+    /// ScreenBox's Size - previously only done in OnValidate, which never
+    /// runs in a build. Called from Awake() and from LevelInstantiator once
+    /// a runtime-built screen's Size is finalized.
+    /// </summary>
+    public void RuntimeInit()
     {
         _ParentScreen = transform.parent.GetComponent<ScreenBox>();
         _PlayerController = FindAnyObjectByType<PlayerController>();
         _DeathCollider = GetComponent<BoxCollider2D>();
 
         if (_ParentScreen == null)
+        {
             Debug.LogError("DeathBox is not a direct child of a ScreenBox!", context: this);
+            return;
+        }
+
+        UpdateDeathCollider();
     }
-    
+
+    void Awake()
+    {
+        RuntimeInit();
+    }
+
+    void OnValidate()
+    {
+        RuntimeInit();
+    }
+
     void UpdateDeathCollider()
     {
         _DeathCollider.offset = _ParentScreen.Size / 2;

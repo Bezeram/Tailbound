@@ -20,5 +20,9 @@ public class EntityDefinition : SerializedScriptableObject
     // toggled in the toolbar, Ctrl inverts) rather than a per-type default -
     // no field here for it.
 
+    [Tooltip("Marks this type as a spawn point for save-validation (every screen needs at least one) " +
+             "and for LevelInstantiator, which places the Player/Camera at the start screen's spawn point.")]
+    public bool IsSpawnPoint;
+
     public List<ComponentSpec> Components = new();
 }

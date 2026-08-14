@@ -515,13 +515,12 @@ namespace TarodevController
 
         void ApplyMovement() => _RigidBody.linearVelocity = _FrameVelocity;
 
-#if UNITY_EDITOR
-        private void OnValidate()
+        // Was previously only assigned in the #if UNITY_EDITOR OnValidate()
+        // below, which is stripped from builds entirely - none of these
+        // fields were ever set outside the Editor. Called from Awake() so
+        // a runtime-instantiated Player (e.g. via LevelInstantiator) works.
+        private void CacheReferences()
         {
-            if (Stats == null) 
-                Debug.LogWarning("Please assign a ScriptableStats asset to the Player Controller's Stats slot", this);
-
-            // Find sprite
             _SpriteRenderer = transform.Find("Visual").Find("Sprite").GetComponent<SpriteRenderer>();
             _RigidBody = GetComponent<Rigidbody2D>();
             _Collider = GetComponent<BoxCollider2D>();
@@ -530,6 +529,20 @@ namespace TarodevController
             _TrailRenderer = GetComponentInChildren<TrailRenderer>();
 
             _CachedQueryStartInColliders = Physics2D.queriesStartInColliders;
+        }
+
+        private void Awake()
+        {
+            CacheReferences();
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (Stats == null)
+                Debug.LogWarning("Please assign a ScriptableStats asset to the Player Controller's Stats slot", this);
+
+            CacheReferences();
         }
 #endif
     }

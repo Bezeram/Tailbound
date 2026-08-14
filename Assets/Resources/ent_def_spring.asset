@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fc6743ade18e5894fb0cee226bed6e48, type: 3}
-  m_Name: EntityDefinition_Player
+  m_Name: ent_def_spring
   m_EditorClassIdentifier: Assembly-CSharp::EntityDefinition
   serializationData:
     SerializedFormat: 2
@@ -21,11 +21,11 @@ MonoBehaviour:
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes: []
-  TypeId: 2
-  DisplayName: Player
-  Icon: {fileID: 4723107735738678597, guid: 871014c995a28014e85a409dc4867ff6, type: 3}
-  Category: 
-  DefaultGridSnap: 1
+  TypeId: 1
+  DisplayName: Spring
+  Icon: {fileID: 21300000, guid: c6ccb2a120855754fb775247df6c057a, type: 3}
+  Category: spring
   Components:
-  - Kind: 1
+  - Kind: 0
     ComponentTypeId: 1
+    Prefab: {fileID: 8531318960523940455, guid: 4d1936d9f8566bd4491f1295991fd752, type: 3}

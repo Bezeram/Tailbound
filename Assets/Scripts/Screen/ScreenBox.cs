@@ -31,19 +31,34 @@ public class ScreenBox : MonoBehaviour
         CurrentSpawnPoint = FirstSpawnPoint;
     }
 
-    void OnValidate()
+    /// <summary>
+    /// Caches _LevelManager, sizes the transition collider from Size, and
+    /// picks a FirstSpawnPoint if none is set - previously only done in
+    /// OnValidate, which never runs in a build. Called from Awake() (so
+    /// hand-placed screens work in a real build too) and from LevelInstantiator
+    /// once a runtime-built screen's Size/content are finalized.
+    /// </summary>
+    public void RuntimeInit()
     {
         _LevelManager = FindAnyObjectByType<LevelManager>();
-        
-        // Setup collider
+
         _TransitionCollider = GetComponent<BoxCollider2D>();
         _TransitionCollider.offset = Size / 2;
         _TransitionCollider.size = Size;
-        
-        // If no spawn point has been set, automatically choose one.
+
         _SpawnPoints = GetComponentsInChildren<SpawnPoint>();
         if (_SpawnPoints.Length != 0)
             FirstSpawnPoint = _SpawnPoints[0];
+    }
+
+    void Awake()
+    {
+        RuntimeInit();
+    }
+
+    void OnValidate()
+    {
+        RuntimeInit();
     }
 
     void OnTriggerEnter2D(Collider2D collision)

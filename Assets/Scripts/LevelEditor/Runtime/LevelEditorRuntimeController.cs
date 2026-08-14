@@ -1,3 +1,4 @@
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -468,9 +469,38 @@ public class LevelEditorRuntimeController : MonoBehaviour
             return;
         }
 
+        if (!AllScreensHaveSpawnPoint(out int missingScreenId))
+        {
+            Debug.LogError(
+                $"[LevelEditor] Save blocked: Screen {missingScreenId} has no spawn point entity. " +
+                "Place one (an entity type with IsSpawnPoint checked) before saving.");
+            return;
+        }
+
         string name = string.IsNullOrWhiteSpace(_NameField.text) ? "New Level" : _NameField.text.Trim();
         Debug.Log($"[LevelEditor] Saving as '{name}' ({_Level.Screens.Count} screen(s))...");
         LevelIO.Save(_Level, name);
+    }
+
+    /// <summary>True if every screen has at least one entity whose type is marked IsSpawnPoint.</summary>
+    private bool AllScreensHaveSpawnPoint(out int missingScreenId)
+    {
+        foreach (var screen in _Level.Screens)
+        {
+            bool hasSpawnPoint = _Level.Entities.Any(e =>
+                e.ScreenId == screen.Id
+                && EntityCatalog.Lookup.TryGetValue(e.TypeId, out var def)
+                && def.IsSpawnPoint);
+
+            if (!hasSpawnPoint)
+            {
+                missingScreenId = screen.Id;
+                return false;
+            }
+        }
+
+        missingScreenId = -1;
+        return true;
     }
 
     private void LoadLevel(string name)

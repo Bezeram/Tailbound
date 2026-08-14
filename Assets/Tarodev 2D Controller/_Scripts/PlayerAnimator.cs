@@ -52,11 +52,25 @@ namespace TarodevController
 
         private bool _IsRunning;
 
-        void OnValidate()
+        // Was previously only assigned in OnValidate(), which never runs in
+        // a build. OnEnable() below (which subscribes to _PlayerController's
+        // events) runs right after Awake() on this same object, so Awake()
+        // is early enough.
+        private void CacheReferences()
         {
             _AudioSource = GetComponent<AudioSource>();
             _PlayerController = GetComponentInParent<PlayerController>();
             _Swing = GetComponentInParent<Swing>();
+        }
+
+        void Awake()
+        {
+            CacheReferences();
+        }
+
+        void OnValidate()
+        {
+            CacheReferences();
         }
 
         void OnEnable()

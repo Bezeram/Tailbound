@@ -12,6 +12,18 @@ public class LevelManager : MonoBehaviour
 
     [SerializeField] private ScreenBox _StartScreen;
     [SerializeField] private bool _UseSaveFile = true;
+
+    /// <summary>
+    /// Lets LevelInstantiator supply a start screen for a runtime-built
+    /// level, since there's no scene GameObject to drag into the Inspector
+    /// field ahead of time. Must be called from another component's Awake()
+    /// (not Start()) to be in place before this component's own Start() runs
+    /// - Unity guarantees every Awake() completes before any Start() does.
+    /// </summary>
+    public void SetStartScreen(ScreenBox screen)
+    {
+        _StartScreen = screen;
+    }
     
     // Store IDs to banana positions.
     private readonly List<int> _CollectedBananas = new();
@@ -51,12 +63,23 @@ public class LevelManager : MonoBehaviour
     private Vector3 _TransitionNextCameraPosition;
     private int _TransitionLastScreenID;
 
-    void OnValidate()
+    // Was previously only done in OnValidate(), which never runs in a build
+    // and can't see a Player/Camera that a LevelInstantiator creates at
+    // runtime anyway (it doesn't exist yet when OnValidate could have run
+    // in the Editor). Called again at the top of Start(), which is safe
+    // regardless of Awake() ordering between this and LevelInstantiator -
+    // Unity runs every object's Awake() before any object's Start().
+    void CacheReferences()
     {
         _LevelLoader = FindAnyObjectByType<LevelLoader>();
         _CameraFollow  = FindAnyObjectByType<CameraFollow>();
         _MainCamera = GameObject.FindGameObjectWithTag("MainCamera");
         _PlayerController = FindAnyObjectByType<PlayerController>();
+    }
+
+    void OnValidate()
+    {
+        CacheReferences();
 
         if (BananaChannel == null)
             Debug.LogWarning("Assign a banana channel for the Scene Manager!", context: this);
@@ -66,6 +89,8 @@ public class LevelManager : MonoBehaviour
 
     void Start()
     {
+        CacheReferences();
+
         // Load objects
         _Screens = FindObjectsByType<ScreenBox>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
         _Bananas = FindObjectsByType<CollectableBanana>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
