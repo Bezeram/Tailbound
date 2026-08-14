@@ -28,3 +28,9 @@ MonoBehaviour:
     RuleTile: {fileID: 0}
     CollisionType: 1
     Category: 
+  - Id: 2
+    DisplayName: Default Brick (TileRule)
+    Sprite: {fileID: -8255023528785730161, guid: 99a0526665290c14ab8e007005c34f1e, type: 3}
+    RuleTile: {fileID: 11400000, guid: 3080f8d07ad28e14594c477b8e4e5010, type: 2}
+    CollisionType: 1
+    Category: 
