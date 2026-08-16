@@ -49,8 +49,8 @@ public class LevelInstantiator : MonoBehaviour
 
         // Keyed by TileDef.Id + whether it's on the collidable layer, since
         // the same tile could paint into either layer with a different
-        // resulting Tile.colliderType.
-        var tileCache = new Dictionary<string, Tile>();
+        // resulting collider setup.
+        var tileCache = new Dictionary<string, TileBase>();
         ScreenBox firstScreen = null;
 
         foreach (var screenDef in level.Screens)
@@ -68,7 +68,7 @@ public class LevelInstantiator : MonoBehaviour
             BuildPlayerAndCamera(firstScreen);
     }
 
-    private ScreenBox BuildScreen(LevelAsset level, ScreenDef screenDef, Dictionary<string, Tile> tileCache)
+    private ScreenBox BuildScreen(LevelAsset level, ScreenDef screenDef, Dictionary<string, TileBase> tileCache)
     {
         float cellSize = level.Grid.CellSize;
 
@@ -90,7 +90,7 @@ public class LevelInstantiator : MonoBehaviour
         for (int i = content.childCount - 1; i >= 0; i--)
             DestroyImmediate(content.GetChild(i).gameObject);
 
-        BuildTiles(content, level, screenDef, cellSize, tileCache);
+        screenBox.TilesRoot = BuildTiles(level, screenDef, cellSize, tileCache);
         BuildEntities(content, level, screenDef, cellSize);
 
         // Awake() already ran once for both of these, synchronously during
@@ -109,20 +109,20 @@ public class LevelInstantiator : MonoBehaviour
     /// <summary>
     /// Instantiates _TilesPrefab (Grid root with pre-authored "Background"/
     /// "Foreground" Tilemap children, Foreground already carrying its
-    /// TilemapCollider2D/CompositeCollider2D/Rigidbody2D) rather than
-    /// building the Grid/Tilemap hierarchy from AddComponent calls -
-    /// procedurally constructing it left the Tilemaps without a valid
-    /// enabled Grid (Unity's own Tilemap inspector warning, tiles painted
-    /// but nothing rendered), whatever the construction order. Reusing an
-    /// Editor-authored prefab is the same fix already applied to
-    /// ScreenPrefab, for the same reason: Unity's own tooling guarantees
-    /// the result is valid in a way hand-built-at-runtime doesn't.
+    /// TilemapCollider2D/CompositeCollider2D/Rigidbody2D) as a scene-root
+    /// sibling of the Screen, never a child of it - confirmed by testing
+    /// that Grid/Tilemap GameObjects nested under Screen never get a
+    /// working Grid, regardless of prefab vs. procedural construction or
+    /// construction order. Since it's no longer parented under the screen,
+    /// its world position has to be set explicitly to match the screen's
+    /// origin instead of inheriting it.
     /// </summary>
-    private void BuildTiles(Transform content, LevelAsset level, ScreenDef screenDef, float cellSize, Dictionary<string, Tile> tileCache)
+    private GameObject BuildTiles(LevelAsset level, ScreenDef screenDef, float cellSize, Dictionary<string, TileBase> tileCache)
     {
-        var gridGO = Instantiate(_TilesPrefab, content, false);
-        gridGO.name = "Tiles";
-
+        var gridGO = Instantiate(_TilesPrefab);
+        gridGO.name = $"Tiles_Screen_{screenDef.Id}";
+        gridGO.transform.position = new Vector3(screenDef.Origin.x, screenDef.Origin.y, 0f) * cellSize;
+        
         var grid = gridGO.GetComponent<Grid>();
         if (grid != null)
             grid.cellSize = new Vector3(cellSize, cellSize, 1f);
@@ -135,15 +135,17 @@ public class LevelInstantiator : MonoBehaviour
         if (backgroundTilemap == null || foregroundTilemap == null)
         {
             Debug.LogError("[LevelInstantiator] TilesPrefab must have \"Background\" and \"Foreground\" children, each with a Tilemap component.");
-            return;
+            return gridGO;
         }
 
         PaintTilemap(backgroundTilemap, level.Background, screenDef, tileCache, collidable: false);
         PaintTilemap(foregroundTilemap, level.Foreground, screenDef, tileCache, collidable: true);
+        
+        return gridGO;
     }
 
     private void PaintTilemap(
-        Tilemap tilemap, TileLayer layer, ScreenDef screenDef, Dictionary<string, Tile> tileCache, bool collidable)
+        Tilemap tilemap, TileLayer layer, ScreenDef screenDef, Dictionary<string, TileBase> tileCache, bool collidable)
     {
         // Only Foreground is collidable, via whatever collider setup is
         // already on the prefab's Foreground child - and only its
@@ -159,22 +161,40 @@ public class LevelInstantiator : MonoBehaviour
             if (!TileCatalog.Lookup.TryGetValue(pair.Value.TileId, out var def))
                 continue;
 
-            Tile tile = GetOrCreateRuntimeTile(tileCache, def, collidable);
+            TileBase tile = GetOrCreateRuntimeTile(tileCache, def, collidable);
             tilemap.SetTile(new Vector3Int(pair.Key.x, pair.Key.y, 0), tile);
         }
     }
 
-    private static Tile GetOrCreateRuntimeTile(Dictionary<string, Tile> cache, TileDef def, bool collidable)
+    /// <summary>
+    /// A RuleTile is used directly as the tile object - a real Tilemap
+    /// evaluates its neighbor rules natively and continuously (including
+    /// re-evaluating as surrounding tiles change), so there's nothing to
+    /// resolve here ourselves. This previously always built a plain Tile
+    /// from TileDef.Sprite regardless, which is null for TileDefs authored
+    /// with only a RuleTile (a normal way to set one up) - genuinely
+    /// invisible tiles, unrelated to the Grid-hierarchy question.
+    /// </summary>
+    private static TileBase GetOrCreateRuntimeTile(Dictionary<string, TileBase> cache, TileDef def, bool collidable)
     {
         string key = def.Id + (collidable ? "#fg" : "#bg");
         if (cache.TryGetValue(key, out var existing))
             return existing;
 
-        var tile = ScriptableObject.CreateInstance<Tile>();
-        tile.sprite = def.Sprite;
-        tile.colliderType = collidable && def.CollisionType == TileCollisionType.Solid
-            ? Tile.ColliderType.Grid
-            : Tile.ColliderType.None;
+        TileBase tile;
+        if (def.RuleTile != null)
+        {
+            tile = def.RuleTile;
+        }
+        else
+        {
+            var plainTile = ScriptableObject.CreateInstance<Tile>();
+            plainTile.sprite = def.Sprite;
+            plainTile.colliderType = collidable && def.CollisionType == TileCollisionType.Solid
+                ? Tile.ColliderType.Grid
+                : Tile.ColliderType.None;
+            tile = plainTile;
+        }
 
         cache[key] = tile;
         return tile;

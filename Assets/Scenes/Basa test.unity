@@ -148,10 +148,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 266e92505f154481990ab918a32d6f43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PauseMenuUI: {fileID: 0}
+  PauseMenuUI: {fileID: 7251646758420309351, guid: 67631e27d55682e48b75bb9f34af2c6d, type: 3}
   BananaChannel: {fileID: 11400000, guid: cd599e7fa6c2c4b4680109d053d75af1, type: 2}
   _StartScreen: {fileID: 0}
-  _UseSaveFile: 1
+  _UseSaveFile: 0
   _Screens: []
   _Bananas: []
   _SpawnPoints: []
@@ -360,6 +360,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelInstantiator
   _ScreenPrefab: {fileID: 1124571987455681906, guid: cdbc1b772e26af54a8e439bdea56fe5f, type: 3}
+  _TilesPrefab: {fileID: 7860622440041588904, guid: 39c90c565fec58a4b8fd3cb2e40b4154, type: 3}
   _PlayerPrefab: {fileID: 1544650614272011804, guid: 88097b566ad1fdd489d7ee77465b57aa, type: 3}
   _CameraPrefab: {fileID: 3081117881214174500, guid: 70c7d9ca6bb16344e8c4231e538f6cdf, type: 3}
   _LevelName: New Level

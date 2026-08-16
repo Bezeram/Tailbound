@@ -12,18 +12,27 @@ public class ScreenBox : MonoBehaviour
     [TitleGroup("Info"), ReadOnly, SerializeField] private SpawnPoint[] _SpawnPoints;
 
     public int ID = -1;
-    
+
+    [Tooltip("Set by LevelInstantiator - the screen's Grid/Tilemap root, which must live " +
+             "at the scene root rather than nested under this screen (Tilemap GameObjects " +
+             "don't get a working Grid when nested), so it isn't covered by ToggleScreenContent " +
+             "the way Content/DeathBox are unless wired up explicitly here.")]
+    public GameObject TilesRoot;
+
     public Vector3 Center => transform.position + new Vector3(Size.x * 0.5f, Size.y * 0.5f, 0f);
     public Vector3 CurrentSpawnPosition => CurrentSpawnPoint.transform.position;
     public Vector3 BottomLeft => transform.position;
 
     private BoxCollider2D _TransitionCollider;
     private LevelManager _LevelManager;
-    
+
     public void ToggleScreenContent(bool active)
     {
         transform.Find("Content").gameObject.SetActive(active);
         transform.Find("DeathBox").gameObject.SetActive(active);
+
+        if (TilesRoot != null)
+            TilesRoot.SetActive(active);
     }
 
     void OnEnable()
@@ -48,7 +57,10 @@ public class ScreenBox : MonoBehaviour
 
         _SpawnPoints = GetComponentsInChildren<SpawnPoint>();
         if (_SpawnPoints.Length != 0)
+        {
             FirstSpawnPoint = _SpawnPoints[0];
+            CurrentSpawnPoint = _SpawnPoints[0];
+        }
     }
 
     void Awake()
