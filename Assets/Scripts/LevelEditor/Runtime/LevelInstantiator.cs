@@ -137,6 +137,10 @@ public class LevelInstantiator : MonoBehaviour
             Debug.LogError("[LevelInstantiator] TilesPrefab must have \"Background\" and \"Foreground\" children, each with a Tilemap component.");
             return gridGO;
         }
+        
+        // Set layer for actual collisions
+        int solidGroundLayer = LayerMask.NameToLayer("SolidGround");
+        foregroundTilemap.gameObject.layer = solidGroundLayer;
 
         PaintTilemap(backgroundTilemap, level.Background, screenDef, tileCache, collidable: false);
         PaintTilemap(foregroundTilemap, level.Foreground, screenDef, tileCache, collidable: true);
