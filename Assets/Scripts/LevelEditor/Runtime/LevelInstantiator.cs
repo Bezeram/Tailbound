@@ -20,6 +20,7 @@ public class LevelInstantiator : MonoBehaviour
     [SerializeField] private GameObject _PlayerPrefab;
     [SerializeField] private GameObject _CameraPrefab;
     [SerializeField] private string _LevelName;
+    [SerializeField] private Tile _Tile;
 
     private void Awake()
     {
@@ -120,7 +121,8 @@ public class LevelInstantiator : MonoBehaviour
     /// </summary>
     private void BuildTiles(Transform content, LevelAsset level, ScreenDef screenDef, float cellSize, Dictionary<string, Tile> tileCache)
     {
-        var gridGO = Instantiate(_TilesPrefab, content, false);
+        //var gridGO = Instantiate(_TilesPrefab, content, false);
+        var gridGO = Instantiate(_TilesPrefab);
         gridGO.name = "Tiles";
 
         var grid = gridGO.GetComponent<Grid>();
@@ -137,6 +139,8 @@ public class LevelInstantiator : MonoBehaviour
             Debug.LogError("[LevelInstantiator] TilesPrefab must have \"Background\" and \"Foreground\" children, each with a Tilemap component.");
             return;
         }
+        
+        //foregroundTilemap.SetTile(new Vector3Int(0, 0, 0), _Tile);
 
         PaintTilemap(backgroundTilemap, level.Background, screenDef, tileCache, collidable: false);
         PaintTilemap(foregroundTilemap, level.Foreground, screenDef, tileCache, collidable: true);
