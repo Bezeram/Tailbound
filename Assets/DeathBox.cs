@@ -8,7 +8,7 @@ public class DeathBox : MonoBehaviour
     private ScreenBox _ParentScreen;
     private LevelLoader _LevelLoader;
     private BoxCollider2D _DeathCollider;
-    private PlayerController _PlayerController;
+    [SerializeField] private PlayerController _PlayerController;
     
     [TitleGroup("Input")] public float ColliderMargin = 0.2f;
 

@@ -66,6 +66,16 @@ public class LevelInstantiator : MonoBehaviour
 
         if (firstScreen != null)
             BuildPlayerAndCamera(firstScreen);
+
+        // DeathBox resolves its PlayerController via FindAnyObjectByType in
+        // its own RuntimeInit - already called once per screen above (both
+        // from its Awake(), firing mid-Instantiate, and explicitly at the
+        // end of BuildScreen), but the Player doesn't exist yet at either of
+        // those points: it's created above, after every screen, since it
+        // needs a screen's spawn point to know where to go. Re-run now that
+        // the Player actually exists.
+        foreach (var deathBox in FindObjectsByType<DeathBox>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            deathBox.RuntimeInit();
     }
 
     private ScreenBox BuildScreen(LevelAsset level, ScreenDef screenDef, Dictionary<string, TileBase> tileCache)
