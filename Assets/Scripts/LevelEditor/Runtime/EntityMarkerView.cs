@@ -61,7 +61,9 @@ public class EntityMarkerView : MonoBehaviour, IPointerClickHandler, IBeginDragH
     {
         float cellPixelSize = _Owner.CellPixelSize;
         _Rect.anchoredPosition = _Instance.LocalPosition * cellPixelSize;
-        _Rect.sizeDelta = new Vector2(cellPixelSize * 0.8f, cellPixelSize * 0.8f);
+        // Same size as a tile (TileCellPool), not shrunk - a marker should
+        // render at 1:1 with the grid, same as the tile it's placed on.
+        _Rect.sizeDelta = new Vector2(cellPixelSize, cellPixelSize);
 
         // Only raycastable while in Entities mode, so a marker never
         // intercepts clicks meant for painting or dragging a screen in the
@@ -101,7 +103,7 @@ public class EntityMarkerView : MonoBehaviour, IPointerClickHandler, IBeginDragH
 
         bool snap = ScreenView.IsGridSnapActive(_Owner);
         if (snap)
-            newPosition = ScreenView.SnapToCellBottomCenter(newPosition);
+            newPosition = ScreenView.SnapToCellOrigin(newPosition);
 
         _Instance.LocalPosition = newPosition;
         _Instance.SnappedToGrid = snap;

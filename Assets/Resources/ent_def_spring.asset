@@ -23,7 +23,8 @@ MonoBehaviour:
     SerializationNodes: []
   TypeId: 1
   DisplayName: Spring
-  Icon: {fileID: 21300000, guid: c6ccb2a120855754fb775247df6c057a, type: 3}
+  Icon: {fileID: 21300000, guid: 136dad9c24435c24ba7bdaedbf91c269, type: 3}
   Category: spring
+  IsSpawnPoint: 0
   Backing: 0
   Prefab: {fileID: 8531318960523940455, guid: 4d1936d9f8566bd4491f1295991fd752, type: 3}

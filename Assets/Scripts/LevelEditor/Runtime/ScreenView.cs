@@ -106,16 +106,20 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
     }
 
     /// <summary>
-    /// Snaps a cell-space position to the bottom-center of whichever cell it
-    /// falls within. Deliberately Floor, not Round: rounding picks whichever
-    /// grid line is numerically closest, which lands on a corner shared by
-    /// 4 cells and flips inconsistently depending on which half of the cell
+    /// Snaps a cell-space position to the bottom-left origin of whichever
+    /// cell it falls within - the same convention TileCellPool positions
+    /// tiles with (integer cell coordinate = that cell's bottom-left
+    /// corner), so a snapped entity with a bottom-left-pivoted sprite lands
+    /// exactly on the tile beneath it instead of a half-cell off to the
+    /// side. Deliberately Floor, not Round: rounding picks whichever grid
+    /// line is numerically closest, which lands on a corner shared by 4
+    /// cells and flips inconsistently depending on which half of the cell
     /// was clicked. Floor always resolves to the cell actually clicked in.
     /// Shared with EntityMarkerView's drag-move snapping.
     /// </summary>
-    public static Vector2 SnapToCellBottomCenter(Vector2 cellPos)
+    public static Vector2 SnapToCellOrigin(Vector2 cellPos)
     {
-        return new Vector2(Mathf.Floor(cellPos.x) + 0.5f, Mathf.Floor(cellPos.y));
+        return new Vector2(Mathf.Floor(cellPos.x), Mathf.Floor(cellPos.y));
     }
 
     /// <summary>
@@ -312,7 +316,7 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         bool snap = IsGridSnapActive(_Owner);
         if (snap)
         {
-            localCellPos = SnapToCellBottomCenter(localCellPos);
+            localCellPos = SnapToCellOrigin(localCellPos);
 
             // Snapping means positions are exact matches, not approximate -
             // don't stack a second entity on a cell that's already occupied.
