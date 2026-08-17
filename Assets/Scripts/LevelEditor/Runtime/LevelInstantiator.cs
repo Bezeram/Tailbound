@@ -270,10 +270,13 @@ public class LevelInstantiator : MonoBehaviour
                 break;
 
             case EntityBackingKind.ScriptBehavior:
-                Debug.LogWarning(
-                    $"[LevelInstantiator] ScriptBehavior entities aren't implemented yet (MiniScript isn't started) - " +
-                    $"skipping '{def.TypeId}' (instance {instance.Id}).");
-                return;
+                if (def.Script == null)
+                {
+                    Debug.LogWarning($"[LevelInstantiator] EntityDefinition '{def.TypeId}' has no Script assigned, skipping.");
+                    return;
+                }
+                root = new GameObject(def.TypeId);
+                break;
 
             default:
                 Debug.LogWarning($"[LevelInstantiator] Unknown EntityBackingKind for '{def.TypeId}', skipping.");
@@ -281,21 +284,29 @@ public class LevelInstantiator : MonoBehaviour
         }
 
         // Parented (and positioned) before applying property overrides, same
-        // reasoning as the Tilemap ordering above - keeps any adapter that
-        // reads the hierarchy or world position at Awake-time correct too.
+        // reasoning as the Tilemap ordering above - keeps any adapter/script
+        // that reads the hierarchy or world position at Awake-time correct too.
         root.transform.SetParent(content, false);
         root.name = $"Entity_{def.TypeId}_{instance.Id}";
         root.transform.localPosition = instance.LocalPosition * cellSize;
         root.transform.localRotation = Quaternion.Euler(0f, 0f, instance.Rotation);
 
-        // The prefab asset's own serialized fields are already the default -
-        // no separate EntityDefinition-level default to merge under (unlike
-        // the old ComponentSpec.Properties), so instance overrides apply
-        // directly on top of whatever's already on the instantiated prefab.
-        if (NativePrefabAdapterRegistry.TryGetForPrefab(def.Prefab, out var adapter))
+        if (def.Backing == EntityBackingKind.NativePrefab)
         {
-            instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var overrides);
-            adapter.Apply(root, overrides ?? _EmptyProperties);
+            // The prefab asset's own serialized fields are already the
+            // default - no separate EntityDefinition-level default to merge
+            // under (unlike the old ComponentSpec.Properties), so instance
+            // overrides apply directly on top of whatever's already on the
+            // instantiated prefab.
+            if (NativePrefabAdapterRegistry.TryGetForPrefab(def.Prefab, out var adapter))
+            {
+                instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var overrides);
+                adapter.Apply(root, overrides ?? _EmptyProperties);
+            }
+        }
+        else
+        {
+            root.AddComponent<ScriptEntityRunner>().Initialize(def.Script, instance);
         }
     }
 

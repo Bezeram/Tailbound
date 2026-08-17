@@ -33,6 +33,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
     private TMP_Text _StatusLabel;
     private GameObject _EntityInspectorPanel;
     private RectTransform _EntityInspectorContent;
+    private readonly ScriptPropertySchemaCollector _ScriptPropertySource = new();
     // Sentinel (not a real selection state) so the first Update() always
     // builds the panel's initial content, even though SelectedEntityId also
     // starts at -1.
@@ -532,10 +533,11 @@ public class LevelEditorRuntimeController : MonoBehaviour
     /// currently is. The property schema is never authored on the
     /// EntityDefinition itself (see its own comment) - for a NativePrefab
     /// entity it comes from whichever INativePrefabAdapter targets a
-    /// component on its Prefab (NativePrefabAdapterRegistry); a
-    /// ScriptBehavior entity has nothing to show until MiniScript exists.
-    /// Called on every selection change and after every edit/reset, since
-    /// edits can change which fields are highlighted as overridden.
+    /// component on its Prefab (NativePrefabAdapterRegistry); for a
+    /// ScriptBehavior entity it comes from running its Script once to
+    /// collect its expose(...) calls (RenderScriptProperties). Called on
+    /// every selection change and after every edit/reset, since edits can
+    /// change which fields are highlighted as overridden.
     /// </summary>
     private void RefreshEntityInspector()
     {
@@ -576,7 +578,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
 
         if (def.Backing == EntityBackingKind.ScriptBehavior)
         {
-            CreateLabel(_EntityInspectorContent, "Script-defined properties aren't available yet - MiniScript isn't implemented.");
+            RenderScriptProperties(instance, def);
             return;
         }
 
@@ -594,7 +596,40 @@ public class LevelEditorRuntimeController : MonoBehaviour
 
         CreateInspectorHeader(_EntityInspectorContent, adapter.AdapterId, subHeader: true);
         foreach (var propDef in adapter.Schema)
-            CreatePropertyRow(_EntityInspectorContent, instance, def.Prefab, adapter, propDef);
+        {
+            PropertyValue value = EntityPropertyResolver.GetEffectiveValue(instance, def.Prefab, adapter, propDef);
+            CreatePropertyRow(_EntityInspectorContent, instance, adapter.AdapterId, propDef, value);
+        }
+    }
+
+    /// <summary>
+    /// Runs the script once (ScriptPropertySchemaCollector - a throwaway
+    /// Interpreter, not the real gameplay one) purely to collect its
+    /// expose(key, defaultValue) calls, then renders the same kind of rows
+    /// as a NativePrefab's adapter Schema, keyed under the shared
+    /// ScriptPropertyResolver.AdapterId instead of a per-prefab adapter id.
+    /// </summary>
+    private void RenderScriptProperties(EntityInstance instance, EntityDefinition def)
+    {
+        if (def.Script == null)
+        {
+            CreateLabel(_EntityInspectorContent, "This entity type has no Script assigned.");
+            return;
+        }
+
+        var schema = _ScriptPropertySource.GetExposedProperties(def);
+        if (schema.Count == 0)
+        {
+            CreateLabel(_EntityInspectorContent, "This script exposes no properties (no expose(...) calls found).");
+            return;
+        }
+
+        CreateInspectorHeader(_EntityInspectorContent, "Script", subHeader: true);
+        foreach (var propDef in schema)
+        {
+            PropertyValue value = ScriptPropertyResolver.GetEffectiveValue(instance, propDef);
+            CreatePropertyRow(_EntityInspectorContent, instance, ScriptPropertyResolver.AdapterId, propDef, value);
+        }
     }
 
     private static void CreateInspectorHeader(Transform parent, string text, bool subHeader = false)
@@ -611,18 +646,19 @@ public class LevelEditorRuntimeController : MonoBehaviour
     /// <summary>
     /// One editable row for a single PropertyDef: a label (amber when an
     /// override exists), a type-appropriate control pre-filled with the
-    /// effective value (override, else whatever the adapter reads straight
-    /// off the prefab asset itself - see INativePrefabAdapter.Read), and a
-    /// reset button that clears just this property's override. Edits commit
-    /// on end-edit/value-changed via SetOverride, then rebuild the whole
-    /// panel so the highlight and (for numeric fields) any range clamping
-    /// are reflected immediately.
+    /// given effective value (already resolved by the caller - a
+    /// NativePrefab's adapter.Read or a ScriptBehavior's PropertyDef.
+    /// DefaultValue, override applied either way), and a reset button that
+    /// clears just this property's override. Edits commit on end-edit/
+    /// value-changed via SetOverride, then rebuild the whole panel so the
+    /// highlight and (for numeric fields) any range clamping are reflected
+    /// immediately. adapterId is just the ComponentOverrides key to write
+    /// under - see EntityPropertyResolver/ScriptPropertyResolver.
     /// </summary>
-    private void CreatePropertyRow(Transform parent, EntityInstance instance, GameObject prefabAsset, INativePrefabAdapter adapter, PropertyDef propDef)
+    private void CreatePropertyRow(Transform parent, EntityInstance instance, string adapterId, PropertyDef propDef, PropertyValue value)
     {
-        bool isOverridden = instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var existingOverrides)
+        bool isOverridden = instance.ComponentOverrides.TryGetValue(adapterId, out var existingOverrides)
             && existingOverrides.ContainsKey(propDef.Key);
-        PropertyValue value = EntityPropertyResolver.GetEffectiveValue(instance, prefabAsset, adapter, propDef);
 
         string labelText = string.IsNullOrEmpty(propDef.Label) ? propDef.Key : propDef.Label;
         if (propDef.HasRange)
@@ -648,7 +684,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
 
         void Commit(PropertyValue newValue)
         {
-            SetOverride(instance, adapter, propDef, newValue);
+            SetOverride(instance, adapterId, propDef, newValue);
             RefreshEntityInspector();
         }
 
@@ -738,7 +774,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
         resetButton.interactable = isOverridden;
         resetButton.onClick.AddListener(() =>
         {
-            ClearOverride(instance, adapter, propDef);
+            ClearOverride(instance, adapterId, propDef);
             RefreshEntityInspector();
         });
 
@@ -753,25 +789,25 @@ public class LevelEditorRuntimeController : MonoBehaviour
         resetText.raycastTarget = false;
     }
 
-    private static void SetOverride(EntityInstance instance, INativePrefabAdapter adapter, PropertyDef propDef, PropertyValue value)
+    private static void SetOverride(EntityInstance instance, string adapterId, PropertyDef propDef, PropertyValue value)
     {
-        if (!instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var overrides))
+        if (!instance.ComponentOverrides.TryGetValue(adapterId, out var overrides))
         {
             overrides = new Dictionary<string, PropertyValue>();
-            instance.ComponentOverrides[adapter.AdapterId] = overrides;
+            instance.ComponentOverrides[adapterId] = overrides;
         }
 
         overrides[propDef.Key] = value;
     }
 
-    private static void ClearOverride(EntityInstance instance, INativePrefabAdapter adapter, PropertyDef propDef)
+    private static void ClearOverride(EntityInstance instance, string adapterId, PropertyDef propDef)
     {
-        if (!instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var overrides))
+        if (!instance.ComponentOverrides.TryGetValue(adapterId, out var overrides))
             return;
 
         overrides.Remove(propDef.Key);
         if (overrides.Count == 0)
-            instance.ComponentOverrides.Remove(adapter.AdapterId);
+            instance.ComponentOverrides.Remove(adapterId);
     }
 
     /// <summary>Minimal TMP_InputField for inline inspector rows - same

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc6743ade18e5894fb0cee226bed6e48, type: 3}
+  m_Name: ent_def_blinker
+  m_EditorClassIdentifier: Assembly-CSharp::EntityDefinition
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  TypeId: 4
+  DisplayName: Blinker
+  Icon: {fileID: 1919671772731642912, guid: a54ff90ad4c427444bf2f5534b4e20a0, type: 3}
+  Category: script
+  IsSpawnPoint: 0
+  Backing: 1
+  Prefab: {fileID: 0}
+  Script: {fileID: 9027929339269108002, guid: f1f3fff25d8e4d4587950898d31a1ff7, type: 3}

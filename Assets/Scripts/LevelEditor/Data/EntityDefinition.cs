@@ -10,8 +10,9 @@ using UnityEngine;
 /// components" coherently. Now the schema is always derived automatically:
 ///   - NativePrefab: from whichever INativePrefabAdapter targets a component
 ///     already present on Prefab (see NativePrefabAdapterRegistry).
-///   - ScriptBehavior: reserved for MiniScript-authored entities, which will
-///     declare their own exposed variables in script - not implemented yet.
+///   - ScriptBehavior: a MiniScript-authored entity (Script). It declares its
+///     own exposed properties by calling expose(key, defaultValue) - see
+///     TailboundIntrinsics and ScriptPropertySchemaCollector.
 /// </summary>
 [CreateAssetMenu(fileName = "EntityDefinition", menuName = "Level Editor/Entity Definition")]
 public class EntityDefinition : SerializedScriptableObject
@@ -39,4 +40,9 @@ public class EntityDefinition : SerializedScriptableObject
              "conditionally with [ShowIf] - Odin's conditional-visibility drawers crash on this " +
              "Unity version (see the odin-crash project memory).")]
     public GameObject Prefab;
+
+    [Tooltip("Only meaningful when Backing is ScriptBehavior - the MiniScript source this entity " +
+             "type runs (a plain .ms text file, imported as a TextAsset). Always shown regardless " +
+             "of Backing, same reasoning as Prefab above.")]
+    public TextAsset Script;
 }

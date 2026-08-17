@@ -11,9 +11,9 @@ public enum EntityBackingKind
     /// see NativePrefabAdapterRegistry - not from anything authored here.</summary>
     NativePrefab,
 
-    /// <summary>A MiniScript-authored behavior. Reserved for a future pass -
-    /// MiniScript isn't implemented yet, so this entity type has no
-    /// properties to expose or build from until it is. Its exposed variables
-    /// will eventually come from the script itself, not this asset.</summary>
+    /// <summary>A MiniScript-authored behavior - Script's own expose(key,
+    /// defaultValue) calls declare its editable properties (see
+    /// ScriptPropertySchemaCollector, TailboundIntrinsics), run at runtime by
+    /// ScriptEntityRunner. Not from anything authored on this asset itself.</summary>
     ScriptBehavior,
 }
