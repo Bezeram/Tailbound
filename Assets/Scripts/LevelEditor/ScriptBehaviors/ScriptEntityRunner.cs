@@ -21,11 +21,14 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
 
     private Interpreter _Interpreter;
     private EntityInstance _Instance;
+    private TextAsset _Script;
+    private string _CompiledSource;
     private bool _Stopped;
 
     public void Initialize(TextAsset script, EntityInstance instance)
     {
         _Instance = instance;
+        _Script = script;
 
         if (script == null)
         {
@@ -33,10 +36,30 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
             return;
         }
 
+        Compile();
+    }
+
+    /// <summary>
+    /// (Re)builds the Interpreter from _Script's current text - called once
+    /// from Initialize(), and again from Update() whenever the text has
+    /// changed since the last compile. That's what lets you edit a
+    /// ScriptBehavior entity's .ms/.txt file (in Unity or an external
+    /// editor, while Unity still has focus/import rights over it) during
+    /// Play Mode or a Play Test and see it take effect without restarting -
+    /// no separate "reload" action needed. Resets whatever local execution
+    /// state the old run had (variables, wherever a loop was paused) and
+    /// starts the new source from the top; components it already added
+    /// (e.g. a SpriteRenderer from setSprite) are left alone, not removed.
+    /// </summary>
+    private void Compile()
+    {
         TailboundIntrinsics.EnsureRegistered();
 
+        _CompiledSource = _Script.text;
+        _Stopped = false;
+
         string tag = gameObject.name;
-        _Interpreter = new Interpreter(script.text)
+        _Interpreter = new Interpreter(_CompiledSource)
         {
             hostData = this,
             standardOutput = (string s, bool lineBreak) => Debug.Log($"[MiniScript:{tag}] {s}"),
@@ -57,7 +80,17 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
         Tick();
     }
 
-    private void Update() => Tick();
+    private void Update()
+    {
+        if (_Script != null && _Script.text != _CompiledSource)
+        {
+            Debug.Log($"[MiniScript:{gameObject.name}] Script changed, reloading.");
+            Compile(); // already ticks once itself - don't also Tick() below this frame
+            return;
+        }
+
+        Tick();
+    }
 
     /// <summary>
     /// Deliberately does NOT early-out on _Interpreter.done - that's true
