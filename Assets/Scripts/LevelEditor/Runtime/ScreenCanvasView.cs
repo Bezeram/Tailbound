@@ -52,6 +52,11 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
         rect.anchorMax = Vector2.one;
         rect.offsetMin = Vector2.zero;
         rect.offsetMax = Vector2.zero;
+        // Bottom-left pivot (rather than the RectTransform default of
+        // center) so ScreenPointToLocalPointInRectangle(_Rect, ...) returns
+        // points directly comparable to _Pan/content-local positions with
+        // no extra corner-offset math - see OnScroll's zoom-to-cursor.
+        rect.pivot = Vector2.zero;
 
         go.GetComponent<Image>().color = new Color(0.12f, 0.12f, 0.12f, 1f);
 
@@ -204,9 +209,27 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
         UpdateGrid();
     }
 
+    /// <summary>
+    /// Zooms around whatever content point is currently under the cursor,
+    /// not always content-local (0,0) - solves for the _Pan that keeps that
+    /// same point under the cursor at the new zoom level, using the old
+    /// zoom to find out what point that is in the first place.
+    /// </summary>
     public void OnScroll(PointerEventData eventData)
     {
-        _Zoom = Mathf.Clamp(_Zoom + eventData.scrollDelta.y * 0.05f, 0.25f, 3f);
+        float newZoom = Mathf.Clamp(_Zoom + eventData.scrollDelta.y * 0.05f, 0.25f, 3f);
+        if (Mathf.Approximately(newZoom, _Zoom))
+            return;
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_Rect, eventData.position, null, out Vector2 localPoint))
+        {
+            _Zoom = newZoom;
+            return;
+        }
+
+        Vector2 contentPointUnderCursor = (localPoint - _Pan) / CellPixelSize; // uses the old zoom
+        _Zoom = newZoom;
+        _Pan = localPoint - contentPointUnderCursor * CellPixelSize; // uses the new zoom
     }
 
     public void OnBeginDrag(PointerEventData eventData) => BeginPan(eventData);
