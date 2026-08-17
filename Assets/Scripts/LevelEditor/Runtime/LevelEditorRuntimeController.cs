@@ -2,6 +2,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
@@ -16,6 +17,10 @@ using UnityEngine.UI;
 public class LevelEditorRuntimeController : MonoBehaviour
 {
     private const float ToolbarHeight = 44f;
+
+    [Tooltip("Scene that boots gameplay from PlayTestSession's saved level - " +
+             "must match its name in Build Settings.")]
+    [SerializeField] private string _PlayTestSceneName = "PlayTest";
 
     private LevelAsset _Level;
     private ScreenCanvasView _CanvasView;
@@ -40,7 +45,21 @@ public class LevelEditorRuntimeController : MonoBehaviour
 
         BuildToolbar(canvas.transform);
 
-        NewLevel();
+        // Coming back from a Play Test rather than a fresh launch of this
+        // scene - restore the level that was being edited instead of
+        // starting blank. Consumed once here; PlayTestSession.IsPlaytesting
+        // is what gated the playtest scene's level source and its "back to
+        // editor" hotkey, so it must go false as soon as we're back.
+        if (PlayTestSession.IsPlaytesting)
+        {
+            PlayTestSession.IsPlaytesting = false;
+            LoadLevel(PlayTestSession.LevelSlotName);
+            _NameField.text = PlayTestSession.ReturnDisplayName;
+        }
+        else
+        {
+            NewLevel();
+        }
     }
 
     private static void EnsureEventSystem()
@@ -108,6 +127,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
         CreateButton(barRect, "Entities Mode", () => SetMode(ScreenCanvasView.InteractionMode.Entities), 120);
         CreateButton(barRect, "Delete Entity", DeleteEntity, 110);
         CreateButton(barRect, "Toggle Snap", ToggleSnapToGrid, 100);
+        CreateButton(barRect, "Play Test", PlayTestLevel, 90);
 
         _LoadPanel = CreateLoadPanel(parent);
         _PalettePanel = CreatePalettePanel(parent);
@@ -280,7 +300,9 @@ public class LevelEditorRuntimeController : MonoBehaviour
         for (int i = _LoadListContent.childCount - 1; i >= 0; i--)
             Destroy(_LoadListContent.GetChild(i).gameObject);
 
-        var levels = LevelIO.ListLevels();
+        // The Play Test scratch slot is an implementation detail, not a
+        // level the user saved - never list it.
+        var levels = LevelIO.ListLevels().Where(name => name != PlayTestSession.LevelSlotName).ToList();
         Debug.Log($"[LevelEditor] Found {levels.Count} saved level(s) under {Application.persistentDataPath}/Levels");
         if (levels.Count == 0)
         {
@@ -480,6 +502,37 @@ public class LevelEditorRuntimeController : MonoBehaviour
         string name = string.IsNullOrWhiteSpace(_NameField.text) ? "New Level" : _NameField.text.Trim();
         Debug.Log($"[LevelEditor] Saving as '{name}' ({_Level.Screens.Count} screen(s))...");
         LevelIO.Save(_Level, name);
+    }
+
+    /// <summary>
+    /// Saves the in-memory level to the Play Test scratch slot and hands off
+    /// to the PlayTest scene, which boots real gameplay from it via
+    /// LevelInstantiator - no manual scene duplication or prefab wiring per
+    /// playtest. Press the in-game "back to editor" key (F1 by default) to
+    /// return here with this same level still loaded.
+    /// </summary>
+    private void PlayTestLevel()
+    {
+        if (_Level == null || _Level.Screens.Count == 0)
+        {
+            Debug.LogWarning("[LevelEditor] Nothing to playtest - add at least one screen first.");
+            return;
+        }
+
+        if (!AllScreensHaveSpawnPoint(out int missingScreenId))
+        {
+            Debug.LogError(
+                $"[LevelEditor] Play Test blocked: Screen {missingScreenId} has no spawn point entity. " +
+                "Place one (an entity type with IsSpawnPoint checked) before playtesting.");
+            return;
+        }
+
+        LevelIO.Save(_Level, PlayTestSession.LevelSlotName);
+        PlayTestSession.IsPlaytesting = true;
+        PlayTestSession.ReturnDisplayName = _NameField.text;
+
+        Debug.Log($"[LevelEditor] Launching Play Test ('{_PlayTestSceneName}')...");
+        SceneManager.LoadScene(_PlayTestSceneName);
     }
 
     /// <summary>True if every screen has at least one entity whose type is marked IsSpawnPoint.</summary>

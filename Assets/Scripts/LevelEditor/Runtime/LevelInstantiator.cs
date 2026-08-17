@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 /// <summary>
@@ -21,16 +22,37 @@ public class LevelInstantiator : MonoBehaviour
     [SerializeField] private GameObject _CameraPrefab;
     [SerializeField] private string _LevelName;
 
+    [Tooltip("Key that returns to the Level Editor scene while a playtest " +
+             "launched from it is in progress (PlayTestSession.IsPlaytesting).")]
+    [SerializeField] private KeyCode _ReturnToEditorKey = KeyCode.F1;
+
+    [Tooltip("Scene to load when returning to the editor - must match the " +
+             "Level Editor scene's name in Build Settings.")]
+    [SerializeField] private string _EditorSceneName = "LevelEditor";
+
     private void Awake()
     {
-        var level = LevelIO.Load(_LevelName);
+        // A playtest launched from the Level Editor overrides this
+        // component's own Inspector-assigned level - see PlayTestSession.
+        string levelName = PlayTestSession.IsPlaytesting ? PlayTestSession.LevelSlotName : _LevelName;
+
+        var level = LevelIO.Load(levelName);
         if (level == null)
         {
-            Debug.LogError($"[LevelInstantiator] Could not load level '{_LevelName}'.");
+            Debug.LogError($"[LevelInstantiator] Could not load level '{levelName}'.");
             return;
         }
 
         Build(level);
+    }
+
+    private void Update()
+    {
+        // Only live during an editor-launched playtest - a PlayTest scene
+        // opened directly (e.g. hitting Play on it in the Editor) has no
+        // editor state to return to, so this key does nothing there.
+        if (PlayTestSession.IsPlaytesting && Input.GetKeyDown(_ReturnToEditorKey))
+            SceneManager.LoadScene(_EditorSceneName);
     }
 
     public void Build(LevelAsset level)
