@@ -37,8 +37,9 @@ public class TileCellPool
                 image.gameObject.SetActive(true);
 
                 TileDef def = tileDefLookup.TryGetValue(pair.Value.TileId, out var found) ? found : null;
-                image.sprite = def != null ? def.Sprite : null;
-                image.color = def != null && def.Sprite != null ? Color.white : MissingSpriteColor;
+                Sprite sprite = def != null ? RuleTileEvaluator.ResolveSprite(pair.Key, def, cells, tileDefLookup) : null;
+                image.sprite = sprite;
+                image.color = sprite != null ? Color.white : MissingSpriteColor;
 
                 _ActiveCells.Add(pair.Key);
                 i++;
