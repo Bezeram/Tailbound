@@ -207,6 +207,10 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        // Right click does nothing here - see ScreenCanvasView.BeginPan.
+        if (eventData.button != PointerEventData.InputButton.Left)
+            return;
+
         _Owner.Select(ScreenId);
 
         if (_Owner.Mode == ScreenCanvasView.InteractionMode.Paint)
@@ -217,6 +221,15 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        // Right click always pans the canvas, never paints/moves - forwarded
+        // to the canvas since uGUI binds this whole drag gesture to us the
+        // moment we receive OnBeginDrag, it won't fall through on its own.
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            _Owner.BeginPan(eventData);
+            return;
+        }
+
         if (_Owner.Mode == ScreenCanvasView.InteractionMode.Paint)
         {
             _LastPaintedCell = null;
@@ -235,6 +248,12 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     public void OnDrag(PointerEventData eventData)
     {
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            _Owner.ContinuePan(eventData);
+            return;
+        }
+
         if (_Owner.Mode == ScreenCanvasView.InteractionMode.Paint)
         {
             PaintAtPointer(eventData);
@@ -249,6 +268,12 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            _Owner.EndPan();
+            return;
+        }
+
         if (_Owner.Mode == ScreenCanvasView.InteractionMode.Paint)
         {
             _LastPaintedCell = null;
@@ -262,10 +287,37 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
     }
 
     // Called by this screen's ScreenResizeHandle child (inactive, so
-    // unreachable, while in Paint mode - see UpdateVisual).
-    public void BeginResize(PointerEventData eventData) => BeginDrag(eventData, isHandle: true);
-    public void ResizeDrag(PointerEventData eventData) => Drag(eventData, isHandle: true);
-    public void EndResize() => EndDrag();
+    // unreachable, while in Paint mode - see UpdateVisual). Same right-
+    // click-always-pans forwarding as the body drag handlers above.
+    public void BeginResize(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            _Owner.BeginPan(eventData);
+            return;
+        }
+        BeginDrag(eventData, isHandle: true);
+    }
+
+    public void ResizeDrag(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            _Owner.ContinuePan(eventData);
+            return;
+        }
+        Drag(eventData, isHandle: true);
+    }
+
+    public void EndResize(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            _Owner.EndPan();
+            return;
+        }
+        EndDrag();
+    }
 
     private void PaintAtPointer(PointerEventData eventData)
     {

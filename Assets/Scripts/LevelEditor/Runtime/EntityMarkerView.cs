@@ -102,11 +102,24 @@ public class EntityMarkerView : MonoBehaviour, IPointerClickHandler, IBeginDragH
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        // Right click does nothing here - see ScreenCanvasView.BeginPan.
+        if (eventData.button != PointerEventData.InputButton.Left)
+            return;
+
         _Owner.SelectEntity(_Instance.Id);
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        // Right click always pans the canvas, never selects/moves - forwarded
+        // to the canvas since uGUI binds this whole drag gesture to us the
+        // moment we receive OnBeginDrag, it won't fall through on its own.
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            _Owner.BeginPan(eventData);
+            return;
+        }
+
         _Owner.SelectEntity(_Instance.Id);
         _IsDragging = true;
         _DragStartPosition = _Instance.LocalPosition;
@@ -116,6 +129,12 @@ public class EntityMarkerView : MonoBehaviour, IPointerClickHandler, IBeginDragH
 
     public void OnDrag(PointerEventData eventData)
     {
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            _Owner.ContinuePan(eventData);
+            return;
+        }
+
         if (!_IsDragging)
             return;
 
@@ -136,6 +155,12 @@ public class EntityMarkerView : MonoBehaviour, IPointerClickHandler, IBeginDragH
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            _Owner.EndPan();
+            return;
+        }
+
         _IsDragging = false;
     }
 }

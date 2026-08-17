@@ -27,6 +27,6 @@ t = 0
 while true
     t = t + speed * 0.05
     brightness = minBrightness + (maxBrightness - minBrightness) * (0.5 + 0.5 * sin(t))
-    setColor 1, brightness, brightness, 1
+    setColor brightness, brightness, 1, 1
     wait 0.05
 end while

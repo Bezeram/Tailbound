@@ -209,7 +209,22 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
         _Zoom = Mathf.Clamp(_Zoom + eventData.scrollDelta.y * 0.05f, 0.25f, 3f);
     }
 
-    public void OnBeginDrag(PointerEventData eventData)
+    public void OnBeginDrag(PointerEventData eventData) => BeginPan(eventData);
+    public void OnDrag(PointerEventData eventData) => ContinuePan(eventData);
+    public void OnEndDrag(PointerEventData eventData) => EndPan();
+
+    /// <summary>
+    /// Right mouse button always pans, regardless of what's under the
+    /// pointer - these three are called directly by these interface methods
+    /// above (drag starting on empty canvas background), and forwarded here
+    /// by ScreenView/EntityMarkerView/ScreenResizeHandle too whenever a drag
+    /// on one of them turns out to be a right-click, so panning works the
+    /// same everywhere instead of only over empty background. uGUI's drag
+    /// handling binds a whole gesture to whichever handler first receives
+    /// OnBeginDrag, so those views can't just "ignore" a right-click and let
+    /// it fall through to us on its own - they have to hand it off explicitly.
+    /// </summary>
+    public void BeginPan(PointerEventData eventData)
     {
         if (eventData.button != PointerEventData.InputButton.Right)
             return;
@@ -218,7 +233,7 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
         RectTransformUtility.ScreenPointToLocalPointInRectangle(_Rect, eventData.position, null, out _PanLastLocalPoint);
     }
 
-    public void OnDrag(PointerEventData eventData)
+    public void ContinuePan(PointerEventData eventData)
     {
         if (!_IsPanning)
             return;
@@ -230,7 +245,7 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
         }
     }
 
-    public void OnEndDrag(PointerEventData eventData)
+    public void EndPan()
     {
         _IsPanning = false;
     }
