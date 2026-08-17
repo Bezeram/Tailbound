@@ -622,7 +622,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
     {
         bool isOverridden = instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var existingOverrides)
             && existingOverrides.ContainsKey(propDef.Key);
-        PropertyValue value = GetEffectiveValue(instance, prefabAsset, adapter, propDef);
+        PropertyValue value = EntityPropertyResolver.GetEffectiveValue(instance, prefabAsset, adapter, propDef);
 
         string labelText = string.IsNullOrEmpty(propDef.Label) ? propDef.Key : propDef.Label;
         if (propDef.HasRange)
@@ -751,15 +751,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         resetText.alignment = TextAlignmentOptions.Center;
         resetText.color = Color.white;
         resetText.raycastTarget = false;
-    }
-
-    private static PropertyValue GetEffectiveValue(EntityInstance instance, GameObject prefabAsset, INativePrefabAdapter adapter, PropertyDef propDef)
-    {
-        if (instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var overrides)
-            && overrides.TryGetValue(propDef.Key, out var overrideValue))
-            return overrideValue;
-
-        return adapter.Read(prefabAsset, propDef.Key);
     }
 
     private static void SetOverride(EntityInstance instance, INativePrefabAdapter adapter, PropertyDef propDef, PropertyValue value)

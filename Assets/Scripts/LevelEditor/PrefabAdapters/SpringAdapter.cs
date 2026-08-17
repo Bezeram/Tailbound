@@ -45,4 +45,17 @@ public class SpringAdapter : INativePrefabAdapter
         // (also re-caches Animator/AudioSource, harmless here).
         spring.RuntimeInit();
     }
+
+    /// <summary>Mirrors Spring.RuntimeInit()'s own rotation math, so the
+    /// entity marker previews the same rotation the real prefab ends up with.</summary>
+    public float GetEditorRotationDegrees(Dictionary<string, PropertyValue> properties)
+    {
+        var direction = properties.TryGetValue("Direction", out var directionProp) && directionProp.Type == PropertyType.Int
+            ? (Spring.DirectionSpring)directionProp.IntValue
+            : Spring.DirectionSpring.Up;
+
+        return (int)direction * 90;
+    }
+
+    public Vector2 GetEditorScale(Dictionary<string, PropertyValue> properties) => Vector2.one;
 }

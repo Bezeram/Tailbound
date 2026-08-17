@@ -65,6 +65,8 @@ public class EntityMarkerView : MonoBehaviour, IPointerClickHandler, IBeginDragH
         // render at 1:1 with the grid, same as the tile it's placed on.
         _Rect.sizeDelta = new Vector2(cellPixelSize, cellPixelSize);
 
+        ApplyAdapterVisualTransform();
+
         // Only raycastable while in Entities mode, so a marker never
         // intercepts clicks meant for painting or dragging a screen in the
         // other two modes - same reasoning as hiding the resize handle
@@ -73,6 +75,29 @@ public class EntityMarkerView : MonoBehaviour, IPointerClickHandler, IBeginDragH
         _Icon.raycastTarget = interactive;
 
         _Icon.color = _Owner.SelectedEntityId == _Instance.Id ? Color.yellow : _BaseColor;
+    }
+
+    /// <summary>
+    /// Previews whatever rotation/scale a NativePrefab entity's adapter
+    /// derives from its current effective properties (e.g. Spring's
+    /// Direction) - see INativePrefabAdapter.GetEditorRotationDegrees/
+    /// GetEditorScale. Identity for anything without a matching adapter
+    /// (unknown type, ScriptBehavior, no Prefab, no registered adapter).
+    /// </summary>
+    private void ApplyAdapterVisualTransform()
+    {
+        if (!EntityPropertyResolver.TryResolveAdapter(_Instance, out var def, out var adapter))
+        {
+            _Rect.localRotation = Quaternion.identity;
+            _Rect.localScale = Vector3.one;
+            return;
+        }
+
+        var properties = EntityPropertyResolver.GetEffectiveProperties(_Instance, def.Prefab, adapter);
+        _Rect.localRotation = Quaternion.Euler(0f, 0f, adapter.GetEditorRotationDegrees(properties));
+
+        Vector2 scale = adapter.GetEditorScale(properties);
+        _Rect.localScale = new Vector3(scale.x, scale.y, 1f);
     }
 
     public void OnPointerClick(PointerEventData eventData)

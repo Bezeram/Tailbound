@@ -43,4 +43,20 @@ public interface INativePrefabAdapter
     /// level default to merge under, since the prefab asset's own serialized
     /// values already are the default) onto the given instantiated entity.</summary>
     void Apply(GameObject entityRoot, Dictionary<string, PropertyValue> properties);
+
+    /// <summary>
+    /// Editor-only visual rotation (degrees around Z) derived from the given
+    /// effective property values (see EntityPropertyResolver), applied to
+    /// this entity's marker on the runtime editor's canvas so a rotation-
+    /// affecting property (e.g. Spring's Direction) previews correctly while
+    /// placing/editing - should mirror whatever Apply() does to the real
+    /// instantiated GameObject's transform. Return 0 for adapters with
+    /// nothing that should rotate the marker.
+    /// </summary>
+    float GetEditorRotationDegrees(Dictionary<string, PropertyValue> properties);
+
+    /// <summary>Editor-only visual scale multiplier, same idea as
+    /// GetEditorRotationDegrees. Return Vector2.one for adapters with
+    /// nothing that should scale the marker.</summary>
+    Vector2 GetEditorScale(Dictionary<string, PropertyValue> properties);
 }
