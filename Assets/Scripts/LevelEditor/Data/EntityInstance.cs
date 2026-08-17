@@ -22,8 +22,13 @@ public class EntityInstance
     public bool SnappedToGrid;
 
     /// <summary>
-    /// Per-instance property overrides, keyed by the owning component's
-    /// ComponentTypeId, layered on top of the EntityDefinition's defaults.
+    /// Per-instance property overrides, keyed by the owning adapter's
+    /// AdapterId (INativePrefabAdapter.AdapterId for a NativePrefab entity -
+    /// see NativePrefabAdapterRegistry), layered on top of whatever value
+    /// the adapter reads directly off the entity's own prefab/instance as
+    /// the default. Only ever has one top-level key today (one adapter per
+    /// NativePrefab entity), but stays a nested dictionary since a future
+    /// MiniScript entity may expose properties from several adapters at once.
     /// </summary>
     public Dictionary<string, Dictionary<string, PropertyValue>> ComponentOverrides = new();
 }

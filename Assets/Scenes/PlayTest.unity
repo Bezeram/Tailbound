@@ -363,7 +363,9 @@ MonoBehaviour:
   _TilesPrefab: {fileID: 7860622440041588904, guid: 39c90c565fec58a4b8fd3cb2e40b4154, type: 3}
   _PlayerPrefab: {fileID: 1544650614272011804, guid: 88097b566ad1fdd489d7ee77465b57aa, type: 3}
   _CameraPrefab: {fileID: 3081117881214174500, guid: 70c7d9ca6bb16344e8c4231e538f6cdf, type: 3}
-  _LevelName: New Level
+  _LevelName: 
+  _ReturnToEditorKey: 282
+  _EditorSceneName: LevelEditor
 --- !u!4 &1041037785
 Transform:
   m_ObjectHideFlags: 0

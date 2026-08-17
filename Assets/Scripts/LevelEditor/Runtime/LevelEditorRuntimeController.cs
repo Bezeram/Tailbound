@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -30,6 +31,12 @@ public class LevelEditorRuntimeController : MonoBehaviour
     private GameObject _PalettePanel;
     private GameObject _EntityPalettePanel;
     private TMP_Text _StatusLabel;
+    private GameObject _EntityInspectorPanel;
+    private RectTransform _EntityInspectorContent;
+    // Sentinel (not a real selection state) so the first Update() always
+    // builds the panel's initial content, even though SelectedEntityId also
+    // starts at -1.
+    private int _InspectedEntityId = -2;
 
     private void Awake()
     {
@@ -60,6 +67,18 @@ public class LevelEditorRuntimeController : MonoBehaviour
         {
             NewLevel();
         }
+    }
+
+    /// <summary>
+    /// Polls for a selection change rather than reacting to an event -
+    /// EntityMarkerView mutates ScreenCanvasView.SelectedEntityId directly
+    /// from pointer handlers (click, drag) with no notification hook, so
+    /// this is the cheapest way to notice without adding one just for this.
+    /// </summary>
+    private void Update()
+    {
+        if (_CanvasView.SelectedEntityId != _InspectedEntityId)
+            RefreshEntityInspector();
     }
 
     private static void EnsureEventSystem()
@@ -132,6 +151,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
         _LoadPanel = CreateLoadPanel(parent);
         _PalettePanel = CreatePalettePanel(parent);
         _EntityPalettePanel = CreateEntityPalettePanel(parent);
+        _EntityInspectorPanel = CreateEntityInspectorPanel(parent);
         CreateStatusPanel(parent);
         UpdateStatusLabel();
     }
@@ -474,6 +494,349 @@ public class LevelEditorRuntimeController : MonoBehaviour
     }
 
     // ------------------------------------------------------------------
+    // Entity inspector (component property overrides)
+    // ------------------------------------------------------------------
+
+    // Bottom-right - the one corner nothing else occupies (Load is top-left,
+    // the tile/entity palettes are top-right, Status is bottom-left).
+    private GameObject CreateEntityInspectorPanel(Transform parent)
+    {
+        var go = new GameObject(
+            "EntityInspectorPanel", typeof(RectTransform), typeof(Image),
+            typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+        go.transform.SetParent(parent, false);
+
+        var rect = (RectTransform)go.transform;
+        rect.anchorMin = new Vector2(1, 0);
+        rect.anchorMax = new Vector2(1, 0);
+        rect.pivot = new Vector2(1, 0);
+        rect.anchoredPosition = new Vector2(-8, 8);
+        rect.sizeDelta = new Vector2(300, 0);
+        go.GetComponent<Image>().color = new Color(0.18f, 0.18f, 0.18f, 0.97f);
+
+        var layout = go.GetComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(8, 8, 8, 8);
+        layout.spacing = 4;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+
+        go.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        _EntityInspectorContent = rect;
+        go.SetActive(false);
+        return go;
+    }
+
+    /// <summary>
+    /// Rebuilds the inspector's contents for whatever ScreenCanvasView.SelectedEntityId
+    /// currently is. The property schema is never authored on the
+    /// EntityDefinition itself (see its own comment) - for a NativePrefab
+    /// entity it comes from whichever INativePrefabAdapter targets a
+    /// component on its Prefab (NativePrefabAdapterRegistry); a
+    /// ScriptBehavior entity has nothing to show until MiniScript exists.
+    /// Called on every selection change and after every edit/reset, since
+    /// edits can change which fields are highlighted as overridden.
+    /// </summary>
+    private void RefreshEntityInspector()
+    {
+        _InspectedEntityId = _CanvasView.SelectedEntityId;
+
+        for (int i = _EntityInspectorContent.childCount - 1; i >= 0; i--)
+            Destroy(_EntityInspectorContent.GetChild(i).gameObject);
+
+        if (_InspectedEntityId < 0)
+        {
+            CreateLabel(_EntityInspectorContent, "No entity selected.");
+            return;
+        }
+
+        var instance = _Level.Entities.Find(e => e.Id == _InspectedEntityId);
+        if (instance == null)
+        {
+            CreateLabel(_EntityInspectorContent, "Selected entity no longer exists.");
+            return;
+        }
+
+        if (!EntityCatalog.Lookup.TryGetValue(instance.TypeId, out var def))
+        {
+            CreateLabel(_EntityInspectorContent, $"Unknown entity type '{instance.TypeId}'.");
+            return;
+        }
+
+        CreateInspectorHeader(_EntityInspectorContent, string.IsNullOrEmpty(def.DisplayName) ? def.TypeId : def.DisplayName);
+
+        if (instance.ComponentOverrides.Count > 0)
+        {
+            CreateButton(_EntityInspectorContent, "Reset All Overrides", () =>
+            {
+                instance.ComponentOverrides.Clear();
+                RefreshEntityInspector();
+            }, 280);
+        }
+
+        if (def.Backing == EntityBackingKind.ScriptBehavior)
+        {
+            CreateLabel(_EntityInspectorContent, "Script-defined properties aren't available yet - MiniScript isn't implemented.");
+            return;
+        }
+
+        if (def.Prefab == null)
+        {
+            CreateLabel(_EntityInspectorContent, "This entity type has no Prefab assigned.");
+            return;
+        }
+
+        if (!NativePrefabAdapterRegistry.TryGetForPrefab(def.Prefab, out var adapter) || adapter.Schema.Count == 0)
+        {
+            CreateLabel(_EntityInspectorContent, "No adapter registered for this prefab - no editable properties.");
+            return;
+        }
+
+        CreateInspectorHeader(_EntityInspectorContent, adapter.AdapterId, subHeader: true);
+        foreach (var propDef in adapter.Schema)
+            CreatePropertyRow(_EntityInspectorContent, instance, def.Prefab, adapter, propDef);
+    }
+
+    private static void CreateInspectorHeader(Transform parent, string text, bool subHeader = false)
+    {
+        var go = new GameObject("Header", typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(parent, false);
+        var label = go.GetComponent<TextMeshProUGUI>();
+        label.text = text;
+        label.fontSize = subHeader ? 12 : 15;
+        label.fontStyle = FontStyles.Bold;
+        label.color = subHeader ? new Color(1f, 1f, 1f, 0.6f) : Color.white;
+    }
+
+    /// <summary>
+    /// One editable row for a single PropertyDef: a label (amber when an
+    /// override exists), a type-appropriate control pre-filled with the
+    /// effective value (override, else whatever the adapter reads straight
+    /// off the prefab asset itself - see INativePrefabAdapter.Read), and a
+    /// reset button that clears just this property's override. Edits commit
+    /// on end-edit/value-changed via SetOverride, then rebuild the whole
+    /// panel so the highlight and (for numeric fields) any range clamping
+    /// are reflected immediately.
+    /// </summary>
+    private void CreatePropertyRow(Transform parent, EntityInstance instance, GameObject prefabAsset, INativePrefabAdapter adapter, PropertyDef propDef)
+    {
+        bool isOverridden = instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var existingOverrides)
+            && existingOverrides.ContainsKey(propDef.Key);
+        PropertyValue value = GetEffectiveValue(instance, prefabAsset, adapter, propDef);
+
+        string labelText = string.IsNullOrEmpty(propDef.Label) ? propDef.Key : propDef.Label;
+        if (propDef.HasRange)
+            labelText += $" ({propDef.MinValue:0.##}-{propDef.MaxValue:0.##})";
+
+        var rowGO = new GameObject(propDef.Key + " Row", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+        rowGO.transform.SetParent(parent, false);
+        rowGO.AddComponent<LayoutElement>().preferredHeight = 24f;
+        var rowLayout = rowGO.GetComponent<HorizontalLayoutGroup>();
+        rowLayout.spacing = 4;
+        rowLayout.childAlignment = TextAnchor.MiddleLeft;
+        rowLayout.childForceExpandWidth = false;
+        rowLayout.childForceExpandHeight = true;
+
+        var labelGO = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+        labelGO.transform.SetParent(rowGO.transform, false);
+        labelGO.AddComponent<LayoutElement>().preferredWidth = 96f;
+        var labelComp = labelGO.GetComponent<TextMeshProUGUI>();
+        labelComp.text = labelText;
+        labelComp.fontSize = 11;
+        labelComp.enableWordWrapping = true;
+        labelComp.color = isOverridden ? new Color(1f, 0.8f, 0.35f) : new Color(1f, 1f, 1f, 0.75f);
+
+        void Commit(PropertyValue newValue)
+        {
+            SetOverride(instance, adapter, propDef, newValue);
+            RefreshEntityInspector();
+        }
+
+        switch (propDef.Type)
+        {
+            case PropertyType.Float:
+            {
+                var field = CreateCompactInputField(rowGO.transform, 70, value.FloatValue.ToString("0.###"));
+                field.contentType = TMP_InputField.ContentType.DecimalNumber;
+                field.onEndEdit.AddListener(text =>
+                {
+                    float f = float.TryParse(text, out float parsed) ? parsed : value.FloatValue;
+                    if (propDef.HasRange)
+                        f = Mathf.Clamp(f, propDef.MinValue, propDef.MaxValue);
+                    Commit(PropertyValue.FromFloat(f));
+                });
+                break;
+            }
+            case PropertyType.Int:
+            {
+                var field = CreateCompactInputField(rowGO.transform, 70, value.IntValue.ToString());
+                field.contentType = TMP_InputField.ContentType.IntegerNumber;
+                field.onEndEdit.AddListener(text =>
+                {
+                    int i = int.TryParse(text, out int parsed) ? parsed : value.IntValue;
+                    if (propDef.HasRange)
+                        i = Mathf.Clamp(i, (int)propDef.MinValue, (int)propDef.MaxValue);
+                    Commit(PropertyValue.FromInt(i));
+                });
+                break;
+            }
+            case PropertyType.Bool:
+            {
+                var toggle = CreateCompactToggle(rowGO.transform, value.BoolValue);
+                toggle.onValueChanged.AddListener(b => Commit(PropertyValue.FromBool(b)));
+                break;
+            }
+            case PropertyType.String:
+            {
+                var field = CreateCompactInputField(rowGO.transform, 140, value.StringValue ?? "");
+                field.contentType = TMP_InputField.ContentType.Standard;
+                field.onEndEdit.AddListener(text => Commit(PropertyValue.FromString(text)));
+                break;
+            }
+            case PropertyType.Vector2:
+            {
+                var xField = CreateCompactInputField(rowGO.transform, 55, value.Vector2Value.x.ToString("0.###"));
+                xField.contentType = TMP_InputField.ContentType.DecimalNumber;
+                var yField = CreateCompactInputField(rowGO.transform, 55, value.Vector2Value.y.ToString("0.###"));
+                yField.contentType = TMP_InputField.ContentType.DecimalNumber;
+
+                void CommitVector(string _)
+                {
+                    float x = float.TryParse(xField.text, out float xv) ? xv : value.Vector2Value.x;
+                    float y = float.TryParse(yField.text, out float yv) ? yv : value.Vector2Value.y;
+                    Commit(PropertyValue.FromVector2(new Vector2(x, y)));
+                }
+                xField.onEndEdit.AddListener(CommitVector);
+                yField.onEndEdit.AddListener(CommitVector);
+                break;
+            }
+            case PropertyType.Color:
+            {
+                var swatchGO = new GameObject("Swatch", typeof(RectTransform), typeof(Image));
+                swatchGO.transform.SetParent(rowGO.transform, false);
+                swatchGO.AddComponent<LayoutElement>().preferredWidth = 20f;
+                swatchGO.GetComponent<Image>().color = value.ColorValue;
+
+                var field = CreateCompactInputField(rowGO.transform, 90, "#" + ColorUtility.ToHtmlStringRGBA(value.ColorValue));
+                field.contentType = TMP_InputField.ContentType.Standard;
+                field.onEndEdit.AddListener(text =>
+                {
+                    if (ColorUtility.TryParseHtmlString(text, out Color parsed))
+                        Commit(PropertyValue.FromColor(parsed));
+                    else
+                        RefreshEntityInspector(); // invalid hex - just revert the display
+                });
+                break;
+            }
+        }
+
+        var resetGO = new GameObject("Reset", typeof(RectTransform), typeof(Image), typeof(Button));
+        resetGO.transform.SetParent(rowGO.transform, false);
+        resetGO.AddComponent<LayoutElement>().preferredWidth = 20f;
+        resetGO.GetComponent<Image>().color = isOverridden ? new Color(0.5f, 0.25f, 0.25f, 1f) : new Color(0.22f, 0.22f, 0.22f, 1f);
+        var resetButton = resetGO.GetComponent<Button>();
+        resetButton.interactable = isOverridden;
+        resetButton.onClick.AddListener(() =>
+        {
+            ClearOverride(instance, adapter, propDef);
+            RefreshEntityInspector();
+        });
+
+        var resetTextGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        resetTextGO.transform.SetParent(resetGO.transform, false);
+        StretchFull((RectTransform)resetTextGO.transform, 0);
+        var resetText = resetTextGO.GetComponent<TextMeshProUGUI>();
+        resetText.text = "x";
+        resetText.fontSize = 11;
+        resetText.alignment = TextAlignmentOptions.Center;
+        resetText.color = Color.white;
+        resetText.raycastTarget = false;
+    }
+
+    private static PropertyValue GetEffectiveValue(EntityInstance instance, GameObject prefabAsset, INativePrefabAdapter adapter, PropertyDef propDef)
+    {
+        if (instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var overrides)
+            && overrides.TryGetValue(propDef.Key, out var overrideValue))
+            return overrideValue;
+
+        return adapter.Read(prefabAsset, propDef.Key);
+    }
+
+    private static void SetOverride(EntityInstance instance, INativePrefabAdapter adapter, PropertyDef propDef, PropertyValue value)
+    {
+        if (!instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var overrides))
+        {
+            overrides = new Dictionary<string, PropertyValue>();
+            instance.ComponentOverrides[adapter.AdapterId] = overrides;
+        }
+
+        overrides[propDef.Key] = value;
+    }
+
+    private static void ClearOverride(EntityInstance instance, INativePrefabAdapter adapter, PropertyDef propDef)
+    {
+        if (!instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var overrides))
+            return;
+
+        overrides.Remove(propDef.Key);
+        if (overrides.Count == 0)
+            instance.ComponentOverrides.Remove(adapter.AdapterId);
+    }
+
+    /// <summary>Minimal TMP_InputField for inline inspector rows - same
+    /// viewport/mask structure CreateInputField uses (TMP_InputField needs
+    /// textViewport to be a distinct masked child), just without a
+    /// placeholder since these are always pre-filled with a real value.</summary>
+    private static TMP_InputField CreateCompactInputField(Transform parent, float width, string initialText)
+    {
+        var go = new GameObject("Field", typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
+        go.transform.SetParent(parent, false);
+        go.AddComponent<LayoutElement>().preferredWidth = width;
+        go.GetComponent<Image>().color = new Color(0.25f, 0.25f, 0.25f, 1f);
+
+        var viewportGO = new GameObject("Text Area", typeof(RectTransform), typeof(RectMask2D));
+        viewportGO.transform.SetParent(go.transform, false);
+        var viewportRect = (RectTransform)viewportGO.transform;
+        StretchFull(viewportRect, 4);
+
+        var textGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        textGO.transform.SetParent(viewportGO.transform, false);
+        StretchFull((RectTransform)textGO.transform, 0);
+        var text = textGO.GetComponent<TextMeshProUGUI>();
+        text.fontSize = 12;
+        text.color = Color.white;
+        text.enableWordWrapping = false;
+
+        var field = go.GetComponent<TMP_InputField>();
+        field.textViewport = viewportRect;
+        field.textComponent = text;
+        field.text = initialText;
+
+        return field;
+    }
+
+    private static Toggle CreateCompactToggle(Transform parent, bool initial)
+    {
+        var go = new GameObject("Toggle", typeof(RectTransform), typeof(Image), typeof(Toggle));
+        go.transform.SetParent(parent, false);
+        go.AddComponent<LayoutElement>().preferredWidth = 20f;
+        go.GetComponent<Image>().color = new Color(0.25f, 0.25f, 0.25f, 1f);
+
+        var checkGO = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
+        checkGO.transform.SetParent(go.transform, false);
+        StretchFull((RectTransform)checkGO.transform, 3);
+        var checkImage = checkGO.GetComponent<Image>();
+        checkImage.color = new Color(0.4f, 0.85f, 0.4f, 1f);
+
+        var toggle = go.GetComponent<Toggle>();
+        toggle.graphic = checkImage;
+        toggle.targetGraphic = go.GetComponent<Image>();
+        toggle.isOn = initial;
+
+        return toggle;
+    }
+
+    // ------------------------------------------------------------------
     // Actions
     // ------------------------------------------------------------------
 
@@ -581,6 +944,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
         _CanvasView.SetMode(mode);
         _PalettePanel.SetActive(mode == ScreenCanvasView.InteractionMode.Paint);
         _EntityPalettePanel.SetActive(mode == ScreenCanvasView.InteractionMode.Entities);
+        _EntityInspectorPanel.SetActive(mode == ScreenCanvasView.InteractionMode.Entities);
         UpdateStatusLabel();
     }
 

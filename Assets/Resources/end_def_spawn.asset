@@ -26,7 +26,5 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: 9b02de8a093014544a8447baed5c4e96, type: 3}
   Category: spawn
   IsSpawnPoint: 1
-  Components:
-  - Kind: 0
-    ComponentTypeId: 1
-    Prefab: {fileID: 3272003652131757445, guid: 4493c0ed6c2f7f745a4d2d4c5e872cde, type: 3}
+  Backing: 0
+  Prefab: {fileID: 3272003652131757445, guid: 4493c0ed6c2f7f745a4d2d4c5e872cde, type: 3}

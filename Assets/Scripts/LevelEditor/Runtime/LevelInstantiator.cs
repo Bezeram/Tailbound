@@ -257,87 +257,49 @@ public class LevelInstantiator : MonoBehaviour
             return;
         }
 
-        // A NativePrefab entity is one opaque, hand-built prefab (Zipline,
-        // Spring, ...) - it's instantiated wholesale as the entity root,
-        // never mixed with other component specs.
-        bool isPrefabEntity = def.Components.Count == 1 && def.Components[0].Kind == ComponentKind.NativePrefab;
-
         GameObject root;
-        if (isPrefabEntity)
+        switch (def.Backing)
         {
-            var spec = def.Components[0];
-            if (spec.Prefab == null)
-            {
-                Debug.LogWarning($"[LevelInstantiator] EntityDefinition '{def.TypeId}' has no Prefab assigned, skipping.");
+            case EntityBackingKind.NativePrefab:
+                if (def.Prefab == null)
+                {
+                    Debug.LogWarning($"[LevelInstantiator] EntityDefinition '{def.TypeId}' has no Prefab assigned, skipping.");
+                    return;
+                }
+                root = Instantiate(def.Prefab);
+                break;
+
+            case EntityBackingKind.ScriptBehavior:
+                Debug.LogWarning(
+                    $"[LevelInstantiator] ScriptBehavior entities aren't implemented yet (MiniScript isn't started) - " +
+                    $"skipping '{def.TypeId}' (instance {instance.Id}).");
                 return;
-            }
 
-            root = Instantiate(spec.Prefab);
-        }
-        else
-        {
-            root = new GameObject(def.TypeId);
+            default:
+                Debug.LogWarning($"[LevelInstantiator] Unknown EntityBackingKind for '{def.TypeId}', skipping.");
+                return;
         }
 
-        // Parented (and positioned) before adding components, same reasoning
-        // as the Tilemap ordering above - keeps any future binder that reads
-        // the hierarchy or world position at Awake-time correct too.
+        // Parented (and positioned) before applying property overrides, same
+        // reasoning as the Tilemap ordering above - keeps any adapter that
+        // reads the hierarchy or world position at Awake-time correct too.
         root.transform.SetParent(content, false);
         root.name = $"Entity_{def.TypeId}_{instance.Id}";
         root.transform.localPosition = instance.LocalPosition * cellSize;
         root.transform.localRotation = Quaternion.Euler(0f, 0f, instance.Rotation);
 
-        if (!isPrefabEntity)
+        // The prefab asset's own serialized fields are already the default -
+        // no separate EntityDefinition-level default to merge under (unlike
+        // the old ComponentSpec.Properties), so instance overrides apply
+        // directly on top of whatever's already on the instantiated prefab.
+        if (NativePrefabAdapterRegistry.TryGetForPrefab(def.Prefab, out var adapter))
         {
-            foreach (var spec in def.Components)
-            {
-                if (spec.Kind == ComponentKind.ScriptBehavior)
-                {
-                    Debug.LogWarning($"[LevelInstantiator] ScriptBehavior isn't supported yet (entity '{def.TypeId}'), skipping component.");
-                    continue;
-                }
-
-                if (spec.Kind != ComponentKind.NativeUnityComponent)
-                    continue;
-
-                if (!NativeComponentBinderRegistry.TryGet(spec.ComponentTypeId, out var binder))
-                {
-                    Debug.LogWarning($"[LevelInstantiator] No binder registered for '{spec.ComponentTypeId}' (entity '{def.TypeId}'), skipping component.");
-                    continue;
-                }
-
-                var component = root.AddComponent(binder.UnityType);
-                binder.Apply(component, MergeProperties(spec, instance));
-            }
-
-            // Only the implicit Transform means every component spec above
-            // failed to resolve - the entity exists (as reported) but has
-            // nothing to render or collide with. Most likely cause: the
-            // EntityDefinition's Components don't reference a registered
-            // binder id, or the binder's properties (e.g. SpriteRenderer's
-            // "Sprite" path) were never actually configured.
-            if (root.GetComponents<Component>().Length <= 1)
-            {
-                Debug.LogWarning(
-                    $"[LevelInstantiator] Entity '{def.TypeId}' (instance {instance.Id}) has no components after " +
-                    "resolution - check its EntityDefinition.Components reference a registered binder id " +
-                    "(see NativeComponentBinderRegistry) with properties actually set.");
-            }
+            instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var overrides);
+            adapter.Apply(root, overrides ?? _EmptyProperties);
         }
     }
 
-    private static Dictionary<string, PropertyValue> MergeProperties(ComponentSpec spec, EntityInstance instance)
-    {
-        var merged = new Dictionary<string, PropertyValue>(spec.Properties);
-
-        if (instance.ComponentOverrides.TryGetValue(spec.ComponentTypeId, out var overrides))
-        {
-            foreach (var pair in overrides)
-                merged[pair.Key] = pair.Value;
-        }
-
-        return merged;
-    }
+    private static readonly Dictionary<string, PropertyValue> _EmptyProperties = new();
 
     // ------------------------------------------------------------------
     // Player / Camera

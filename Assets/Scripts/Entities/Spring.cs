@@ -19,6 +19,28 @@ public class Spring : MonoBehaviour
     private Animator Animator;
     private AudioSource AudioSource;
 
+    /// <summary>
+    /// Caches references and applies Direction to this Spring's rotation -
+    /// previously only done in OnValidate(), which never runs in a build and
+    /// can't react to a runtime-applied property override either (see
+    /// SpringAdapter). Called from Awake() (so a hand-placed Spring works in
+    /// a real build too) and from OnValidate() and SpringAdapter.Apply().
+    /// </summary>
+    public void RuntimeInit()
+    {
+        Animator = GetComponent<Animator>();
+        AudioSource = transform.GetChild(0).GetComponent<AudioSource>();
+
+        // Rotate depending on the spring direction. Use the enum's values.
+        float angle = (int)Direction * 90;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+    }
+
+    void Awake()
+    {
+        RuntimeInit();
+    }
+
     Vector2 GetSpeed()
     {
         return Direction switch
@@ -48,12 +70,6 @@ public class Spring : MonoBehaviour
 
     void OnValidate()
     {
-        Animator = GetComponent<Animator>();
-        AudioSource = transform.GetChild(0).GetComponent<AudioSource>();
-
-        // Rotate depending on the spring direction.
-        // Use the enum's values.
-        float angle = (int)Direction * 90;
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        RuntimeInit();
     }
 }
