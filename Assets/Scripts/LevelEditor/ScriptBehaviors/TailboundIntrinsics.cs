@@ -1,4 +1,5 @@
 using Miniscript;
+using TarodevController;
 using UnityEngine;
 
 /// <summary>
@@ -34,6 +35,7 @@ public static class TailboundIntrinsics
         RegisterColor();
         RegisterCollider();
         RegisterDeltaTime();
+        RegisterPlayer();
     }
 
     private static void RegisterExpose()
@@ -86,6 +88,24 @@ public static class TailboundIntrinsics
                 t.localPosition = new Vector3(x, y, t.localPosition.z);
             }
             return Intrinsic.Result.Null;
+        };
+
+        // getPosition is local (relative to the entity's screen), same
+        // space every other placement/position value in the level editor
+        // uses - not directly comparable to getPlayerPosition's world space
+        // unless the entity happens to be on a screen at world origin. This
+        // is the one to use for e.g. "direction to the player".
+        var getWorldPosition = Intrinsic.Create("getWorldPosition");
+        getWorldPosition.code = (context, partialResult) =>
+        {
+            if (context.interpreter?.hostData is not ScriptEntityRunner runner)
+                return Intrinsic.Result.Null;
+
+            Vector3 pos = runner.transform.position;
+            var list = new ValList();
+            list.values.Add(new ValNumber(pos.x));
+            list.values.Add(new ValNumber(pos.y));
+            return new Intrinsic.Result(list);
         };
     }
 
@@ -156,6 +176,94 @@ public static class TailboundIntrinsics
     {
         var f = Intrinsic.Create("deltaTime");
         f.code = (context, partialResult) => new Intrinsic.Result(Time.deltaTime);
+    }
+
+    /// <summary>
+    /// Unlike every other intrinsic here, these don't look at hostData at
+    /// all - they act on the one global PlayerController, not "this
+    /// entity", so they work the same regardless of which ScriptBehavior
+    /// entity (if any) called them. getPlayerSpeed/setPlayerSpeed go
+    /// through FrameVelocity/InheritVelocity specifically, not the
+    /// Rigidbody2D's own velocity - InheritVelocity is PlayerController's
+    /// own sanctioned way to push an external velocity onto the player
+    /// (Swing.cs uses the same call for the exact same reason), and
+    /// FrameVelocity is what the controller itself is about to apply that
+    /// frame - reading the Rigidbody2D directly would race against
+    /// whichever runs first in the physics step.
+    /// </summary>
+    private static void RegisterPlayer()
+    {
+        var getPlayerPosition = Intrinsic.Create("getPlayerPosition");
+        getPlayerPosition.code = (context, partialResult) =>
+        {
+            var player = FindPlayer();
+            if (player == null)
+                return Intrinsic.Result.Null;
+
+            Vector3 pos = player.transform.position;
+            var list = new ValList();
+            list.values.Add(new ValNumber(pos.x));
+            list.values.Add(new ValNumber(pos.y));
+            return new Intrinsic.Result(list);
+        };
+
+        var setPlayerPosition = Intrinsic.Create("setPlayerPosition");
+        setPlayerPosition.AddParam("x", 0);
+        setPlayerPosition.AddParam("y", 0);
+        setPlayerPosition.code = (context, partialResult) =>
+        {
+            var player = FindPlayer();
+            if (player != null)
+            {
+                float x = (float)context.GetLocalDouble("x");
+                float y = (float)context.GetLocalDouble("y");
+                Transform t = player.transform;
+                t.position = new Vector3(x, y, t.position.z);
+            }
+            return Intrinsic.Result.Null;
+        };
+
+        var getPlayerSpeed = Intrinsic.Create("getPlayerSpeed");
+        getPlayerSpeed.code = (context, partialResult) =>
+        {
+            var player = FindPlayer();
+            if (player == null)
+                return Intrinsic.Result.Null;
+
+            Vector2 vel = player.FrameVelocity;
+            var list = new ValList();
+            list.values.Add(new ValNumber(vel.x));
+            list.values.Add(new ValNumber(vel.y));
+            return new Intrinsic.Result(list);
+        };
+
+        var setPlayerSpeed = Intrinsic.Create("setPlayerSpeed");
+        setPlayerSpeed.AddParam("x", 0);
+        setPlayerSpeed.AddParam("y", 0);
+        setPlayerSpeed.code = (context, partialResult) =>
+        {
+            var player = FindPlayer();
+            if (player != null)
+            {
+                float x = (float)context.GetLocalDouble("x");
+                float y = (float)context.GetLocalDouble("y");
+                player.InheritVelocity(new Vector2(x, y));
+            }
+            return Intrinsic.Result.Null;
+        };
+    }
+
+    // Cached rather than FindAnyObjectByType'd on every call (these can run
+    // every frame) - Unity's == correctly treats a destroyed/unloaded
+    // player as null again, so a stale reference from a previous PlayTest
+    // session gets re-resolved automatically rather than staying stuck.
+    private static PlayerController _CachedPlayer;
+
+    private static PlayerController FindPlayer()
+    {
+        if (_CachedPlayer == null)
+            _CachedPlayer = Object.FindAnyObjectByType<PlayerController>();
+        return _CachedPlayer;
     }
 
     /// <summary>Number/string only for v1 - matches PropertyType's coverage
