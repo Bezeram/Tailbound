@@ -204,4 +204,58 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
 
         binder.Apply(component, new Dictionary<string, PropertyValue> { [key] = value });
     }
+
+    // ------------------------------------------------------------------
+    // Audio - Play/PlayOneShot/Stop/isPlaying are actions/state on the
+    // AudioSource itself, not settable fields, so they bypass
+    // ApplyComponentProperty/INativeComponentBinder (see AudioSourceBinder's
+    // own comment) and talk to the component directly instead. Called by
+    // TailboundIntrinsics' playAudio/playAudioOneShot/stopAudio/isAudioPlaying.
+    // ------------------------------------------------------------------
+
+    private AudioSource EnsureAudioSource()
+    {
+        var source = GetComponent<AudioSource>();
+        if (source == null)
+            source = gameObject.AddComponent<AudioSource>();
+        return source;
+    }
+
+    /// <summary>Plays whatever clip is currently assigned (setAudioClip) -
+    /// same as Unity's AudioSource.Play(). No-op with a warning if no clip
+    /// has been set, same as Unity would silently do nothing either way.</summary>
+    public void PlayAudio()
+    {
+        var source = EnsureAudioSource();
+        if (source.clip == null)
+        {
+            Debug.LogWarning($"[ScriptEntityRunner] '{gameObject.name}': playAudio called with no clip set (setAudioClip first).", this);
+            return;
+        }
+        source.Play();
+    }
+
+    /// <summary>Loads a clip fresh from a Resources path and plays it once,
+    /// without disturbing whatever's already assigned/playing - same as
+    /// Unity's AudioSource.PlayOneShot(clip, volumeScale), and the more
+    /// common of the two ways to play a one-off sound (e.g. from
+    /// onTriggerEnter) without needing setAudioClip first.</summary>
+    public void PlayAudioOneShot(string resourcesPath, float volumeScale)
+    {
+        var clip = Resources.Load<AudioClip>(resourcesPath);
+        if (clip == null)
+        {
+            Debug.LogWarning($"[ScriptEntityRunner] '{gameObject.name}': no AudioClip found at Resources path '{resourcesPath}'.", this);
+            return;
+        }
+        EnsureAudioSource().PlayOneShot(clip, volumeScale);
+    }
+
+    public void StopAudio() => EnsureAudioSource().Stop();
+
+    public bool IsAudioPlaying()
+    {
+        var source = GetComponent<AudioSource>();
+        return source != null && source.isPlaying;
+    }
 }

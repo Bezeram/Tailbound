@@ -21,7 +21,7 @@ launchSpeed = expose("LaunchSpeed", 15.0)
 
 start = function()
     setSprite "Textures/Spring/spring-1"
-    setCollider 1, 1, 1   // pure trigger, 1x1 - see onTriggerEnter
+    setCollider 1, 1/7, 1   // pure trigger, 1x1 - see onTriggerEnter
     globals.origin = getPosition
 end function
 
@@ -33,7 +33,12 @@ update = function()
 end function
 
 onTriggerEnter = function(other)
-    if not other.isPlayer then return
+    if not other.isPlayer then 
+        return
+    end if
+    
+    playAudioOneShot "Audio/spring", 1.0
+    
     setColor 1, 0, 0, 1
 
     // Direction from this entity to the player, normalized - getPosition

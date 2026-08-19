@@ -36,6 +36,7 @@ public static class TailboundIntrinsics
         RegisterCollider();
         RegisterDeltaTime();
         RegisterPlayer();
+        RegisterAudio();
     }
 
     private static void RegisterExpose()
@@ -166,6 +167,88 @@ public static class TailboundIntrinsics
                 runner.ApplyComponentProperty("BoxCollider2D", "IsTrigger", PropertyValue.FromBool(isTrigger));
             }
             return Intrinsic.Result.Null;
+        };
+    }
+
+    /// <summary>
+    /// Mirrors Unity's AudioSource API: setAudioClip/setAudioVolume/
+    /// setAudioPitch/setAudioLoop configure the component (via
+    /// AudioSourceBinder, same as setSprite/setColor/setCollider);
+    /// playAudio/playAudioOneShot/stopAudio/isAudioPlaying are the actions,
+    /// which don't fit the binder's "set these fields" shape so they call
+    /// straight through to ScriptEntityRunner instead - same distinction
+    /// Unity itself draws between AudioSource's inspector fields and its
+    /// Play()/PlayOneShot()/Stop()/isPlaying members.
+    /// </summary>
+    private static void RegisterAudio()
+    {
+        var setClip = Intrinsic.Create("setAudioClip");
+        setClip.AddParam("path", "");
+        setClip.code = (context, partialResult) =>
+        {
+            if (context.interpreter?.hostData is ScriptEntityRunner runner)
+                runner.ApplyComponentProperty("AudioSource", "Clip", PropertyValue.FromString(context.GetLocalString("path")));
+            return Intrinsic.Result.Null;
+        };
+
+        var setVolume = Intrinsic.Create("setAudioVolume");
+        setVolume.AddParam("volume", 1);
+        setVolume.code = (context, partialResult) =>
+        {
+            if (context.interpreter?.hostData is ScriptEntityRunner runner)
+                runner.ApplyComponentProperty("AudioSource", "Volume", PropertyValue.FromFloat((float)context.GetLocalDouble("volume")));
+            return Intrinsic.Result.Null;
+        };
+
+        var setPitch = Intrinsic.Create("setAudioPitch");
+        setPitch.AddParam("pitch", 1);
+        setPitch.code = (context, partialResult) =>
+        {
+            if (context.interpreter?.hostData is ScriptEntityRunner runner)
+                runner.ApplyComponentProperty("AudioSource", "Pitch", PropertyValue.FromFloat((float)context.GetLocalDouble("pitch")));
+            return Intrinsic.Result.Null;
+        };
+
+        var setLoop = Intrinsic.Create("setAudioLoop");
+        setLoop.AddParam("loop", 0);
+        setLoop.code = (context, partialResult) =>
+        {
+            if (context.interpreter?.hostData is ScriptEntityRunner runner)
+                runner.ApplyComponentProperty("AudioSource", "Loop", PropertyValue.FromBool(context.GetLocalDouble("loop") != 0));
+            return Intrinsic.Result.Null;
+        };
+
+        var play = Intrinsic.Create("playAudio");
+        play.code = (context, partialResult) =>
+        {
+            if (context.interpreter?.hostData is ScriptEntityRunner runner)
+                runner.PlayAudio();
+            return Intrinsic.Result.Null;
+        };
+
+        var playOneShot = Intrinsic.Create("playAudioOneShot");
+        playOneShot.AddParam("path", "");
+        playOneShot.AddParam("volumeScale", 1);
+        playOneShot.code = (context, partialResult) =>
+        {
+            if (context.interpreter?.hostData is ScriptEntityRunner runner)
+                runner.PlayAudioOneShot(context.GetLocalString("path"), (float)context.GetLocalDouble("volumeScale"));
+            return Intrinsic.Result.Null;
+        };
+
+        var stop = Intrinsic.Create("stopAudio");
+        stop.code = (context, partialResult) =>
+        {
+            if (context.interpreter?.hostData is ScriptEntityRunner runner)
+                runner.StopAudio();
+            return Intrinsic.Result.Null;
+        };
+
+        var isPlaying = Intrinsic.Create("isAudioPlaying");
+        isPlaying.code = (context, partialResult) =>
+        {
+            bool playing = context.interpreter?.hostData is ScriptEntityRunner runner && runner.IsAudioPlaying();
+            return new Intrinsic.Result(playing ? 1 : 0);
         };
     }
 

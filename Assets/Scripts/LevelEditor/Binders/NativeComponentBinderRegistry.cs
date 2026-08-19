@@ -12,6 +12,7 @@ public static class NativeComponentBinderRegistry
     {
         { "SpriteRenderer", new SpriteRendererBinder() },
         { "BoxCollider2D", new BoxCollider2DBinder() },
+        { "AudioSource", new AudioSourceBinder() },
     };
 
     public static bool TryGet(string componentTypeId, out INativeComponentBinder binder)
