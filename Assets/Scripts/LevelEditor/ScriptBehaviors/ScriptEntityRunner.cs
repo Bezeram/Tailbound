@@ -6,17 +6,36 @@ using UnityEngine;
 /// Runs one ScriptBehavior EntityInstance's MiniScript source as real
 /// gameplay - added by LevelInstantiator, never present in the level
 /// editor's own uGUI canvas (EntityMarkerView just previews a static icon
-/// there, same as any other entity). Owns one Interpreter, ticked
-/// incrementally: a script is expected to declare its exposed properties
-/// up front, then (optionally) loop forever cooperating via wait()/yield -
-/// both of those are stdlib intrinsics that suspend execution, which is
-/// what lets RunUntilDone hand control back to Unity every frame instead of
-/// running the whole loop in one go.
+/// there, same as any other entity). Owns one Interpreter and supports two
+/// execution models, chosen automatically per script:
+///
+///   - MonoBehaviour-style (recommended): the top-level script just declares
+///     properties and defines functions - most notably start() (called once)
+///     and update() (called every frame, deltaTime available via the
+///     deltaTime intrinsic) - then finishes. Once the top level finishes on
+///     its own, this becomes the model: InvokeIfDefined pushes a call to
+///     start()/update()/onCollisionEnter()/etc. directly via
+///     TAC.Machine.ManuallyPushCall, MiniScript's own documented mechanism
+///     for a host to invoke a handler function on demand (see its doc
+///     comment in MiniscriptTAC.cs).
+///   - Legacy self-driven loop (still supported, e.g. Blinker.ms/.txt): the
+///     top-level script itself contains a `while true ... wait ... end
+///     while` and never finishes on its own. If the very first run doesn't
+///     finish, this entity just keeps resuming that same top-level program
+///     every frame via RunUntilDone, exactly as before - start()/update()
+///     are never invoked in this case, since the script is already driving
+///     itself.
+///
+/// Both models cooperate with Unity's frame budget the same way: wait()/
+/// yield() are stdlib intrinsics that suspend execution, which is what lets
+/// RunUntilDone hand control back to Unity instead of running forever in
+/// one go.
 /// </summary>
 public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
 {
     // Generous per-frame budget - scripts are expected to cooperate via
-    // wait()/yield well before this, so it's a safety cap, not a target.
+    // wait()/yield (legacy model) or simply return promptly (update()) well
+    // before this, so it's a safety cap, not a target.
     private const double FrameTimeBudget = 0.05;
 
     private Interpreter _Interpreter;
@@ -40,16 +59,13 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
     }
 
     /// <summary>
-    /// (Re)builds the Interpreter from _Script's current text - called once
-    /// from Initialize(), and again from Update() whenever the text has
-    /// changed since the last compile. That's what lets you edit a
-    /// ScriptBehavior entity's .ms/.txt file (in Unity or an external
-    /// editor, while Unity still has focus/import rights over it) during
-    /// Play Mode or a Play Test and see it take effect without restarting -
-    /// no separate "reload" action needed. Resets whatever local execution
-    /// state the old run had (variables, wherever a loop was paused) and
-    /// starts the new source from the top; components it already added
-    /// (e.g. a SpriteRenderer from setSprite) are left alone, not removed.
+    /// (Re)builds the Interpreter from _Script's current text and runs the
+    /// top level once - called once from Initialize(), and again from
+    /// Update() whenever the text has changed since the last compile (live
+    /// reload while editing in Unity or an external editor during Play Mode
+    /// / a Play Test). Resets whatever local execution state the old run
+    /// had; components it already added (e.g. a SpriteRenderer from
+    /// setSprite) are left alone, not removed.
     /// </summary>
     private void Compile()
     {
@@ -74,10 +90,14 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
             },
         };
 
-        // Run whatever we can immediately (e.g. one-shot setup code with no
-        // loop at all) rather than waiting for the first Update() - matches
-        // a real prefab's Awake() running the instant it's instantiated.
+        // Run the top level once, immediately, rather than waiting for the
+        // first Update() - matches a real prefab's Awake() running the
+        // instant it's instantiated. Whether this finishes or not decides
+        // which of the two execution models (see class comment) applies.
         Tick();
+
+        if (!_Stopped && _Interpreter.done)
+            InvokeIfDefined("start");
     }
 
     private void Update()
@@ -85,11 +105,59 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
         if (_Script != null && _Script.text != _CompiledSource)
         {
             Debug.Log($"[MiniScript:{gameObject.name}] Script changed, reloading.");
-            Compile(); // already ticks once itself - don't also Tick() below this frame
+            Compile(); // already ticks (and calls start()) itself this frame
             return;
         }
 
-        Tick();
+        if (_Interpreter == null || _Stopped)
+            return;
+
+        if (_Interpreter.done)
+            InvokeIfDefined("update"); // MonoBehaviour-style model
+        else
+            Tick(); // legacy self-driven loop, still mid-run
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision) => InvokeIfDefined("onCollisionEnter", BuildOtherInfo(collision.gameObject));
+    private void OnCollisionExit2D(Collision2D collision) => InvokeIfDefined("onCollisionExit", BuildOtherInfo(collision.gameObject));
+    private void OnTriggerEnter2D(Collider2D other) => InvokeIfDefined("onTriggerEnter", BuildOtherInfo(other.gameObject));
+    private void OnTriggerExit2D(Collider2D other) => InvokeIfDefined("onTriggerExit", BuildOtherInfo(other.gameObject));
+
+    /// <summary>Minimal info about the other GameObject in a collision/
+    /// trigger - MiniScript has no notion of a GameObject/Component, so
+    /// this is a small map rather than a handle. Extend here if a script
+    /// needs more (whatever's added, it's still just data - no way for a
+    /// script to reach back into the other object's own components).</summary>
+    private static ValMap BuildOtherInfo(GameObject other)
+    {
+        var info = new ValMap();
+        info.map[new ValString("name")] = new ValString(other.name);
+        info.map[new ValString("isPlayer")] = new ValNumber(other.layer == LayerMask.NameToLayer("Player") ? 1 : 0);
+        info.map[new ValString("x")] = new ValNumber(other.transform.position.x);
+        info.map[new ValString("y")] = new ValNumber(other.transform.position.y);
+        return info;
+    }
+
+    /// <summary>
+    /// Looks up a global MiniScript function by name and, if defined, calls
+    /// it right now via TAC.Machine.ManuallyPushCall - MiniScript's own
+    /// documented mechanism for a host to invoke a handler function it
+    /// discovered via a global/intrinsic, rather than only ever resuming
+    /// wherever the script itself last paused. Does nothing if the name
+    /// isn't bound to a function (e.g. a script that doesn't define
+    /// onCollisionEnter just never gets it called - not an error).
+    /// </summary>
+    private void InvokeIfDefined(string functionName, Value argument = null)
+    {
+        if (_Interpreter == null || _Stopped)
+            return;
+
+        if (_Interpreter.GetGlobalValue(functionName) is not ValFunction function)
+            return;
+
+        var arguments = argument != null ? new List<Value> { argument } : null;
+        _Interpreter.vm.ManuallyPushCall(function, null, arguments);
+        _Interpreter.RunUntilDone(FrameTimeBudget, returnEarly: true);
     }
 
     /// <summary>
@@ -119,20 +187,21 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
         return defaultValue;
     }
 
-    /// <summary>Adds a SpriteRenderer if this entity doesn't have one yet,
-    /// then applies one property via the existing SpriteRendererBinder -
-    /// reusing the same curated adapter the NativePrefab side uses, rather
-    /// than duplicating "which SpriteRenderer fields are safe to touch"
-    /// logic here. Called by TailboundIntrinsics' setSprite/setColor.</summary>
-    public void ApplySpriteRendererProperty(string key, PropertyValue value)
+    /// <summary>Adds a component if this entity doesn't have one yet, then
+    /// applies one property via the matching registered
+    /// INativeComponentBinder - reusing the same curated adapters the
+    /// NativePrefab side uses, rather than duplicating "which fields are
+    /// safe to touch" logic here. Called by TailboundIntrinsics' setSprite/
+    /// setColor/setCollider.</summary>
+    public void ApplyComponentProperty(string binderTypeId, string key, PropertyValue value)
     {
-        if (!NativeComponentBinderRegistry.TryGet("SpriteRenderer", out var binder))
+        if (!NativeComponentBinderRegistry.TryGet(binderTypeId, out var binder))
             return;
 
-        var renderer = GetComponent<SpriteRenderer>();
-        if (renderer == null)
-            renderer = gameObject.AddComponent<SpriteRenderer>();
+        var component = GetComponent(binder.UnityType);
+        if (component == null)
+            component = gameObject.AddComponent(binder.UnityType);
 
-        binder.Apply(renderer, new Dictionary<string, PropertyValue> { [key] = value });
+        binder.Apply(component, new Dictionary<string, PropertyValue> { [key] = value });
     }
 }

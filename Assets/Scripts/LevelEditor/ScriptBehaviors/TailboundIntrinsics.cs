@@ -32,6 +32,8 @@ public static class TailboundIntrinsics
         RegisterPosition();
         RegisterSprite();
         RegisterColor();
+        RegisterCollider();
+        RegisterDeltaTime();
     }
 
     private static void RegisterExpose()
@@ -94,7 +96,7 @@ public static class TailboundIntrinsics
         f.code = (context, partialResult) =>
         {
             if (context.interpreter?.hostData is ScriptEntityRunner runner)
-                runner.ApplySpriteRendererProperty("Sprite", PropertyValue.FromString(context.GetLocalString("path")));
+                runner.ApplyComponentProperty("SpriteRenderer", "Sprite", PropertyValue.FromString(context.GetLocalString("path")));
             return Intrinsic.Result.Null;
         };
     }
@@ -113,10 +115,47 @@ public static class TailboundIntrinsics
                 var color = new Color(
                     (float)context.GetLocalDouble("r"), (float)context.GetLocalDouble("g"),
                     (float)context.GetLocalDouble("b"), (float)context.GetLocalDouble("a"));
-                runner.ApplySpriteRendererProperty("Color", PropertyValue.FromColor(color));
+                runner.ApplyComponentProperty("SpriteRenderer", "Color", PropertyValue.FromColor(color));
             }
             return Intrinsic.Result.Null;
         };
+    }
+
+    /// <summary>
+    /// Adds (if missing) and configures a BoxCollider2D - needed for
+    /// onCollisionEnter/onTriggerEnter to ever fire at all, since a bare
+    /// ScriptBehavior entity starts with nothing but a Transform (and
+    /// whatever setSprite/setColor added). isTrigger follows MiniScript's
+    /// usual "0 is false, anything else is true" convention.
+    /// </summary>
+    private static void RegisterCollider()
+    {
+        var f = Intrinsic.Create("setCollider");
+        f.AddParam("width", 1);
+        f.AddParam("height", 1);
+        f.AddParam("isTrigger", 0);
+        f.code = (context, partialResult) =>
+        {
+            if (context.interpreter?.hostData is ScriptEntityRunner runner)
+            {
+                float width = (float)context.GetLocalDouble("width");
+                float height = (float)context.GetLocalDouble("height");
+                bool isTrigger = context.GetLocalDouble("isTrigger") != 0;
+
+                runner.ApplyComponentProperty("BoxCollider2D", "Size", PropertyValue.FromVector2(new Vector2(width, height)));
+                runner.ApplyComponentProperty("BoxCollider2D", "IsTrigger", PropertyValue.FromBool(isTrigger));
+            }
+            return Intrinsic.Result.Null;
+        };
+    }
+
+    /// <summary>Unity's Time.deltaTime, for an update() function to scale
+    /// per-frame movement/animation by - the MiniScript-side equivalent of
+    /// reading Time.deltaTime directly in a real MonoBehaviour.Update().</summary>
+    private static void RegisterDeltaTime()
+    {
+        var f = Intrinsic.Create("deltaTime");
+        f.code = (context, partialResult) => new Intrinsic.Result(Time.deltaTime);
     }
 
     /// <summary>Number/string only for v1 - matches PropertyType's coverage

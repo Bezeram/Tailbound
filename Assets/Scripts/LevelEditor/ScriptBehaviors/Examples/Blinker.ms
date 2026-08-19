@@ -14,34 +14,29 @@
 //
 // At runtime, pulses a SpriteRenderer's brightness up and down forever.
 
-speed = expose("Speed", 2.0)
-minBrightness = expose("MinBrightness", 0.2)
-maxBrightness = expose("MaxBrightness", 1.0)
-spritePath = expose("SpritePath", "")
+speed = expose("Speed", 3.0)
 
-if spritePath != "" then
-    setSprite spritePath
-end if
-
-SetPosition = function(position)
-    setPosition position[0], position[1]
+start = function()
+    setSprite "Textures/Spring/spring-1"
+    setCollider 1, 1, 1   // trigger, 1x1
+    globals.origin = getPosition
 end function
 
-x = 10
-y = 5
-r = 5
-position = [x, y]
-radius = r
 t = 0
-while true
-    brightness = minBrightness + (maxBrightness - minBrightness) * (0.5 + 0.5 * sin(t * speed))
-    setColor brightness, 1, brightness, 1
-    
-    radius = sin(t) * r
-    position[1] = y + sin(t * speed) * radius
-    position[0] = x + cos(t * speed) * radius
-    SetPosition position
 
-    wait 0.05
-    t += 0.05
-end while
+update = function()
+    globals.t += deltaTime
+    setPosition globals.origin[0], globals.origin[1] + sin(globals.t * 5)
+end function
+
+onTriggerEnter = function(other)
+    if other.isPlayer then
+        setColor 1, 0, 0, 1
+    end if
+end function
+
+onTriggerExit = function(other)
+    if other.isPlayer then
+        setColor 1, 1, 1, 1
+    end if
+end function

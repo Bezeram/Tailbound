@@ -14,7 +14,8 @@ using System.Collections.Generic;
 /// A ScriptBehavior entity can also expose native Unity component properties
 /// alongside its own script variables (e.g. its SpriteRenderer's Color) via
 /// the existing INativeComponentBinder/NativeComponentBinderRegistry -
-/// ScriptEntityRunner.ApplySpriteRendererProperty is the first example.
+/// ScriptEntityRunner.ApplyComponentProperty is the general-purpose bridge,
+/// called by TailboundIntrinsics' setSprite/setColor/setCollider.
 /// </summary>
 public interface IScriptPropertySource
 {
