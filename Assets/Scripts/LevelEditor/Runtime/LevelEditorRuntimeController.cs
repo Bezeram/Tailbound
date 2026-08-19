@@ -637,9 +637,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
         _NewEntityIsSpawnPointToggle = CreateCompactToggle(spawnRowGO.transform, false, 28f);
         CreateLabel(spawnRowGO.transform, "Is Spawn Point", 18);
 
-        CreateLabel(go.transform,
-            "Creates a starter .ms script and opens it in your default app for that " +
-            "file type - Type Id is derived from Display Name automatically.", 14);
+        CreateLabel(go.transform, "Creates a starter MiniScript behaviour script.", 14);
 
         var buttonRowGO = new GameObject("ButtonRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
         buttonRowGO.transform.SetParent(go.transform, false);
