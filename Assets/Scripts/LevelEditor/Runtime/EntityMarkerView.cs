@@ -122,6 +122,7 @@ public class EntityMarkerView : MonoBehaviour, IPointerClickHandler, IBeginDragH
 
         _Owner.SelectEntity(_Instance.Id);
         _IsDragging = true;
+        _Owner.IsDraggingEntity = true;
         _DragStartPosition = _Instance.LocalPosition;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             (RectTransform)transform.parent, eventData.position, null, out _DragStartLocalPoint);
@@ -162,5 +163,6 @@ public class EntityMarkerView : MonoBehaviour, IPointerClickHandler, IBeginDragH
         }
 
         _IsDragging = false;
+        _Owner.IsDraggingEntity = false;
     }
 }

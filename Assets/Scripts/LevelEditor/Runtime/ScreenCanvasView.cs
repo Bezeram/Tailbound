@@ -42,6 +42,9 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
     private bool _IsPanning;
     private Vector2 _PanLastLocalPoint;
 
+    private RectTransform _PreviewRect;
+    private Image _PreviewImage;
+
     public static ScreenCanvasView Create(Transform parent)
     {
         var go = new GameObject("ScreenCanvas", typeof(RectTransform), typeof(Image), typeof(ScreenCanvasView));
@@ -71,6 +74,21 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
         view._Content.pivot = Vector2.zero;
         view._Content.anchoredPosition = Vector2.zero;
         view._Content.sizeDelta = Vector2.zero;
+
+        // Cursor preview - parented under Content like everything else it
+        // needs to line up with (tiles, entity markers), so its position is
+        // just "cell * CellPixelSize" the same way theirs is. Starts hidden;
+        // UpdateCursorPreview shows/positions it every frame.
+        var previewGO = new GameObject("CursorPreview", typeof(RectTransform), typeof(Image));
+        previewGO.transform.SetParent(view._Content, false);
+        view._PreviewRect = (RectTransform)previewGO.transform;
+        view._PreviewRect.anchorMin = Vector2.zero;
+        view._PreviewRect.anchorMax = Vector2.zero;
+        view._PreviewImage = previewGO.GetComponent<Image>();
+        view._PreviewImage.raycastTarget = false;
+        view._PreviewImage.color = new Color(1f, 1f, 1f, 0.55f);
+        view._PreviewImage.preserveAspect = true;
+        previewGO.SetActive(false);
 
         return view;
     }
@@ -151,6 +169,12 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
         SelectedEntityId = entityId;
     }
 
+    /// <summary>Set by EntityMarkerView while an existing entity is being
+    /// dragged around, so UpdateCursorPreview can hide the placement
+    /// preview - both would otherwise show at the same time, right on top
+    /// of each other, while moving an entity you've already placed.</summary>
+    public bool IsDraggingEntity { get; set; }
+
     public void DeleteSelectedEntity()
     {
         if (Level == null || SelectedEntityId < 0)
@@ -169,6 +193,33 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
     public bool ScreenToContentLocalPoint(PointerEventData eventData, out Vector2 localPoint)
     {
         return RectTransformUtility.ScreenPointToLocalPointInRectangle(_Content, eventData.position, null, out localPoint);
+    }
+
+    /// <summary>
+    /// Re-evaluates tiles for every screen edge-adjacent (or corner-
+    /// touching - cheaper to over-include than to compute exact edge
+    /// sharing) to the given one - called after a paint/erase, since a rule
+    /// tile just inside one screen's edge can depend on a neighbor cell that
+    /// belongs to whichever screen borders it (see RuleTileEvaluator).
+    /// </summary>
+    public void RefreshAdjacentScreenTiles(int screenId)
+    {
+        var screen = Level?.GetScreen(screenId);
+        if (screen == null)
+            return;
+
+        var expanded = new RectInt(
+            screen.Bounds.x - 1, screen.Bounds.y - 1,
+            screen.Bounds.width + 2, screen.Bounds.height + 2);
+
+        foreach (var other in Level.Screens)
+        {
+            if (other.Id == screenId)
+                continue;
+
+            if (expanded.Overlaps(other.Bounds) && _ScreenViews.TryGetValue(other.Id, out var view))
+                view.RefreshTiles();
+        }
     }
 
     private void RebuildScreenViews()
@@ -207,6 +258,109 @@ public class ScreenCanvasView : MonoBehaviour, IScrollHandler, IBeginDragHandler
         }
 
         UpdateGrid();
+        UpdateCursorPreview();
+    }
+
+    /// <summary>
+    /// Shows a semi-transparent preview of whatever tile/entity type is
+    /// currently selected, following the cursor - snapped to the cell it
+    /// would actually be placed in (tiles always snap, same as painting
+    /// itself; entities snap only when SnapToGridEnabled/Ctrl says so, same
+    /// as placing one for real - see IsGridSnapActive). Hidden whenever
+    /// there's nothing to preview (Screens mode, eraser selected, no entity
+    /// type selected) or the cursor isn't over any screen.
+    /// </summary>
+    private void UpdateCursorPreview()
+    {
+        bool wantTilePreview = Mode == InteractionMode.Paint && !string.IsNullOrEmpty(ActiveTileId);
+        bool wantEntityPreview = Mode == InteractionMode.Entities && !string.IsNullOrEmpty(ActiveEntityTypeId) && !IsDraggingEntity;
+
+        if ((!wantTilePreview && !wantEntityPreview) || !TryGetHoveredCell(wantTilePreview, out var screen, out var localCell))
+        {
+            _PreviewRect.gameObject.SetActive(false);
+            return;
+        }
+
+        Sprite sprite;
+        Vector2 pivot;
+        float size = CellPixelSize;
+
+        if (wantTilePreview)
+        {
+            // Plain def sprite, not a live RuleTileEvaluator result - good
+            // enough to show "this is the tile you have selected", without
+            // simulating what painting it would do to its own neighbors.
+            sprite = TileCatalog.Lookup.TryGetValue(ActiveTileId, out var tileDef)
+                ? tileDef.Sprite ?? tileDef.RuleTile?.m_DefaultSprite
+                : null;
+            pivot = Vector2.zero; // tiles fill their cell from its bottom-left, same as TileCellPool
+        }
+        else
+        {
+            sprite = EntityCatalog.Lookup.TryGetValue(ActiveEntityTypeId, out var entityDef) ? entityDef.Icon : null;
+            // Same sprite-pivot-to-RectTransform-pivot mapping EntityMarkerView
+            // uses, so the preview lines up with where the placed marker
+            // would actually end up.
+            pivot = sprite != null
+                ? new Vector2(sprite.pivot.x / sprite.rect.width, sprite.pivot.y / sprite.rect.height)
+                : new Vector2(0.5f, 0.5f);
+        }
+
+        if (sprite == null)
+        {
+            _PreviewRect.gameObject.SetActive(false);
+            return;
+        }
+
+        _PreviewRect.gameObject.SetActive(true);
+        // Created once, before any ScreenView exists, so its sibling index
+        // (render order) would otherwise stay under every screen rebuilt
+        // afterward - keep it pinned on top so it's never hidden behind a
+        // screen's own background/tiles.
+        _PreviewRect.SetAsLastSibling();
+        _PreviewImage.sprite = sprite;
+        _PreviewRect.pivot = pivot;
+        _PreviewRect.sizeDelta = new Vector2(size, size);
+        _PreviewRect.anchoredPosition = ((Vector2)screen.Origin + localCell) * size;
+    }
+
+    /// <summary>
+    /// Resolves the cursor's current position to a screen and a cell within
+    /// it (in that screen's local space), or false if the cursor isn't over
+    /// any screen. forceSnap is true for tile painting (always snaps, same
+    /// as PaintAtPointer); otherwise follows IsGridSnapActive, same as
+    /// placing an entity for real.
+    /// </summary>
+    private bool TryGetHoveredCell(bool forceSnap, out ScreenDef screen, out Vector2 localCell)
+    {
+        screen = null;
+        localCell = Vector2.zero;
+
+        if (Level == null)
+            return false;
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_Content, Input.mousePosition, null, out Vector2 contentLocal))
+            return false;
+
+        Vector2 worldPoint = contentLocal / CellPixelSize;
+        var worldCell = new Vector2Int(Mathf.FloorToInt(worldPoint.x), Mathf.FloorToInt(worldPoint.y));
+
+        foreach (var candidate in Level.Screens)
+        {
+            if (!candidate.Bounds.Contains(worldCell))
+                continue;
+
+            screen = candidate;
+            Vector2 local = worldPoint - (Vector2)candidate.Origin;
+
+            if (forceSnap || ScreenView.IsGridSnapActive(this))
+                local = ScreenView.SnapToCellOrigin(local);
+
+            localCell = local;
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>

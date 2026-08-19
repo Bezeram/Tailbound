@@ -334,6 +334,20 @@ public static class TailboundIntrinsics
             }
             return Intrinsic.Result.Null;
         };
+
+        // instant defaults to 1 (true) - PlayerController.Kill(true) moves
+        // the player offscreen immediately; Kill(false) plays out whatever
+        // non-instant death handling LevelManager/LevelLoader already do
+        // for e.g. DeathBox. Either way this only starts the death - actual
+        // respawn is still LevelLoader's job, same as any other death source.
+        var killPlayer = Intrinsic.Create("killPlayer");
+        killPlayer.AddParam("instant", 1);
+        killPlayer.code = (context, partialResult) =>
+        {
+            var player = FindPlayer();
+            player?.Kill(context.GetLocalDouble("instant") != 0);
+            return Intrinsic.Result.Null;
+        };
     }
 
     // Cached rather than FindAnyObjectByType'd on every call (these can run

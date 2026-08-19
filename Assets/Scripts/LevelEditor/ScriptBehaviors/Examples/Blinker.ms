@@ -41,11 +41,7 @@ onTriggerEnter = function(other)
     
     setColor 1, 0, 0, 1
 
-    // Direction from this entity to the player, normalized - getPosition
-    // is local (relative to this entity's screen), not directly comparable
-    // to getPlayerPosition's world space, so getWorldPosition is the one to
-    // use here.
-    entityPos = getPosition
+    entityPos = getWorldPosition
     playerPos = getPlayerPosition
     dx = playerPos[0] - entityPos[0]
     dy = playerPos[1] - entityPos[1]

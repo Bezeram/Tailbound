@@ -22,7 +22,9 @@ public class TileCellPool
         _Parent = parent;
     }
 
-    public void SetCells(Dictionary<Vector2Int, TileRef> cells, Dictionary<string, TileDef> tileDefLookup)
+    public void SetCells(
+        Dictionary<Vector2Int, TileRef> cells, Dictionary<string, TileDef> tileDefLookup,
+        ScreenDef screen, LevelAsset level, TileLayer layer)
     {
         _ActiveCells.Clear();
 
@@ -37,7 +39,9 @@ public class TileCellPool
                 image.gameObject.SetActive(true);
 
                 TileDef def = tileDefLookup.TryGetValue(pair.Value.TileId, out var found) ? found : null;
-                Sprite sprite = def != null ? RuleTileEvaluator.ResolveSprite(pair.Key, def, cells, tileDefLookup) : null;
+                Sprite sprite = def != null
+                    ? RuleTileEvaluator.ResolveSprite(pair.Key, def, cells, tileDefLookup, screen, level, layer)
+                    : null;
                 image.sprite = sprite;
                 image.color = sprite != null ? Color.white : MissingSpriteColor;
 

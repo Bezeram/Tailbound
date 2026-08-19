@@ -170,19 +170,22 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         _ForegroundTiles.Reposition(cellPixelSize);
     }
 
-    /// <summary>Structural rebuild of which cells are shown - call after any paint/erase write, and once after creation.</summary>
+    /// <summary>Structural rebuild of which cells are shown - call after any paint/erase write, and once after creation.
+    /// Passes the owning screen/level/layer through so RuleTileEvaluator can look across into an adjacent screen for
+    /// edge-cell neighbors instead of treating everything outside this screen as empty.</summary>
     public void RefreshTiles()
     {
-        var screen = _Owner.Level?.GetScreen(ScreenId);
+        var level = _Owner.Level;
+        var screen = level?.GetScreen(ScreenId);
         if (screen == null)
             return;
 
         var lookup = TileCatalog.Lookup;
-        _Owner.Level.Background.ScreenCells.TryGetValue(ScreenId, out var backgroundCells);
-        _Owner.Level.Foreground.ScreenCells.TryGetValue(ScreenId, out var foregroundCells);
+        level.Background.ScreenCells.TryGetValue(ScreenId, out var backgroundCells);
+        level.Foreground.ScreenCells.TryGetValue(ScreenId, out var foregroundCells);
 
-        _BackgroundTiles.SetCells(backgroundCells, lookup);
-        _ForegroundTiles.SetCells(foregroundCells, lookup);
+        _BackgroundTiles.SetCells(backgroundCells, lookup, screen, level, level.Background);
+        _ForegroundTiles.SetCells(foregroundCells, lookup, screen, level, level.Foreground);
     }
 
     /// <summary>Structural rebuild of which entity markers exist - call after any placement/deletion, and once after creation.</summary>
@@ -348,6 +351,10 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             cells[cell] = new TileRef(_Owner.ActiveTileId);
 
         RefreshTiles();
+        // A cell change near this screen's edge can flip a rule tile's
+        // evaluation on the OTHER side of that edge too, in whichever
+        // screen actually borders it - repaint those as well.
+        _Owner.RefreshAdjacentScreenTiles(ScreenId);
     }
 
     private void PlaceEntityAtPointer(PointerEventData eventData)

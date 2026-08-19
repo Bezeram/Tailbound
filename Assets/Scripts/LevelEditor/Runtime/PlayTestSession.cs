@@ -26,4 +26,10 @@ public static class PlayTestSession
     /// <summary>The editor's Level Name field text at the moment Play Test
     /// was pressed, restored into that field on return.</summary>
     public static string ReturnDisplayName;
+
+    /// <summary>The name the level was actually saved under (if any) at the
+    /// moment Play Test was pressed - restored on return so Rename still
+    /// knows what to delete, rather than being left pointed at the
+    /// playtest scratch slot LoadLevel(LevelSlotName) would otherwise leave it on.</summary>
+    public static string ReturnLoadedLevelName;
 }

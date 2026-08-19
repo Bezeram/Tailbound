@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using Miniscript;
 using UnityEngine;
 
@@ -44,10 +45,21 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
     private string _CompiledSource;
     private bool _Stopped;
 
+    // Set only for a RuntimeEntityIO-created script (see GetSourcePath) -
+    // an Editor-imported TextAsset has none of this and instead relies on
+    // its own .text updating live, since Unity's asset pipeline watches
+    // that file itself; a runtime-constructed TextAsset has no such
+    // pipeline behind it, so this polls the file directly instead.
+    private string _WatchedFilePath;
+    private System.DateTime _WatchedFileLastWriteUtc;
+
     public void Initialize(TextAsset script, EntityInstance instance)
     {
         _Instance = instance;
         _Script = script;
+        _WatchedFilePath = RuntimeEntityIO.GetSourcePath(script);
+        if (_WatchedFilePath != null && File.Exists(_WatchedFilePath))
+            _WatchedFileLastWriteUtc = File.GetLastWriteTimeUtc(_WatchedFilePath);
 
         if (script == null)
         {
@@ -102,7 +114,7 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
 
     private void Update()
     {
-        if (_Script != null && _Script.text != _CompiledSource)
+        if (HasScriptChanged())
         {
             Debug.Log($"[MiniScript:{gameObject.name}] Script changed, reloading.");
             Compile(); // already ticks (and calls start()) itself this frame
@@ -116,6 +128,34 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
             InvokeIfDefined("update"); // MonoBehaviour-style model
         else
             Tick(); // legacy self-driven loop, still mid-run
+    }
+
+    /// <summary>
+    /// Two sources, checked appropriately: an Editor-imported TextAsset
+    /// just compares its own (live-updating) .text against what was last
+    /// compiled; a runtime-created one (_WatchedFilePath set - see
+    /// RuntimeEntityIO) has no Unity import pipeline keeping that current,
+    /// so this polls the source file's last-write time on disk instead,
+    /// and re-reads + rebuilds _Script from it only when that's actually
+    /// changed (cheap file-time check every frame, not a full re-read).
+    /// </summary>
+    private bool HasScriptChanged()
+    {
+        if (_WatchedFilePath != null)
+        {
+            if (!File.Exists(_WatchedFilePath))
+                return false;
+
+            var lastWriteUtc = File.GetLastWriteTimeUtc(_WatchedFilePath);
+            if (lastWriteUtc == _WatchedFileLastWriteUtc)
+                return false;
+
+            _WatchedFileLastWriteUtc = lastWriteUtc;
+            _Script = new TextAsset(File.ReadAllText(_WatchedFilePath));
+            return _Script.text != _CompiledSource;
+        }
+
+        return _Script != null && _Script.text != _CompiledSource;
     }
 
     private void OnCollisionEnter2D(Collision2D collision) => InvokeIfDefined("onCollisionEnter", BuildOtherInfo(collision.gameObject));
