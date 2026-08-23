@@ -60,13 +60,25 @@ public class CollectableBanana : MonoBehaviour
     private float _TimerPulseTrigger;
     [SerializeField] private float _TimerPulseAnimation;
 
-    void OnValidate()
+    // OnValidate never runs in a build (or for a runtime-instantiated
+    // banana, e.g. via LevelInstantiator) - Awake() covers those cases too.
+    void CacheReferences()
     {
         _Light = transform.GetComponentInChildren<Light2D>();
         _InitialOuterLightRadius = _Light.pointLightOuterRadius;
         _AudioSource = transform.GetComponentInChildren<AudioSource>();
         _SpriteRenderer = GetComponent<SpriteRenderer>();
         _Animator = GetComponent<Animator>();
+    }
+
+    void Awake()
+    {
+        CacheReferences();
+    }
+
+    void OnValidate()
+    {
+        CacheReferences();
     }
 
     void Start()

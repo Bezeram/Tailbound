@@ -16,7 +16,8 @@ public class EntityDefinition : SerializedScriptableObject
              "and for LevelInstantiator, which places the Player/Camera at the start screen's spawn point.")]
     public bool IsSpawnPoint;
 
-    // See TileDef.CollisionType for why this is EnumToggleButtons rather than a dropdown.
+    // EnumToggleButtons, not a dropdown - Odin's dropdown popup crashes on
+    // this Unity version (MissingMethodException from a removed UIElements API).
     [EnumToggleButtons]
     public EntityBackingKind Backing = EntityBackingKind.NativePrefab;
 

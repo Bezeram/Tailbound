@@ -1,5 +1,4 @@
 using System;
-using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -14,9 +13,5 @@ public class TileDef
     public Sprite Sprite;
     public RuleTile RuleTile;
 
-    // EnumToggleButtons, not a dropdown - Odin's dropdown popup crashes on
-    // this Unity version (MissingMethodException from a removed UIElements API).
-    [EnumToggleButtons]
-    public TileCollisionType CollisionType = TileCollisionType.None;
     public string Category;
 }

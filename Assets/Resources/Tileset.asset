@@ -23,14 +23,42 @@ MonoBehaviour:
     SerializationNodes: []
   Tiles:
   - Id: 1
-    DisplayName: Default Brick
-    Sprite: {fileID: -8255023528785730161, guid: 99a0526665290c14ab8e007005c34f1e, type: 3}
-    RuleTile: {fileID: 0}
-    CollisionType: 1
+    DisplayName: Ground (RuleTile)
+    Sprite: {fileID: 0}
+    RuleTile: {fileID: 11400000, guid: b14ca7511b8d6604aa8eaf6969a1cda3, type: 2}
     Category: 
   - Id: 2
     DisplayName: Default Brick (TileRule)
     Sprite: {fileID: -8255023528785730161, guid: 99a0526665290c14ab8e007005c34f1e, type: 3}
     RuleTile: {fileID: 11400000, guid: 3080f8d07ad28e14594c477b8e4e5010, type: 2}
-    CollisionType: 1
+    Category: 
+  - Id: 3
+    DisplayName: Red Brick (TileRule)
+    Sprite: {fileID: -1420126354912360558, guid: ae7e7eb7233244742b96ec8a3c900547, type: 3}
+    RuleTile: {fileID: 11400000, guid: d3a510d8863a45a4da74f6d17772fcf8, type: 2}
+    Category: 
+  - Id: 4
+    DisplayName: Background Brick (TileRule)
+    Sprite: {fileID: -4705873304204234514, guid: 99a0526665290c14ab8e007005c34f1e, type: 3}
+    RuleTile: {fileID: 11400000, guid: 231a02f1f3b50644294513e5c4b2b067, type: 2}
+    Category: 
+  - Id: 5
+    DisplayName: Background 1
+    Sprite: {fileID: 5383240797267062188, guid: b3b3f3870b4adfd46991a212a1f88a52, type: 3}
+    RuleTile: {fileID: 0}
+    Category: 
+  - Id: 6
+    DisplayName: Background 2
+    Sprite: {fileID: -1545972435293894886, guid: b3b3f3870b4adfd46991a212a1f88a52, type: 3}
+    RuleTile: {fileID: 0}
+    Category: 
+  - Id: 7
+    DisplayName: Background 3
+    Sprite: {fileID: -3007056548383230296, guid: b3b3f3870b4adfd46991a212a1f88a52, type: 3}
+    RuleTile: {fileID: 0}
+    Category: 
+  - Id: 8
+    DisplayName: Background 4
+    Sprite: {fileID: -3497835169972637392, guid: b3b3f3870b4adfd46991a212a1f88a52, type: 3}
+    RuleTile: {fileID: 0}
     Category: 

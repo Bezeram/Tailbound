@@ -21,11 +21,11 @@ MonoBehaviour:
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes: []
-  TypeId: zipline_accelerated
-  DisplayName: ZiplineAccelerated
-  Icon: {fileID: -2307062153405646915, guid: e85a6eea3bde4cf47a96ef073a283895, type: 3}
+  TypeId: zipline_timed
+  DisplayName: ZiplineTimed
+  Icon: {fileID: 4522549808137827389, guid: 1a55f9a70d6676e4cb38af53ef3b6cfe, type: 3}
   Category: zipline
   IsSpawnPoint: 0
   Backing: 0
-  Prefab: {fileID: 4608288645020052648, guid: 35b30a82a8a625d4f8ccbb3d068b59ff, type: 3}
+  Prefab: {fileID: 4608288645020052648, guid: 303e9d12f9cc5ec44a6037d957aecda0, type: 3}
   Script: {fileID: 0}

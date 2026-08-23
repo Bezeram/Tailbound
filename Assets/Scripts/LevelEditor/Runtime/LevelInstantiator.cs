@@ -145,8 +145,7 @@ public class LevelInstantiator : MonoBehaviour
     private void PaintTilemap(
         Tilemap tilemap, TileLayer layer, ScreenDef screenDef, Dictionary<string, TileBase> tileCache, bool collidable)
     {
-        // Only Foreground is collidable, and only its Solid-type tiles
-        // generate collision. OneWayPlatform/Hazard/Ladder render only, for now.
+        // Only Foreground is collidable - every tile painted there generates collision.
         if (!layer.ScreenCells.TryGetValue(screenDef.Id, out var cells))
             return;
 
@@ -175,9 +174,7 @@ public class LevelInstantiator : MonoBehaviour
         {
             var plainTile = ScriptableObject.CreateInstance<Tile>();
             plainTile.sprite = def.Sprite;
-            plainTile.colliderType = collidable && def.CollisionType == TileCollisionType.Solid
-                ? Tile.ColliderType.Grid
-                : Tile.ColliderType.None;
+            plainTile.colliderType = collidable ? Tile.ColliderType.Grid : Tile.ColliderType.None;
             tile = plainTile;
         }
 
