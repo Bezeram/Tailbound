@@ -5,10 +5,7 @@ using UnityEngine.Rendering;
 
 public class LevelLoader : MonoBehaviour
 {
-    private static readonly int AnimationTriggerStart = Animator.StringToHash("Start");
-    private static readonly int AnimationTriggerEnd = Animator.StringToHash("End");
-    
-    public Animator Transition;
+    public ScreenWipeTransition Transition;
     public AudioClip RespawnAudioClip;
     [SerializeField] private float _SoundVolume = 0.3f;
 
@@ -31,17 +28,17 @@ public class LevelLoader : MonoBehaviour
 
     IEnumerator RespawnCoroutine(bool instantDeath)
     {
-        Transition.SetTrigger(AnimationTriggerStart);
-        
+        Transition.PlayIn();
+
         yield return new WaitForSeconds(1);
-        
+
         _ResetScreenForRespawn(instantDeath);
-        
+
         yield return new WaitForSeconds(0.1f);
-        
+
         _AudioSource.PlayOneShot(RespawnAudioClip, _SoundVolume);
-        Transition.SetTrigger(AnimationTriggerEnd);
-        
+        Transition.PlayOut();
+
         yield return new WaitForSeconds(0.1f);
         
         _Player.Respawn(_LevelManager.CurrentSpawnPosition);
@@ -74,7 +71,7 @@ public class LevelLoader : MonoBehaviour
 
     IEnumerator LoadLevelCoroutine(string level)
     {
-        Transition.SetTrigger(AnimationTriggerStart);
+        Transition.PlayIn();
 
         yield return new WaitForSeconds(1);
 
@@ -89,7 +86,7 @@ public class LevelLoader : MonoBehaviour
 
     IEnumerator Finish_Level(string level)
     {
-        Transition.SetTrigger(AnimationTriggerStart);
+        Transition.PlayIn();
 
         yield return new WaitForSeconds(1);
 
