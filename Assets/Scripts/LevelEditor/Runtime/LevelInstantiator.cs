@@ -24,7 +24,7 @@ public class LevelInstantiator : MonoBehaviour
 
     [Tooltip("Key that returns to the Level Editor scene while a playtest " +
              "launched from it is in progress (PlayTestSession.IsPlaytesting).")]
-    [SerializeField] private KeyCode _ReturnToEditorKey = KeyCode.F1;
+    [SerializeField] private KeyCode _ReturnToEditorKey = KeyCode.Escape;
 
     [Tooltip("Scene to load when returning to the editor - must match the " +
              "Level Editor scene's name in Build Settings.")]
