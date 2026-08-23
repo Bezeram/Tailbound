@@ -10,7 +10,7 @@ using UnityEngine.UI;
 /// Entry point for the runtime level editor. Bootstraps a Canvas and
 /// EventSystem if the scene doesn't already have one, owns the current
 /// in-memory LevelAsset, and wires the toolbar (New / Save / Load /
-/// + Screen / Delete Screen) to the ScreenCanvasView.
+/// + Screen) to the ScreenCanvasView.
 ///
 /// Attach this to a single empty GameObject in the Level Editor scene -
 /// everything else is built at runtime, no prefab required.
@@ -139,10 +139,9 @@ public class LevelEditorRuntimeController : MonoBehaviour
     }
 
     /// <summary>Context-sensitive Delete/Backspace - the selected entity in
-    /// Entities mode, otherwise the selected screen. Replaces the old
-    /// dedicated "Delete Entity" toolbar button (removed - this keybind is
-    /// its only way to delete an entity now); Delete Screen keeps its own
-    /// button too, since screen deletion is rarer and more consequential.</summary>
+    /// Entities mode, otherwise the selected screen. Neither "Delete Entity"
+    /// nor "Delete Screen" has a dedicated toolbar button anymore - this
+    /// keybind is the only way to delete either now.</summary>
     private void DeleteSelected()
     {
         if (_CanvasView.Mode == ScreenCanvasView.InteractionMode.Entities)
@@ -216,7 +215,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         CreateButton(barRect, "Rename (^R)", RenameLevel, 100);
         CreateButton(barRect, "Load (^L)", ToggleLoadPanel, 80);
         CreateButton(barRect, "+ Screen (+)", AddScreen, 100);
-        CreateButton(barRect, "Delete Screen (Del)", DeleteScreen, 150);
         CreateButton(barRect, "Screens (1)", () => SetMode(ScreenCanvasView.InteractionMode.Screens), 100);
         CreateButton(barRect, "Paint (2)", () => SetMode(ScreenCanvasView.InteractionMode.Paint), 90);
         CreateButton(barRect, "Entities (3)", () => SetMode(ScreenCanvasView.InteractionMode.Entities), 100);
