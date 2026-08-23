@@ -32,7 +32,7 @@ public class AudioSourceBinder : INativeComponentBinder
             && clipProp.Type == PropertyType.String
             && !string.IsNullOrEmpty(clipProp.StringValue))
         {
-            source.clip = Resources.Load<AudioClip>(clipProp.StringValue);
+            source.clip = RuntimeResourceLoader.LoadAudioClip(clipProp.StringValue);
         }
 
         if (properties.TryGetValue("Volume", out var volumeProp) && volumeProp.Type == PropertyType.Float)

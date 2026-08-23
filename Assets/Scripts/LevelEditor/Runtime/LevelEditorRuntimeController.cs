@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -37,7 +38,12 @@ public class LevelEditorRuntimeController : MonoBehaviour
     private Image _BackgroundLayerButtonImage;
     private Image _ForegroundLayerButtonImage;
     private GameObject _EntityPalettePanel;
+    // Keyed by TypeId - lets UpdateEntityPaletteButtonColors() find each
+    // button again after the panel's been rebuilt (RebuildEntityPalettePanel
+    // destroys and recreates every button, so this is repopulated each time).
+    private readonly Dictionary<string, Image> _EntityPaletteButtonImages = new();
     private TMP_Text _StatusLabel;
+    private GameObject _OpenScriptButton;
     private GameObject _EntityInspectorPanel;
     private RectTransform _EntityInspectorContent;
     private readonly ScriptPropertySchemaCollector _ScriptPropertySource = new();
@@ -99,7 +105,10 @@ public class LevelEditorRuntimeController : MonoBehaviour
     private void Update()
     {
         if (_CanvasView.SelectedEntityId != _InspectedEntityId)
+        {
             RefreshEntityInspector();
+            UpdateOpenScriptButton();
+        }
 
         HandleKeybinds();
     }
@@ -220,6 +229,8 @@ public class LevelEditorRuntimeController : MonoBehaviour
         CreateButton(barRect, "Entities (3)", () => SetMode(ScreenCanvasView.InteractionMode.Entities), 100);
         CreateButton(barRect, "Snap (G)", ToggleSnapToGrid, 90);
         CreateButton(barRect, "Play Test (F5)", PlayTestLevel, 120);
+        CreateButton(barRect, "Open Resources Folder", OpenResourcesFolder, 190);
+        CreateButton(barRect, "Open Scripts Folder", OpenScriptsFolder, 170);
 
         _LoadPanel = CreateLoadPanel(parent);
         _PalettePanel = CreatePalettePanel(parent);
@@ -264,6 +275,67 @@ public class LevelEditorRuntimeController : MonoBehaviour
         _StatusLabel.fontSize = 20;
         _StatusLabel.color = new Color(1f, 1f, 1f, 0.8f);
         _StatusLabel.enableWordWrapping = true;
+
+        // Only meaningful for a ScriptBehavior entity - hidden the rest of
+        // the time (no selection, or a NativePrefab entity with no script to
+        // open). UpdateOpenScriptButton keeps this in sync with selection.
+        _OpenScriptButton = CreateButton(go.transform, "Open Script", OpenSelectedEntityScript, 480, 32f, 18).gameObject;
+        _OpenScriptButton.SetActive(false);
+    }
+
+    /// <summary>Shows/hides the status panel's "Open Script" button for
+    /// whatever's currently selected - only a ScriptBehavior (MiniScript)
+    /// entity with a script actually assigned has one to open.</summary>
+    private void UpdateOpenScriptButton()
+    {
+        if (_OpenScriptButton == null)
+            return;
+
+        var instance = _Level.Entities.Find(e => e.Id == _CanvasView.SelectedEntityId);
+        bool show = instance != null
+            && EntityCatalog.Lookup.TryGetValue(instance.TypeId, out var def)
+            && def.Backing == EntityBackingKind.ScriptBehavior
+            && def.Script != null;
+
+        _OpenScriptButton.SetActive(show);
+    }
+
+    /// <summary>Opens the currently selected entity's MiniScript source with
+    /// the OS's default handler for it - same mechanism the New Script
+    /// Entity dialog uses right after creating one (OpenWithDefaultApp).</summary>
+    private void OpenSelectedEntityScript()
+    {
+        var instance = _Level.Entities.Find(e => e.Id == _CanvasView.SelectedEntityId);
+        if (instance == null || !EntityCatalog.Lookup.TryGetValue(instance.TypeId, out var def)
+            || def.Backing != EntityBackingKind.ScriptBehavior || def.Script == null)
+            return;
+
+        string path = GetScriptPath(def.Script);
+        if (string.IsNullOrEmpty(path))
+        {
+            Debug.LogWarning($"[LevelEditor] Could not resolve a file path for '{def.TypeId}''s script.");
+            return;
+        }
+
+        OpenWithDefaultApp(path);
+    }
+
+    /// <summary>Resolves a Script TextAsset back to an on-disk path -
+    /// RuntimeEntityIO.GetSourcePath covers a runtime-created entity type
+    /// (see its own comment: no Unity import pipeline behind it), while an
+    /// Editor-imported one (MiniScriptImporter) only has an AssetDatabase
+    /// path, hence the #if.</summary>
+    private static string GetScriptPath(TextAsset script)
+    {
+        string runtimePath = RuntimeEntityIO.GetSourcePath(script);
+        if (!string.IsNullOrEmpty(runtimePath))
+            return runtimePath;
+
+#if UNITY_EDITOR
+        return UnityEditor.AssetDatabase.GetAssetPath(script);
+#else
+        return null;
+#endif
     }
 
     private static TMP_InputField CreateInputField(Transform parent, string placeholder, float width)
@@ -528,11 +600,13 @@ public class LevelEditorRuntimeController : MonoBehaviour
 
         CreateButton(go.transform, "+ New Script Entity...", OpenNewScriptEntityDialog, 440, 48f, 18);
 
+        _EntityPaletteButtonImages.Clear();
         foreach (var def in EntityCatalog.All)
         {
             string typeId = def.TypeId;
-            CreateEntityButton(go.transform, def, () => SetActiveEntityType(typeId));
+            _EntityPaletteButtonImages[typeId] = CreateEntityButton(go.transform, def, () => SetActiveEntityType(typeId));
         }
+        UpdateEntityPaletteButtonColors();
 
         if (EntityCatalog.All.Count == 0)
             CreateLabel(go.transform, "No entity types found. Add an Entity Definition asset under Assets/Resources.", 18);
@@ -541,12 +615,13 @@ public class LevelEditorRuntimeController : MonoBehaviour
         return go;
     }
 
-    private static void CreateEntityButton(Transform parent, EntityDefinition def, UnityEngine.Events.UnityAction onClick)
+    private static Image CreateEntityButton(Transform parent, EntityDefinition def, UnityEngine.Events.UnityAction onClick)
     {
         var go = new GameObject(def.TypeId + " Entity Button", typeof(RectTransform), typeof(Image), typeof(Button));
         go.transform.SetParent(parent, false);
         go.AddComponent<LayoutElement>().preferredHeight = 68f;
-        go.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 1f);
+        var buttonImage = go.GetComponent<Image>();
+        buttonImage.color = InactiveLayerColor;
         go.GetComponent<Button>().onClick.AddListener(onClick);
 
         var iconGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
@@ -575,6 +650,17 @@ public class LevelEditorRuntimeController : MonoBehaviour
         text.color = Color.white;
         text.alignment = TextAlignmentOptions.MidlineLeft;
         text.raycastTarget = false;
+
+        return buttonImage;
+    }
+
+    /// <summary>Greens out whichever entity-type button matches
+    /// ScreenCanvasView.ActiveEntityTypeId (the type that'll be placed next),
+    /// same pattern as UpdateActiveLayerButtonColors for the layer toggle.</summary>
+    private void UpdateEntityPaletteButtonColors()
+    {
+        foreach (KeyValuePair<string, Image> entry in _EntityPaletteButtonImages)
+            entry.Value.color = entry.Key == _CanvasView.ActiveEntityTypeId ? ActiveLayerColor : InactiveLayerColor;
     }
 
     // ------------------------------------------------------------------
@@ -733,6 +819,30 @@ public class LevelEditorRuntimeController : MonoBehaviour
     /// successfully either way; this is a convenience on top of that, not
     /// a requirement for it.
     /// </summary>
+    /// <summary>Opens RuntimeResourceLoader.CustomContentDirectory in the OS
+    /// file browser - a real folder on disk in a shipped build (unlike
+    /// Assets/Resources, which only exists inside the Unity project and gets
+    /// baked into the build's data files, unreachable by a player after the
+    /// fact) that setSprite/setAudioClip/entity-icon lookups now check first.
+    /// Created on demand here rather than assuming it already exists, so the
+    /// button always opens *something* even before a player's added anything.</summary>
+    private static void OpenResourcesFolder()
+    {
+        Directory.CreateDirectory(RuntimeResourceLoader.CustomContentDirectory);
+        OpenWithDefaultApp(RuntimeResourceLoader.CustomContentDirectory);
+    }
+
+    /// <summary>Opens RuntimeEntityIO.EntitiesDirectory - where every
+    /// runtime-created MiniScript entity's .ms file actually lives - rather
+    /// than Assets/Scripts (this project's whole C# codebase, not
+    /// modder-facing content, and Editor-only besides). Same on-demand
+    /// creation reasoning as OpenResourcesFolder above.</summary>
+    private static void OpenScriptsFolder()
+    {
+        Directory.CreateDirectory(RuntimeEntityIO.EntitiesDirectory);
+        OpenWithDefaultApp(RuntimeEntityIO.EntitiesDirectory);
+    }
+
     private static void OpenWithDefaultApp(string path)
     {
         try
@@ -1299,6 +1409,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
     private void SetActiveEntityType(string typeId)
     {
         _CanvasView.SetActiveEntityType(typeId);
+        UpdateEntityPaletteButtonColors();
         UpdateStatusLabel();
     }
 

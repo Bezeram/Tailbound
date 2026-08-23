@@ -282,7 +282,7 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
     /// onTriggerEnter) without needing setAudioClip first.</summary>
     public void PlayAudioOneShot(string resourcesPath, float volumeScale)
     {
-        var clip = Resources.Load<AudioClip>(resourcesPath);
+        var clip = RuntimeResourceLoader.LoadAudioClip(resourcesPath);
         if (clip == null)
         {
             Debug.LogWarning($"[ScriptEntityRunner] '{gameObject.name}': no AudioClip found at Resources path '{resourcesPath}'.", this);

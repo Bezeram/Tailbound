@@ -28,7 +28,7 @@ public class SpriteRendererBinder : INativeComponentBinder
             && spriteProp.Type == PropertyType.String
             && !string.IsNullOrEmpty(spriteProp.StringValue))
         {
-            renderer.sprite = Resources.Load<Sprite>(spriteProp.StringValue);
+            renderer.sprite = RuntimeResourceLoader.LoadSprite(spriteProp.StringValue);
         }
 
         if (properties.TryGetValue("Color", out var colorProp) && colorProp.Type == PropertyType.Color)

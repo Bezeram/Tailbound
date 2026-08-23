@@ -30,7 +30,7 @@ public static class RuntimeEntityIO
         public string IconPath;
     }
 
-    private static string EntitiesDirectory => Path.Combine(Application.persistentDataPath, "Entities");
+    public static string EntitiesDirectory => Path.Combine(Application.persistentDataPath, "Entities");
 
     // Which on-disk file (if any) a given in-memory TextAsset was built
     // from - ScriptEntityRunner uses this to poll the file directly for
@@ -116,7 +116,7 @@ public static class RuntimeEntityIO
 
         if (!string.IsNullOrEmpty(record.IconPath))
         {
-            def.Icon = Resources.Load<Sprite>(record.IconPath);
+            def.Icon = RuntimeResourceLoader.LoadSprite(record.IconPath);
             if (def.Icon == null)
                 Debug.LogWarning($"[RuntimeEntityIO] '{record.TypeId}': no Sprite found at Resources path '{record.IconPath}'.");
         }
