@@ -1,21 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Shared logic for resolving a NativePrefab EntityInstance's adapter and
-/// effective property values (instance override, else whatever the adapter
-/// reads off the prefab asset itself) - used by both the entity inspector
-/// (LevelEditorRuntimeController) and the canvas marker (EntityMarkerView),
-/// so the two can't disagree on what "the current value" of a property is.
-/// </summary>
 public static class EntityPropertyResolver
 {
-    /// <summary>
-    /// Resolves the EntityDefinition and matched adapter for a given
-    /// EntityInstance in one call. False if the entity type is unknown,
-    /// isn't NativePrefab-backed, has no Prefab assigned, or no adapter
-    /// targets a component on that Prefab (see NativePrefabAdapterRegistry).
-    /// </summary>
     public static bool TryResolveAdapter(EntityInstance instance, out EntityDefinition definition, out INativePrefabAdapter adapter)
     {
         adapter = null;

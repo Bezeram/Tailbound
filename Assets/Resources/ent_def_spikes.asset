@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fc6743ade18e5894fb0cee226bed6e48, type: 3}
-  m_Name: ent_def_spring
+  m_Name: ent_def_spikes
   m_EditorClassIdentifier: Assembly-CSharp::EntityDefinition
   serializationData:
     SerializedFormat: 2
@@ -21,11 +21,11 @@ MonoBehaviour:
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes: []
-  TypeId: spring
-  DisplayName: Spring
-  Icon: {fileID: 21300000, guid: 136dad9c24435c24ba7bdaedbf91c269, type: 3}
-  Category: spring
+  TypeId: spikes
+  DisplayName: Spikes
+  Icon: {fileID: 21300000, guid: f8a814af55abf3d4facdf7b8fde6e71d, type: 3}
+  Category: hazard
   IsSpawnPoint: 0
   Backing: 0
-  Prefab: {fileID: 8531318960523940455, guid: 4d1936d9f8566bd4491f1295991fd752, type: 3}
+  Prefab: {fileID: 7194498110822371735, guid: 6f37a67d65b0d9241b3befbe7496f1e2, type: 3}
   Script: {fileID: 0}

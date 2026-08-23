@@ -40,13 +40,6 @@ public class ScreenBox : MonoBehaviour
         CurrentSpawnPoint = FirstSpawnPoint;
     }
 
-    /// <summary>
-    /// Caches _LevelManager, sizes the transition collider from Size, and
-    /// picks a FirstSpawnPoint if none is set - previously only done in
-    /// OnValidate, which never runs in a build. Called from Awake() (so
-    /// hand-placed screens work in a real build too) and from LevelInstantiator
-    /// once a runtime-built screen's Size/content are finalized.
-    /// </summary>
     public void RuntimeInit()
     {
         _LevelManager = FindAnyObjectByType<LevelManager>();

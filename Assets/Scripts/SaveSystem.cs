@@ -13,8 +13,7 @@ public static class SaveSystem
 
         formatter.Serialize(stream, playerData);
         stream.Close();
-        
-        // Debug
+
         if (File.Exists(SaveFilePath))
             Debug.Log("Save file has been updated successfully.");
         else

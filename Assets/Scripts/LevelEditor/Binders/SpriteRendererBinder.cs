@@ -2,12 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Starter native-component adapter, covering the fields the existing
-/// entity prefabs actually use. Sprite is a Resources-folder path (there's
-/// no object-reference PropertyType yet) rather than a direct asset
-/// reference.
-/// </summary>
 public class SpriteRendererBinder : INativeComponentBinder
 {
     public Type UnityType => typeof(SpriteRenderer);

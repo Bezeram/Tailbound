@@ -16,16 +16,14 @@ public class CheckpointTrigger : MonoBehaviour
     
     void UpdateScreenParent()
     {
-        // Do not run while in prefab editing mode.
         if (_Collider == null)
             _Collider = GetComponent<BoxCollider2D>();
-        
-        // Find the closest screen to attach to.
+
         var screens = FindObjectsByType<ScreenBox>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         if (screens.Length == 0)
             return;
-        
-        // Compute screens bounds to determine its closest point and thus the shortest distance.  
+
+        // Closest point on each screen's bounds determines distance.
         int minIndex = 0;
         var minBounds = new Bounds(screens[0].Center, screens[0].Size);
         float minDistance = Vector3.Distance(minBounds.ClosestPoint(transform.position), transform.position);
@@ -54,16 +52,13 @@ public class CheckpointTrigger : MonoBehaviour
         if (collision.gameObject.layer != LayerMask.NameToLayer("Player")) 
             return;
         
-        // Locate the closest RespawnPoint
         var spawnPoints = transform.parent.GetComponentsInChildren<SpawnPoint>();
         if (spawnPoints.Length == 0)
         {
             // ScreenArea already throws error
             return;
         }
-            
-        // Get the closest respawn point and set the spawn point.
-        // Compute screens bounds to determine its closest point and thus the shortest distance.
+
         Vector3 playerPosition = collision.transform.position;
         int minIndex = 0;
         float minDistance = Vector3.Distance(playerPosition, spawnPoints[0].transform.position);
@@ -98,7 +93,6 @@ public class CheckpointTrigger : MonoBehaviour
         _UpdateTimer += Time.deltaTime;
         if (_UpdateTimer >= 0.5f)
         {
-            // Set parent to the screen area.
             if (ScreenBox != null)
             {
                 Transform screenContent = ScreenBox.transform.Find("Content");

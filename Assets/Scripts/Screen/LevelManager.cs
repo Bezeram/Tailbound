@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Sirenix.OdinInspector;
 using TarodevController;
@@ -7,24 +7,16 @@ using UnityEngine;
 public class LevelManager : MonoBehaviour
 {
     [TitleGroup("References")]
-    public GameObject PauseMenuUI;
     public BananaChannel BananaChannel;
 
     [SerializeField] private ScreenBox _StartScreen;
     [SerializeField] private bool _UseSaveFile = true;
 
-    /// <summary>
-    /// Lets LevelInstantiator supply a start screen for a runtime-built
-    /// level, since there's no scene GameObject to drag into the Inspector
-    /// field ahead of time. Must be called from another component's Awake()
-    /// (not Start()) to be in place before this component's own Start() runs
-    /// - Unity guarantees every Awake() completes before any Start() does.
-    /// </summary>
     public void SetStartScreen(ScreenBox screen)
     {
         _StartScreen = screen;
     }
-    
+
     // Store IDs to banana positions.
     private readonly List<int> _CollectedBananas = new();
     [ReadOnly, SerializeField] private ScreenBox[] _Screens;
@@ -36,17 +28,17 @@ public class LevelManager : MonoBehaviour
     private LevelLoader _LevelLoader;
     private CameraFollow _CameraFollow;
     private GameObject _MainCamera;
-    
+
     private static bool _isPaused;
     public static bool IsPaused => _isPaused;
-    
+
     private int _LastScreenID = -1;
     public int NewScreenID() { _LastScreenID++; return _LastScreenID; }
     private int _LastBananaID = -1;
     public int NewBananaID() { _LastBananaID++; return _LastBananaID; }
     private int _LastSpawnPointID = -1;
     public int NewSpawnPointID() { _LastSpawnPointID++; return _LastSpawnPointID; }
-    
+
     public ScreenBox CurrentScreen => _Screens[_CurrentScreenID];
     public ScreenBox TransitionPreviousScreen => _Screens[_TransitionLastScreenID];
     public Vector3 CurrentSpawnPosition => _Screens[_CurrentScreenID].CurrentSpawnPosition;
@@ -63,12 +55,8 @@ public class LevelManager : MonoBehaviour
     private Vector3 _TransitionNextCameraPosition;
     private int _TransitionLastScreenID;
 
-    // Was previously only done in OnValidate(), which never runs in a build
-    // and can't see a Player/Camera that a LevelInstantiator creates at
-    // runtime anyway (it doesn't exist yet when OnValidate could have run
-    // in the Editor). Called again at the top of Start(), which is safe
-    // regardless of Awake() ordering between this and LevelInstantiator -
-    // Unity runs every object's Awake() before any object's Start().
+    // Called from OnValidate and Start; safe either way since Awake()
+    // always runs before Start().
     void CacheReferences()
     {
         _LevelLoader = FindAnyObjectByType<LevelLoader>();
@@ -83,34 +71,27 @@ public class LevelManager : MonoBehaviour
 
         if (BananaChannel == null)
             Debug.LogWarning("Assign a banana channel for the Scene Manager!", context: this);
-        if (PauseMenuUI == null)
-            Debug.LogWarning("Assign a pause menu UI for the Scene Manager!", context: this);
     }
 
     void Start()
     {
         CacheReferences();
 
-        // Load objects
         _Screens = FindObjectsByType<ScreenBox>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
         _Bananas = FindObjectsByType<CollectableBanana>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
         _SpawnPoints = FindObjectsByType<SpawnPoint>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
-        
-        // Assign ID to each screen.
+
         // Disable all screens before activating the one with the player.
         foreach (var screen in _Screens)
         {
-            screen.ID = NewScreenID();            
+            screen.ID = NewScreenID();
             screen.ToggleScreenContent(false);
         }
-        // Assign ID to each banana
         foreach (CollectableBanana banana in _Bananas)
             banana.ID = NewBananaID();
-        // Assign ID to each Spawn-Point
         foreach (SpawnPoint spawnPoint in _SpawnPoints)
             spawnPoint.ID = NewSpawnPointID();
-        
-        // Load and use file data
+
         PlayerData data = SaveSystem.LoadGame();
         if (data != null && _UseSaveFile)
         {
@@ -130,18 +111,14 @@ public class LevelManager : MonoBehaviour
             _CurrentScreenID = _StartScreen.ID;
         }
 
-        // Subscribe to player death
         _PlayerController.Died += OnPlayerDeath;
-        
-        // Move player and clear trail renderer.
+
         _PlayerController.transform.position = CurrentSpawnPosition;
         _PlayerController.gameObject.GetComponentInChildren<TrailRenderer>().Clear();
-        // Move camera
         _CameraFollow.Screen = CurrentScreen;
-        // Set active the content of the screen used.
         CurrentScreen.ToggleScreenContent(true);
     }
-    
+
     void OnEnable()
     {
         BananaChannel.OnRaised += HandleBananaCollected;
@@ -151,10 +128,9 @@ public class LevelManager : MonoBehaviour
     {
         BananaChannel.OnRaised -= HandleBananaCollected;
     }
-    
+
     void Update()
     {
-        HandlePausing();
         HandleScreenTransition();
     }
 
@@ -167,12 +143,11 @@ public class LevelManager : MonoBehaviour
     {
         if (!_TransitioningScreens)
             return;
-        
-        // Animate screen
+
         _TransitionTimer += Time.deltaTime;
         float t = _TransitionTimer / _TransitionTime;
         t = Utils.EaseOutCubic(t);
-        
+
         // Subtly move player towards final position
         _MainCamera.transform.position = Vector3.Lerp(_TransitionLastCameraPosition, _TransitionNextCameraPosition, t);
         _PlayerController.transform.position = Vector3.Lerp(_TransitionLastPlayerPosition, _TransitionNextPlayerPosition, t);
@@ -184,25 +159,21 @@ public class LevelManager : MonoBehaviour
             TransitionPreviousScreen.ToggleScreenContent(false);
             TransitionPreviousScreen.IsTransitioning = false;
             CurrentScreen.IsTransitioning = false;
-            // Set new screen.
             _CameraFollow.enabled = true;
-            // Animation finished, resume game.
+            // Animation finished - resume game.
             Resume();
         }
     }
-    
+
     public void RunScreenTransition(int newScreenID)
     {
-        // Pause game momentarily
         PauseNoUI();
         _TransitioningScreens = true;
-        // Setup old and new screen.
         _TransitionLastScreenID = _CurrentScreenID;
         _CurrentScreenID = newScreenID;
         // Deactivate old screen collider to prevent colliding during transition.
         TransitionPreviousScreen.IsTransitioning = true;
         CurrentScreen.IsTransitioning = true;
-        // Activate the new screen.
         CurrentScreen.ToggleScreenContent(true);
         _CameraFollow.Screen = CurrentScreen;
 
@@ -233,45 +204,22 @@ public class LevelManager : MonoBehaviour
             (moveDirection.y > 0) ? _TransitionMoveScalarUpwards : _TransitionMoveScalarDownwards;
 
         // Setup lerp points
-        // Player
         _TransitionLastPlayerPosition = _PlayerController.transform.position;
         _TransitionNextPlayerPosition = _TransitionLastPlayerPosition + (Vector3)(moveDirection * transitionScalar);
-        // Camera
         _TransitionLastCameraPosition = _CameraFollow.transform.position;
-        // Get the camera position in the new screen.
         Vector2 cameraRestraint = _CameraFollow.GetCameraPosition();
         _TransitionNextCameraPosition = new Vector3(cameraRestraint.x, cameraRestraint.y, _CameraFollow.transform.position.z);
-        
-        // Disable camera follow script during transition
-        _CameraFollow.enabled = false;
-        // Stop player immediately.
-        // Current speed is stored internally in another variable, so the speed is not lost.
-        _PlayerController.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
-        
-        _TransitionTimer = 0;
-    }
 
-    void HandlePausing()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (_isPaused)
-                Resume();
-            else
-                Pause();
-        }
+        _CameraFollow.enabled = false;
+        // Stop immediately - current speed is preserved in a separate variable, not lost.
+        _PlayerController.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
+
+        _TransitionTimer = 0;
     }
 
     public void Resume()
     {
-        PauseMenuUI.SetActive(false);
         _isPaused = false;
-    }
-
-    public void Pause()
-    {
-        PauseMenuUI.SetActive(true);
-        _isPaused = true;
     }
 
     public void PauseNoUI()

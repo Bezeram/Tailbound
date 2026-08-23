@@ -19,12 +19,8 @@ public class LevelLoader : MonoBehaviour
         _LevelManager = FindAnyObjectByType<LevelManager>();
         _AudioSource = _Player.GetComponentInChildren<AudioSource>();
 
-        // The panel's rest position covers the screen (so a level that's
-        // loaded via LoadLevel/FinishLevel - which call Transition.PlayIn()
-        // right before the scene switch - opens already covered, matching
-        // what the previous scene left behind). Every fresh scene load needs
-        // to explicitly wipe that away once things are set up, or the level
-        // just stays hidden behind the panel forever.
+        // The panel's rest position covers the screen; every scene load
+        // must explicitly wipe it away or the level stays hidden.
         Transition.PlayOut();
     }
 

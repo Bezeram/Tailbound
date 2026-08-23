@@ -3,17 +3,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
-/// <summary>
-/// Builds real gameplay GameObjects (ScreenBox/DeathBox, Tilemaps, entities,
-/// Player, Camera) from a LevelAsset, reusing the existing runtime systems
-/// (ScreenBox, LevelManager, SpawnPoint, CameraFollow) rather than
-/// reimplementing them - LevelManager's own Start() already discovers
-/// screens/spawn points/bananas via FindObjectsByType, so this only needs to
-/// make sure they exist in the scene before that runs. All work happens in
-/// Awake(), since Unity guarantees every Awake() completes before any
-/// Start() does, which is what lets SetStartScreen (and the Player/Camera
-/// this creates) be in place before LevelManager.Start() reads them.
-/// </summary>
 public class LevelInstantiator : MonoBehaviour
 {
     [SerializeField] private GameObject _ScreenPrefab;
@@ -32,8 +21,7 @@ public class LevelInstantiator : MonoBehaviour
 
     private void Awake()
     {
-        // A playtest launched from the Level Editor overrides this
-        // component's own Inspector-assigned level - see PlayTestSession.
+        // A playtest overrides the Inspector-assigned level - see PlayTestSession.
         string levelName = PlayTestSession.IsPlaytesting ? PlayTestSession.LevelSlotName : _LevelName;
 
         var level = LevelIO.Load(levelName);
@@ -48,9 +36,7 @@ public class LevelInstantiator : MonoBehaviour
 
     private void Update()
     {
-        // Only live during an editor-launched playtest - a PlayTest scene
-        // opened directly (e.g. hitting Play on it in the Editor) has no
-        // editor state to return to, so this key does nothing there.
+        // Only live during an editor-launched playtest.
         if (PlayTestSession.IsPlaytesting && Input.GetKeyDown(_ReturnToEditorKey))
             SceneManager.LoadScene(_EditorSceneName);
     }
@@ -69,9 +55,7 @@ public class LevelInstantiator : MonoBehaviour
             return;
         }
 
-        // Keyed by TileDef.Id + whether it's on the collidable layer, since
-        // the same tile could paint into either layer with a different
-        // resulting collider setup.
+        // Keyed by TileDef.Id + collidable, since collider setup differs per layer.
         var tileCache = new Dictionary<string, TileBase>();
         ScreenBox firstScreen = null;
 
@@ -89,13 +73,8 @@ public class LevelInstantiator : MonoBehaviour
         if (firstScreen != null)
             BuildPlayerAndCamera(firstScreen);
 
-        // DeathBox resolves its PlayerController via FindAnyObjectByType in
-        // its own RuntimeInit - already called once per screen above (both
-        // from its Awake(), firing mid-Instantiate, and explicitly at the
-        // end of BuildScreen), but the Player doesn't exist yet at either of
-        // those points: it's created above, after every screen, since it
-        // needs a screen's spawn point to know where to go. Re-run now that
-        // the Player actually exists.
+        // DeathBox needs the Player, which doesn't exist until after every
+        // screen builds - re-run its init now that it does.
         foreach (var deathBox in FindObjectsByType<DeathBox>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             deathBox.RuntimeInit();
     }
@@ -113,21 +92,15 @@ public class LevelInstantiator : MonoBehaviour
 
         var content = screenGO.transform.Find("Content");
 
-        // Remove the prefab's baked-in template content (its default Spawn
-        // instance) - it's sized/positioned for the template's default area,
-        // not this screen. Real content (below) replaces it. DestroyImmediate
-        // because RuntimeInit(), later in this method, needs the final child
-        // list synchronously - a deferred Destroy() would still be found by
-        // GetComponentsInChildren<SpawnPoint>() this same frame.
+        // Clears the prefab's template content; DestroyImmediate so
+        // RuntimeInit() below sees the final child list this frame.
         for (int i = content.childCount - 1; i >= 0; i--)
             DestroyImmediate(content.GetChild(i).gameObject);
 
         screenBox.TilesRoot = BuildTiles(level, screenDef, cellSize, tileCache);
         BuildEntities(content, level, screenDef, cellSize);
 
-        // Awake() already ran once for both of these, synchronously during
-        // Instantiate() above - before Size/Content were finalized. Re-run
-        // now that they're correct.
+        // Awake() ran before Size/Content were finalized - re-run now that they're correct.
         screenBox.RuntimeInit();
         screenGO.transform.Find("DeathBox").GetComponent<DeathBox>().RuntimeInit();
 
@@ -138,17 +111,6 @@ public class LevelInstantiator : MonoBehaviour
     // Tiles
     // ------------------------------------------------------------------
 
-    /// <summary>
-    /// Instantiates _TilesPrefab (Grid root with pre-authored "Background"/
-    /// "Foreground" Tilemap children, Foreground already carrying its
-    /// TilemapCollider2D/CompositeCollider2D/Rigidbody2D) as a scene-root
-    /// sibling of the Screen, never a child of it - confirmed by testing
-    /// that Grid/Tilemap GameObjects nested under Screen never get a
-    /// working Grid, regardless of prefab vs. procedural construction or
-    /// construction order. Since it's no longer parented under the screen,
-    /// its world position has to be set explicitly to match the screen's
-    /// origin instead of inheriting it.
-    /// </summary>
     private GameObject BuildTiles(LevelAsset level, ScreenDef screenDef, float cellSize, Dictionary<string, TileBase> tileCache)
     {
         var gridGO = Instantiate(_TilesPrefab);
@@ -183,12 +145,8 @@ public class LevelInstantiator : MonoBehaviour
     private void PaintTilemap(
         Tilemap tilemap, TileLayer layer, ScreenDef screenDef, Dictionary<string, TileBase> tileCache, bool collidable)
     {
-        // Only Foreground is collidable, via whatever collider setup is
-        // already on the prefab's Foreground child - and only its
-        // Solid-collision-type tiles actually generate collision, via their
-        // own colliderType (set in GetOrCreateRuntimeTile). OneWayPlatform/
-        // Hazard/Ladder render but have no collision or special physics
-        // behavior yet - a scoped-out follow-up.
+        // Only Foreground is collidable, and only its Solid-type tiles
+        // generate collision. OneWayPlatform/Hazard/Ladder render only, for now.
         if (!layer.ScreenCells.TryGetValue(screenDef.Id, out var cells))
             return;
 
@@ -202,15 +160,6 @@ public class LevelInstantiator : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// A RuleTile is used directly as the tile object - a real Tilemap
-    /// evaluates its neighbor rules natively and continuously (including
-    /// re-evaluating as surrounding tiles change), so there's nothing to
-    /// resolve here ourselves. This previously always built a plain Tile
-    /// from TileDef.Sprite regardless, which is null for TileDefs authored
-    /// with only a RuleTile (a normal way to set one up) - genuinely
-    /// invisible tiles, unrelated to the Grid-hierarchy question.
-    /// </summary>
     private static TileBase GetOrCreateRuntimeTile(Dictionary<string, TileBase> cache, TileDef def, bool collidable)
     {
         string key = def.Id + (collidable ? "#fg" : "#bg");
@@ -283,9 +232,7 @@ public class LevelInstantiator : MonoBehaviour
                 return;
         }
 
-        // Parented (and positioned) before applying property overrides, same
-        // reasoning as the Tilemap ordering above - keeps any adapter/script
-        // that reads the hierarchy or world position at Awake-time correct too.
+        // Parented/positioned before overrides, so Awake-time hierarchy/position reads are correct.
         root.transform.SetParent(content, false);
         root.name = $"Entity_{def.TypeId}_{instance.Id}";
         root.transform.localPosition = instance.LocalPosition * cellSize;
@@ -293,11 +240,8 @@ public class LevelInstantiator : MonoBehaviour
 
         if (def.Backing == EntityBackingKind.NativePrefab)
         {
-            // The prefab asset's own serialized fields are already the
-            // default - no separate EntityDefinition-level default to merge
-            // under (unlike the old ComponentSpec.Properties), so instance
-            // overrides apply directly on top of whatever's already on the
-            // instantiated prefab.
+            // The prefab's own serialized fields are the default; overrides
+            // apply directly on top.
             if (NativePrefabAdapterRegistry.TryGetForPrefab(def.Prefab, out var adapter))
             {
                 instance.ComponentOverrides.TryGetValue(adapter.AdapterId, out var overrides);
@@ -316,12 +260,6 @@ public class LevelInstantiator : MonoBehaviour
     // Player / Camera
     // ------------------------------------------------------------------
 
-    /// <summary>
-    /// Spawns the Player at the start screen's spawn point and the Camera
-    /// aligned bottom-left-to-bottom-left with that same screen. Skips
-    /// entirely (no Player, no Camera) if the screen has no spawn point -
-    /// there'd be nowhere sensible to put either.
-    /// </summary>
     private void BuildPlayerAndCamera(ScreenBox startScreen)
     {
         var spawnPoint = startScreen.GetComponentInChildren<SpawnPoint>();

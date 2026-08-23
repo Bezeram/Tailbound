@@ -87,7 +87,6 @@ public class CollectableBanana : MonoBehaviour
             _BobDirection *= -1;
         }
         
-        // Bob animation
         float top = _BobOffset;
         float bottom = -_BobOffset;
         float t = _TimerBobbing / _BobTime;
@@ -96,10 +95,7 @@ public class CollectableBanana : MonoBehaviour
 
     void FollowPlayer()
     {
-        // The banana follows but stops when close enough to the player.
-        // Note: A new banana should keep its distance to the last banana collected, otherwise the bananas
-        // are going to stack on top of each other and not form a beautiful banana trail.
-        // Only update if the player is moving.
+        // Follows the player at a delay, so consecutive bananas don't stack into one trail point.
         _TimerUpdates += Time.deltaTime;
         while (_TimerUpdates >= _DelayFollow)
         {
@@ -110,8 +106,6 @@ public class CollectableBanana : MonoBehaviour
             {
                 if (_StoppedMovingNow)
                 {
-                    // When the player stops, record the current
-                    // position as the next position.
                     _StoppedMovingNow = false;
                     _NextPosition = transform.position;
                 }
@@ -119,7 +113,6 @@ public class CollectableBanana : MonoBehaviour
             else
             {
                 _StoppedMovingNow = true;
-                // Update position                
                 _NextPosition = _PlayerController.transform.position + Vector3.up * _FollowVerticalOffset;
             }
         }
@@ -131,7 +124,6 @@ public class CollectableBanana : MonoBehaviour
     void HandleCollection()
     {
         State = BananaState.Collected;
-        // Notify LevelManager banana has been collected.
         BananaChannel?.Raise(this);
         
         _AudioSource.PlayOneShot(BananaCollect, _AudioVolume);
@@ -147,7 +139,6 @@ public class CollectableBanana : MonoBehaviour
         Vector3 lerpScale = new Vector3(transform.localScale.x, lerpScaleY, transform.localScale.z);
         transform.localScale = lerpScale;
         
-        // Make outer light radius smaller
         _Light.pointLightOuterRadius = lerpScaleY * _InitialOuterLightRadius;
         
         if (lerpT >= 1)
@@ -180,7 +171,7 @@ public class CollectableBanana : MonoBehaviour
                 Quaternion leftEdge = Quaternion.Euler(0, 0, 0);
                 Quaternion rightEdge = Quaternion.Euler(0, 0, 2 * _PulseRotationOffset);
                 transform.rotation = Quaternion.Lerp(leftEdge, rightEdge, t);
-                // Interrupt half-way. "Distances" between points lerped must be the same to maintain the same speed.
+                // Interrupt half-way - lerp "distances" must match to keep speed constant.
                 if (t >= 0.5)
                 {
                     _PulseAnimationState = PulseAnimationState.SwingRight;
@@ -217,7 +208,7 @@ public class CollectableBanana : MonoBehaviour
                 Quaternion leftEdge = Quaternion.Euler(0, 0, _PulseRotationOffset);
                 Quaternion rightEdge = Quaternion.Euler(0, 0, -_PulseRotationOffset);
                 transform.rotation = Quaternion.Lerp(leftEdge, rightEdge, t);
-                // Interrupt half-way. "Distances" between points lerped must be the same to maintain the same speed.
+                // Interrupt half-way - lerp "distances" must match to keep speed constant.
                 if (t >= 0.5)
                 {
                     _PulseAnimationState = PulseAnimationState.Finish;
@@ -231,7 +222,6 @@ public class CollectableBanana : MonoBehaviour
 
     void Update()
     {
-        // Pulse sound
         if (State is BananaState.Idle or BananaState.PickedUp)
         {
             _TimerPulseTrigger += Time.deltaTime;
@@ -246,7 +236,6 @@ public class CollectableBanana : MonoBehaviour
             HandlePulseAnimation();
         }
         
-        // Main update
         switch (State)
         {
             case BananaState.Idle:
@@ -254,8 +243,7 @@ public class CollectableBanana : MonoBehaviour
                 break;
             case BananaState.PickedUp:
                 FollowPlayer();
-                // Player must stand on the ground to register
-                // collecting the banana.
+                // Must stand on the ground to register collection.
                 if (_PlayerController.TimeOnGround >= _DelayCollect)
                     HandleCollection();
                 break;
@@ -306,13 +294,11 @@ public class CollectableBanana : MonoBehaviour
         if (Utils.IsInMask(collision.gameObject.layer, PlayerLayer) && State == BananaState.Idle)
         {
             State = BananaState.PickedUp;
-            
-            // Follow player
+
             _PlayerController = collision.gameObject.GetComponent<PlayerController>();
             _NextPosition = _PlayerController.transform.position;
             _PreviousPosition = transform.position;
-            // If the player dies before collecting the banana, it's lost
-            // and returns to its original position.
+            // Lost (returns to start) if the player dies before collecting it.
             _PlayerController.Died += OnPlayerDeath;
             
             _AudioSource.PlayOneShot(BananaTouch, _AudioVolume);

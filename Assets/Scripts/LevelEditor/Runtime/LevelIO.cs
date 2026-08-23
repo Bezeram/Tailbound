@@ -3,18 +3,11 @@ using System.IO;
 using Sirenix.Serialization;
 using UnityEngine;
 
-/// <summary>
-/// Runtime save/load for LevelAsset. No AssetDatabase or ScriptableObject
-/// asset involved - levels are plain JSON files on disk, written via Odin's
-/// runtime-capable serializer (the one serializer already in the project
-/// that round-trips the Dictionary-heavy data model without extra work).
-/// </summary>
 public static class LevelIO
 {
     private const string FileExtension = ".json";
-    // What FileExtension used to be, before it dropped the ".level" part -
-    // MigrateLegacyFiles renames anything still saved under this so old
-    // saves don't just vanish from the Load list.
+    // Older save files use this extension; MigrateLegacyFiles renames them
+    // so they don't vanish from the Load list.
     private const string LegacyFileExtension = ".level.json";
 
     private static string LevelsDirectory => Path.Combine(Application.persistentDataPath, "Levels");
@@ -94,13 +87,6 @@ public static class LevelIO
         return names;
     }
 
-    /// <summary>
-    /// One-time upgrade for levels saved before FileExtension dropped the
-    /// ".level" part - renames them in place (same name, just ".json"
-    /// instead of ".level.json") so they don't silently disappear from the
-    /// Load list. Skips (and warns) rather than overwriting if a file
-    /// already exists at the new name.
-    /// </summary>
     private static void MigrateLegacyFiles()
     {
         foreach (string oldPath in Directory.GetFiles(LevelsDirectory, "*" + LegacyFileExtension))

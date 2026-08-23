@@ -478,7 +478,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 266e92505f154481990ab918a32d6f43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PauseMenuUI: {fileID: 2041723490752032677}
   BananaChannel: {fileID: 11400000, guid: cd599e7fa6c2c4b4680109d053d75af1, type: 2}
   _Screens: []
   _Bananas: []

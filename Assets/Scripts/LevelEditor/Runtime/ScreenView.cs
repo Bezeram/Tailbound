@@ -4,13 +4,6 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-/// <summary>
-/// The rectangle representing one ScreenDef on the ScreenCanvasView. Built
-/// entirely from code (no hand-authored prefab) since the number of screens
-/// is dynamic. Doubles as the interaction surface for both of the canvas's
-/// modes: move/resize in Screens mode, paint/erase in Paint mode - the two
-/// are mutually exclusive since both happen via click/drag on this same rect.
-/// </summary>
 public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public int ScreenId { get; private set; }
@@ -52,13 +45,8 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
         view._Fill = go.GetComponent<Image>();
 
-        // Background tiles, then Foreground tiles, then label/handle - sibling
-        // order is draw order, so each of these renders on top of the last.
-        // Anchored to the bottom-left corner (a point anchor, like _Rect
-        // itself) rather than the RectTransform default of center - a point
-        // anchor doesn't move when the parent's sizeDelta changes, so tile
-        // positions (which are anchoredPosition relative to these roots)
-        // stay put on resize instead of dragging along with it.
+        // Draw order = sibling order. Point-anchored bottom-left (not center)
+        // so tiles don't drag when sizeDelta changes.
         var backgroundRoot = new GameObject("BackgroundTiles", typeof(RectTransform));
         backgroundRoot.transform.SetParent(go.transform, false);
         SetBottomLeftAnchor((RectTransform)backgroundRoot.transform);
@@ -69,8 +57,7 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         SetBottomLeftAnchor((RectTransform)foregroundRoot.transform);
         view._ForegroundTiles = new TileCellPool(foregroundRoot.transform);
 
-        // Entities render above tiles, same bottom-left anchor so they move
-        // with the screen correctly (the same anchor bug fixed for tiles).
+        // Entities render above tiles, same bottom-left anchor.
         var entitiesRootGO = new GameObject("Entities", typeof(RectTransform));
         entitiesRootGO.transform.SetParent(go.transform, false);
         SetBottomLeftAnchor((RectTransform)entitiesRootGO.transform);
@@ -105,28 +92,11 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         return view;
     }
 
-    /// <summary>
-    /// Snaps a cell-space position to the bottom-left origin of whichever
-    /// cell it falls within - the same convention TileCellPool positions
-    /// tiles with (integer cell coordinate = that cell's bottom-left
-    /// corner), so a snapped entity with a bottom-left-pivoted sprite lands
-    /// exactly on the tile beneath it instead of a half-cell off to the
-    /// side. Deliberately Floor, not Round: rounding picks whichever grid
-    /// line is numerically closest, which lands on a corner shared by 4
-    /// cells and flips inconsistently depending on which half of the cell
-    /// was clicked. Floor always resolves to the cell actually clicked in.
-    /// Shared with EntityMarkerView's drag-move snapping.
-    /// </summary>
     public static Vector2 SnapToCellOrigin(Vector2 cellPos)
     {
         return new Vector2(Mathf.Floor(cellPos.x), Mathf.Floor(cellPos.y));
     }
 
-    /// <summary>
-    /// Grid snapping is a global editor mode, not a per-entity-type default -
-    /// holding Ctrl inverts whatever the toolbar toggle is currently set to,
-    /// for both placement and dragging an existing entity.
-    /// </summary>
     public static bool IsGridSnapActive(ScreenCanvasView owner)
     {
         bool ctrlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
@@ -157,22 +127,16 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
         _Label.text = $"Screen {ScreenId} ({bounds.width}x{bounds.height})";
 
-        // Resizing only makes sense in Screens mode - hide the handle in
-        // Paint mode so it can't be triggered while trying to paint near a
-        // screen's top-right corner.
+        // Resizing only applies in Screens mode - hide the handle elsewhere.
         _HandleObject.SetActive(_Owner.Mode == ScreenCanvasView.InteractionMode.Screens);
     }
 
-    /// <summary>Cheap per-frame follow-up to UpdateVisual - repositions already-built tile images for the current zoom.</summary>
     public void RepositionTiles(float cellPixelSize)
     {
         _BackgroundTiles.Reposition(cellPixelSize);
         _ForegroundTiles.Reposition(cellPixelSize);
     }
 
-    /// <summary>Structural rebuild of which cells are shown - call after any paint/erase write, and once after creation.
-    /// Passes the owning screen/level/layer through so RuleTileEvaluator can look across into an adjacent screen for
-    /// edge-cell neighbors instead of treating everything outside this screen as empty.</summary>
     public void RefreshTiles()
     {
         var level = _Owner.Level;
@@ -188,7 +152,6 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         _ForegroundTiles.SetCells(foregroundCells, lookup, screen, level, level.Foreground);
     }
 
-    /// <summary>Structural rebuild of which entity markers exist - call after any placement/deletion, and once after creation.</summary>
     public void RefreshEntities()
     {
         foreach (var marker in _EntityMarkers)
@@ -224,9 +187,7 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        // Right click always pans the canvas, never paints/moves - forwarded
-        // to the canvas since uGUI binds this whole drag gesture to us the
-        // moment we receive OnBeginDrag, it won't fall through on its own.
+        // Right click always pans - forward to the canvas (uGUI binds drag to us on OnBeginDrag).
         if (eventData.button == PointerEventData.InputButton.Right)
         {
             _Owner.BeginPan(eventData);
@@ -240,9 +201,7 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             return;
         }
 
-        // Placement is click-only (one click = one entity); the screen body
-        // itself has no drag behavior in Entities mode - only individual
-        // markers (moving an existing entity) do.
+        // Placement is click-only; only markers drag in Entities mode.
         if (_Owner.Mode == ScreenCanvasView.InteractionMode.Entities)
             return;
 
@@ -289,9 +248,7 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         EndDrag();
     }
 
-    // Called by this screen's ScreenResizeHandle child (inactive, so
-    // unreachable, while in Paint mode - see UpdateVisual). Same right-
-    // click-always-pans forwarding as the body drag handlers above.
+    // Called by this screen's ScreenResizeHandle (inactive in Paint mode).
     public void BeginResize(PointerEventData eventData)
     {
         if (eventData.button == PointerEventData.InputButton.Right)
@@ -351,9 +308,7 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             cells[cell] = new TileRef(_Owner.ActiveTileId);
 
         RefreshTiles();
-        // A cell change near this screen's edge can flip a rule tile's
-        // evaluation on the OTHER side of that edge too, in whichever
-        // screen actually borders it - repaint those as well.
+        // A cell change can flip a rule tile's evaluation across the screen edge - repaint neighbors too.
         _Owner.RefreshAdjacentScreenTiles(ScreenId);
     }
 
@@ -377,8 +332,7 @@ public class ScreenView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         {
             localCellPos = SnapToCellOrigin(localCellPos);
 
-            // Snapping means positions are exact matches, not approximate -
-            // don't stack a second entity on a cell that's already occupied.
+            // Snapped positions are exact matches - don't stack on an occupied cell.
             var existing = _Owner.Level.Entities.Find(
                 e => e.ScreenId == ScreenId && e.LocalPosition == localCellPos);
             if (existing != null)

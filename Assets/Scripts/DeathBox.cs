@@ -12,12 +12,6 @@ public class DeathBox : MonoBehaviour
     
     [TitleGroup("Input")] public float ColliderMargin = 0.2f;
 
-    /// <summary>
-    /// Caches references and sizes the death collider from the parent
-    /// ScreenBox's Size - previously only done in OnValidate, which never
-    /// runs in a build. Called from Awake() and from LevelInstantiator once
-    /// a runtime-built screen's Size is finalized.
-    /// </summary>
     public void RuntimeInit()
     {
         _ParentScreen = transform.parent.GetComponent<ScreenBox>();
@@ -61,7 +55,6 @@ public class DeathBox : MonoBehaviour
         if (Application.isPlaying)
             return;
         
-        // Update collider every once in a while
         _TimerUpdate += Time.deltaTime;
         while (_TimerUpdate >= 0.1)
         {
@@ -80,7 +73,6 @@ public class DeathBox : MonoBehaviour
             // Left below the screen
             if (_PlayerController.transform.position.y < transform.position.y)
             {
-                // Death
                 _LevelLoader.RespawnPlayer(true);
             }
         }

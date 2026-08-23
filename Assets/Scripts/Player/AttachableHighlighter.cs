@@ -73,7 +73,7 @@ public class LayerHighlight2D : MonoBehaviour
             CreateOrUpdateLight(top, b, lightStrength);
         }
 
-        // Cleanup: remove highlight objects from things no longer processed
+        // Remove highlights from objects no longer processed this frame.
         foreach (var t in all)
         {
             if (t)

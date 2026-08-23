@@ -2,23 +2,6 @@ using Miniscript;
 using TarodevController;
 using UnityEngine;
 
-/// <summary>
-/// Custom MiniScript intrinsics bridging ScriptBehavior entities to the
-/// Tailbound property system and a minimal set of Unity operations. Kept in
-/// its own file rather than touching the vendored MiniScript source, per
-/// MiniscriptIntrinsics.cs's own header comment. Intrinsic.Create registers
-/// into MiniScript's process-wide static registry (same one the stdlib
-/// intrinsics use), so EnsureRegistered() only needs to run once - safe to
-/// call it every time an Interpreter is about to compile a script.
-///
-/// Each intrinsic finds out what it's running for via
-/// Interpreter.hostData: expose() wants an IExposePropertyHost (either
-/// ScriptPropertySchemaCollector, during the editor's dry-run schema
-/// collection, or ScriptEntityRunner, during real gameplay); everything
-/// else wants a ScriptEntityRunner specifically, and just does nothing if
-/// hostData isn't one (e.g. called during schema collection, where there's
-/// no real GameObject to act on yet).
-/// </summary>
 public static class TailboundIntrinsics
 {
     private static bool _Registered;
@@ -55,8 +38,7 @@ public static class TailboundIntrinsics
                 return new Intrinsic.Result(FromPropertyValue(effective));
             }
 
-            // No host wired up (e.g. a standalone test script) - behave as
-            // a harmless identity function.
+            // No host wired up - behave as an identity function.
             return new Intrinsic.Result(defaultRaw);
         };
     }
@@ -91,11 +73,8 @@ public static class TailboundIntrinsics
             return Intrinsic.Result.Null;
         };
 
-        // getPosition is local (relative to the entity's screen), same
-        // space every other placement/position value in the level editor
-        // uses - not directly comparable to getPlayerPosition's world space
-        // unless the entity happens to be on a screen at world origin. This
-        // is the one to use for e.g. "direction to the player".
+        // getPosition is screen-local, not comparable to getPlayerPosition's
+        // world space - use this one for e.g. "direction to the player".
         var getWorldPosition = Intrinsic.Create("getWorldPosition");
         getWorldPosition.code = (context, partialResult) =>
         {
@@ -142,13 +121,6 @@ public static class TailboundIntrinsics
         };
     }
 
-    /// <summary>
-    /// Adds (if missing) and configures a BoxCollider2D - needed for
-    /// onCollisionEnter/onTriggerEnter to ever fire at all, since a bare
-    /// ScriptBehavior entity starts with nothing but a Transform (and
-    /// whatever setSprite/setColor added). isTrigger follows MiniScript's
-    /// usual "0 is false, anything else is true" convention.
-    /// </summary>
     private static void RegisterCollider()
     {
         var f = Intrinsic.Create("setCollider");
@@ -170,16 +142,6 @@ public static class TailboundIntrinsics
         };
     }
 
-    /// <summary>
-    /// Mirrors Unity's AudioSource API: setAudioClip/setAudioVolume/
-    /// setAudioPitch/setAudioLoop configure the component (via
-    /// AudioSourceBinder, same as setSprite/setColor/setCollider);
-    /// playAudio/playAudioOneShot/stopAudio/isAudioPlaying are the actions,
-    /// which don't fit the binder's "set these fields" shape so they call
-    /// straight through to ScriptEntityRunner instead - same distinction
-    /// Unity itself draws between AudioSource's inspector fields and its
-    /// Play()/PlayOneShot()/Stop()/isPlaying members.
-    /// </summary>
     private static void RegisterAudio()
     {
         var setClip = Intrinsic.Create("setAudioClip");
@@ -252,28 +214,12 @@ public static class TailboundIntrinsics
         };
     }
 
-    /// <summary>Unity's Time.deltaTime, for an update() function to scale
-    /// per-frame movement/animation by - the MiniScript-side equivalent of
-    /// reading Time.deltaTime directly in a real MonoBehaviour.Update().</summary>
     private static void RegisterDeltaTime()
     {
         var f = Intrinsic.Create("deltaTime");
         f.code = (context, partialResult) => new Intrinsic.Result(Time.deltaTime);
     }
 
-    /// <summary>
-    /// Unlike every other intrinsic here, these don't look at hostData at
-    /// all - they act on the one global PlayerController, not "this
-    /// entity", so they work the same regardless of which ScriptBehavior
-    /// entity (if any) called them. getPlayerSpeed/setPlayerSpeed go
-    /// through FrameVelocity/InheritVelocity specifically, not the
-    /// Rigidbody2D's own velocity - InheritVelocity is PlayerController's
-    /// own sanctioned way to push an external velocity onto the player
-    /// (Swing.cs uses the same call for the exact same reason), and
-    /// FrameVelocity is what the controller itself is about to apply that
-    /// frame - reading the Rigidbody2D directly would race against
-    /// whichever runs first in the physics step.
-    /// </summary>
     private static void RegisterPlayer()
     {
         var getPlayerPosition = Intrinsic.Create("getPlayerPosition");
@@ -335,11 +281,8 @@ public static class TailboundIntrinsics
             return Intrinsic.Result.Null;
         };
 
-        // instant defaults to 1 (true) - PlayerController.Kill(true) moves
-        // the player offscreen immediately; Kill(false) plays out whatever
-        // non-instant death handling LevelManager/LevelLoader already do
-        // for e.g. DeathBox. Either way this only starts the death - actual
-        // respawn is still LevelLoader's job, same as any other death source.
+        // instant=1: Kill(true) moves the player offscreen immediately.
+        // Either way, respawn is still LevelLoader's job.
         var killPlayer = Intrinsic.Create("killPlayer");
         killPlayer.AddParam("instant", 1);
         killPlayer.code = (context, partialResult) =>
@@ -350,10 +293,8 @@ public static class TailboundIntrinsics
         };
     }
 
-    // Cached rather than FindAnyObjectByType'd on every call (these can run
-    // every frame) - Unity's == correctly treats a destroyed/unloaded
-    // player as null again, so a stale reference from a previous PlayTest
-    // session gets re-resolved automatically rather than staying stuck.
+    // Cached since these can run every frame; Unity's == treats a destroyed
+    // player as null again, so a stale reference re-resolves automatically.
     private static PlayerController _CachedPlayer;
 
     private static PlayerController FindPlayer()
@@ -363,10 +304,6 @@ public static class TailboundIntrinsics
         return _CachedPlayer;
     }
 
-    /// <summary>Number/string only for v1 - matches PropertyType's coverage
-    /// of what expose() can infer from a bare MiniScript value. Bool/Int/
-    /// Vector2/Color aren't distinguishable from a plain number/string
-    /// without an explicit type hint, which expose() doesn't take yet.</summary>
     private static PropertyValue ToPropertyValue(Value raw)
     {
         return raw switch

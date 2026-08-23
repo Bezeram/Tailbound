@@ -1,16 +1,6 @@
 using System.Collections;
 using UnityEngine;
 
-/// <summary>
-/// A directional screen-wipe transition: a solid panel slides in from one
-/// edge until it fully covers the screen, then (on a later, separate call -
-/// there's usually gameplay logic to run while the screen's covered, e.g.
-/// LevelLoader repositioning the player) slides further out the opposite
-/// edge to reveal whatever's behind it. Built from scratch specifically to
-/// not depend on any pre-made asset: PlayIn/PlayOut just animate a
-/// RectTransform's anchoredPosition via a coroutine - no baked Animation
-/// clip, no Animator Controller state machine, unlike the wipe this replaces.
-/// </summary>
 public class ScreenWipeTransition : MonoBehaviour
 {
     [Tooltip("The solid-color panel that slides across - should already be " +
@@ -31,11 +21,8 @@ public class ScreenWipeTransition : MonoBehaviour
         _ParentRect = (RectTransform)_Panel.parent;
     }
 
-    /// <summary>Slides the panel in from off-screen (left) until it fully covers the screen.</summary>
     public void PlayIn() => Restart(fromOffscreenLeft: true);
 
-    /// <summary>From fully covering the screen, slides the panel further out
-    /// (past the right edge) to reveal whatever's behind it.</summary>
     public void PlayOut() => Restart(fromOffscreenLeft: false);
 
     private void Restart(bool fromOffscreenLeft)
@@ -47,9 +34,7 @@ public class ScreenWipeTransition : MonoBehaviour
 
     private IEnumerator SlideRoutine(bool fromOffscreenLeft)
     {
-        // Read every frame, not just once, in case the window/canvas gets
-        // resized mid-slide - keeps the panel's start/end points honest
-        // relative to whatever the screen width actually is right now.
+        // Read every frame (not once) so resizing mid-slide keeps start/end honest.
         float startX = fromOffscreenLeft ? -_ParentRect.rect.width : 0f;
         float endX = fromOffscreenLeft ? 0f : _ParentRect.rect.width;
 

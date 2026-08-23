@@ -1,19 +1,6 @@
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-/// <summary>
-/// A placeable entity type: the palette entry. Its editable property schema
-/// is never authored here - it used to be a hand-picked List&lt;ComponentSpec&gt;
-/// (removed; see git history and NativePrefabAdapterRegistry), which both
-/// crashed Odin (its [ShowIf]'d Prefab field, see the odin-crash notes) and
-/// couldn't actually express "wrap this prefab AND expose one of its
-/// components" coherently. Now the schema is always derived automatically:
-///   - NativePrefab: from whichever INativePrefabAdapter targets a component
-///     already present on Prefab (see NativePrefabAdapterRegistry).
-///   - ScriptBehavior: a MiniScript-authored entity (Script). It declares its
-///     own exposed properties by calling expose(key, defaultValue) - see
-///     TailboundIntrinsics and ScriptPropertySchemaCollector.
-/// </summary>
 [CreateAssetMenu(fileName = "EntityDefinition", menuName = "Level Editor/Entity Definition")]
 public class EntityDefinition : SerializedScriptableObject
 {
@@ -23,9 +10,7 @@ public class EntityDefinition : SerializedScriptableObject
     public Sprite Icon;
     public string Category;
 
-    // Grid snapping is a global editor mode (ScreenCanvasView.SnapToGridEnabled,
-    // toggled in the toolbar, Ctrl inverts) rather than a per-type default -
-    // no field here for it.
+    // Grid snapping is a global editor mode, not a per-type default - no field here for it.
 
     [Tooltip("Marks this type as a spawn point for save-validation (every screen needs at least one) " +
              "and for LevelInstantiator, which places the Player/Camera at the start screen's spawn point.")]

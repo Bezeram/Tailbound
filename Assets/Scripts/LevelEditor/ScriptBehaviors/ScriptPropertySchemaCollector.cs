@@ -2,19 +2,6 @@ using System.Collections.Generic;
 using Miniscript;
 using UnityEngine;
 
-/// <summary>
-/// Implements IScriptPropertySource by actually running the script - once,
-/// in a throwaway Interpreter, purely to collect its expose(key, default)
-/// calls into a PropertyDef list. No separate declaration syntax to parse
-/// or keep in sync with what the script actually calls; the real MiniScript
-/// interpreter (already vendored) reads its own source.
-///
-/// Scripts are expected to call expose() for everything they want editable
-/// before entering any long-running loop - CollectionTimeBudget bounds how
-/// long a dry run can take if a script loops before ever hitting a wait()/
-/// yield (both are intrinsics that suspend execution, which is what lets
-/// RunUntilDone return promptly for a well-behaved script).
-/// </summary>
 public class ScriptPropertySchemaCollector : IScriptPropertySource, IExposePropertyHost
 {
     private const double CollectionTimeBudget = 0.25;

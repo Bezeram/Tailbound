@@ -47,7 +47,6 @@ public class GameSettings : MonoBehaviour
         }
         else
         {
-            // Choose between 2 different time scales.
             CurrentTimeScale = UsingTimeScale1 ? TimeScale1 : TimeScale2;
 
             Time.timeScale = CurrentTimeScale;

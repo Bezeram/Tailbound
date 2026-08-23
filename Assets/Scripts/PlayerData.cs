@@ -14,7 +14,6 @@ public class PlayerData
     {
         ScreenID = screenID;
         SpawnPointID = spawnPointID;
-        // Serialize Vector3 array in a bidimensional primitive type array.
         CollectedBananaIDs = collectedBananasIDs.ToList();
     }
 }

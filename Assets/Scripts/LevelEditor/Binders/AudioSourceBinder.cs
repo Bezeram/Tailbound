@@ -2,15 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Adapter for AudioSource's config fields (not playback itself - Play/
-/// PlayOneShot/Stop are actions, not properties, so they don't fit
-/// INativeComponentBinder.Apply's "set these fields" shape; see
-/// ScriptEntityRunner.PlayAudio/PlayAudioOneShot/StopAudio and
-/// TailboundIntrinsics' playAudio/playAudioOneShot/stopAudio instead).
-/// Clip is a Resources-folder path, same convention as SpriteRendererBinder's
-/// Sprite, since there's no object-reference PropertyType yet.
-/// </summary>
 public class AudioSourceBinder : INativeComponentBinder
 {
     public Type UnityType => typeof(AudioSource);

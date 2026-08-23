@@ -1,11 +1,6 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// A tagged-union value used by property bags (adapter Schemas,
-/// <see cref="EntityInstance.ComponentOverrides"/>). Only one of the fields
-/// below is meaningful, selected by <see cref="Type"/>.
-/// </summary>
 [Serializable]
 public struct PropertyValue
 {

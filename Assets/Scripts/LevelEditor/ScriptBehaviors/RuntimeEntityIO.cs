@@ -3,17 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-/// <summary>
-/// Runtime-created ScriptBehavior entity types - has to work in a
-/// standalone build (no Unity Editor, no AssetDatabase), so this is a
-/// starter .ms text file plus a small JSON record, both plain files under
-/// Application.persistentDataPath, the same "no Unity asset involved"
-/// approach LevelIO already uses for levels themselves. Each is wrapped
-/// into a real in-memory EntityDefinition via ScriptableObject.CreateInstance
-/// and `new TextAsset(text)` - both plain runtime APIs, not Editor-only ones
-/// (unlike AssetDatabase.CreateAsset, which the level editor's New Script
-/// Entity dialog used before this).
-/// </summary>
 public static class RuntimeEntityIO
 {
     [Serializable]
@@ -24,19 +13,14 @@ public static class RuntimeEntityIO
         public string Category;
         public bool IsSpawnPoint;
         public string ScriptFileName;
-        // Resources-folder path (no extension), same convention as
-        // setSprite/setAudioClip - empty/null means no icon, same as
-        // leaving EntityDefinition.Icon unassigned by hand.
+        // Resources-folder path, no extension; empty/null means no icon.
         public string IconPath;
     }
 
     public static string EntitiesDirectory => Path.Combine(Application.persistentDataPath, "Entities");
 
-    // Which on-disk file (if any) a given in-memory TextAsset was built
-    // from - ScriptEntityRunner uses this to poll the file directly for
-    // live-reload, since a runtime-constructed TextAsset has no Unity
-    // import pipeline behind it to keep its .text current on its own the
-    // way an Editor-imported one does.
+    // On-disk source file for a runtime-built TextAsset; ScriptEntityRunner
+    // polls it for live-reload.
     private static readonly Dictionary<TextAsset, string> _SourcePaths = new();
 
     public static string GetSourcePath(TextAsset script)
@@ -44,12 +28,6 @@ public static class RuntimeEntityIO
         return script != null && _SourcePaths.TryGetValue(script, out var path) ? path : null;
     }
 
-    /// <summary>
-    /// Creates a new runtime script entity: a starter .ms file and its
-    /// metadata record, both under EntitiesDirectory. Returns the resulting
-    /// EntityDefinition (already usable) and the script's full path (so the
-    /// caller can hand it to e.g. Process.Start to open it for editing).
-    /// </summary>
     public static EntityDefinition Create(string typeId, string displayName, string category, bool isSpawnPoint, string iconPath, out string scriptPath)
     {
         Directory.CreateDirectory(EntitiesDirectory);
@@ -73,9 +51,6 @@ public static class RuntimeEntityIO
         return ToEntityDefinition(record);
     }
 
-    /// <summary>Loads every runtime entity definition already saved on disk
-    /// from a previous session, calling onLoaded once per one - used by
-    /// EntityCatalog at startup, alongside its Resources.LoadAll scan.</summary>
     public static void LoadAll(Action<EntityDefinition> onLoaded)
     {
         if (!Directory.Exists(EntitiesDirectory))
@@ -124,10 +99,8 @@ public static class RuntimeEntityIO
         return def;
     }
 
-    // Kept as one literal block (not composed from per-intrinsic doc
-    // comments in TailboundIntrinsics.cs) so it reads as a single cheatsheet
-    // in the order a script author actually needs it - keep this in sync by
-    // hand whenever an intrinsic there is added, renamed, or removed.
+    // One literal block so it reads as a single cheatsheet; keep in sync
+    // with TailboundIntrinsics.cs by hand.
     private const string Cheatsheet =
 @"// Cheatsheet
 //

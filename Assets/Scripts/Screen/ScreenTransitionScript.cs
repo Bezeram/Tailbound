@@ -11,7 +11,6 @@ public class ScreenTransitionScript : MonoBehaviour
         Gizmos.color = Color.green;
         Gizmos.DrawWireCube(transform.position, GetComponent<BoxCollider2D>().size);
 
-        // Draw arrow for editor clarity
         Vector3 start = transform.position;
         Vector3 end = start + (Vector3)ArrowDirection.normalized;
         Gizmos.DrawLine(start, end);

@@ -2,13 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Exposes Spring.prefab's Direction as an editable property. Reference
-/// implementation for INativePrefabAdapter - see NativePrefabAdapterRegistry.
-/// Direction is stored as its underlying int (PropertyType has no enum kind,
-/// by design - see PropertyType), so the label spells out what each value
-/// means since Spring.DirectionSpring isn't a plain 0/1/2 sequence.
-/// </summary>
 public class SpringAdapter : INativePrefabAdapter
 {
     public Type TargetComponentType => typeof(Spring);
@@ -41,13 +34,10 @@ public class SpringAdapter : INativePrefabAdapter
         if (properties.TryGetValue("Direction", out var directionProp) && directionProp.Type == PropertyType.Int)
             spring.Direction = (Spring.DirectionSpring)directionProp.IntValue;
 
-        // Direction alone doesn't rotate the transform - RuntimeInit() does
-        // (also re-caches Animator/AudioSource, harmless here).
+        // Direction alone doesn't rotate the transform - RuntimeInit() does that.
         spring.RuntimeInit();
     }
 
-    /// <summary>Mirrors Spring.RuntimeInit()'s own rotation math, so the
-    /// entity marker previews the same rotation the real prefab ends up with.</summary>
     public float GetEditorRotationDegrees(Dictionary<string, PropertyValue> properties)
     {
         var direction = properties.TryGetValue("Direction", out var directionProp) && directionProp.Type == PropertyType.Int

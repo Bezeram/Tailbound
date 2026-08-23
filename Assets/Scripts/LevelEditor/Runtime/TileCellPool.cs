@@ -2,13 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Pooled sprite-Image renderer for one TileLayer's painted cells within a
-/// single screen. Same pool-and-toggle pattern as the grid lines in
-/// ScreenCanvasView, split into a structural rebuild (SetCells, called only
-/// when the painted set actually changes) and a cheap per-frame
-/// reposition (Reposition, called every frame so tiles track pan/zoom).
-/// </summary>
 public class TileCellPool
 {
     private static readonly Color MissingSpriteColor = new(1f, 0f, 1f, 0.5f);
@@ -77,9 +70,7 @@ public class TileCellPool
             rect.pivot = Vector2.zero;
 
             var image = go.GetComponent<Image>();
-            // Tiles must never intercept clicks meant for the screen body -
-            // both move/resize (Screens mode) and painting (Paint mode) rely
-            // on the ScreenView's own root Image receiving the raycast.
+            // Tiles must never intercept clicks meant for the screen body's own raycast.
             image.raycastTarget = false;
 
             _Pool.Add(image);

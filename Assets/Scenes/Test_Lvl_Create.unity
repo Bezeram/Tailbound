@@ -152312,10 +152312,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5483765732753741570, guid: 3833136d61698324eb04458e3163a6a4, type: 3}
-      propertyPath: PauseMenuUI
-      value: 
-      objectReference: {fileID: 860300887}
-    - target: {fileID: 5483765732753741570, guid: 3833136d61698324eb04458e3163a6a4, type: 3}
       propertyPath: _StartScreen
       value: 
       objectReference: {fileID: 1779862789}

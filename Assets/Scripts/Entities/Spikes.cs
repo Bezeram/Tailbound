@@ -37,30 +37,25 @@ public class Spikes : MonoBehaviour
         if (_Collider == null)
             _Collider = GetComponent<BoxCollider2D>();
         
-        // Snap count to step size defined.
         SnapCountToStep();
-        
-        // Rotate based on direction.
+
         float angle = (int)Direction * 90;
         transform.rotation = Quaternion.Euler(0, 0, angle);
-        
+
         if (Mathf.Abs(Count - 1) <= 0e-4)
         {
-            // Reset
             _OldColliderSize = _DefaultColliderSize;
             _OldColliderOffset = _DefaultColliderOffset;
             _Collider.size = _DefaultColliderSize;
             _Collider.offset = _DefaultColliderOffset;
             return;
         }
-        
-        // Extend the box collider depending on the spikes count.
+
         _Collider.size = _DefaultColliderSize + _ExtendDirection * (Count - 1);
-        // Recalculate the offset.
-        // This is necessary because the size is based in the center.
+        // Recalculated because size is based on center.
         _Collider.offset = _OldColliderOffset + (_Collider.size - _OldColliderSize) / 2f;
-        
-        // Update "old" values at the next iteration.
+
+        // Cache for next time.
         _OldColliderSize = _Collider.size;
         _OldColliderOffset = _Collider.offset;
     }
@@ -70,10 +65,7 @@ public class Spikes : MonoBehaviour
         if (Application.isPlaying)
             return;
         
-        // Sprite is rendered as a tile.
-        // Extend the tile size depending on the Count.
-        // This could've been called in OnValidate(),
-        //  but it produces an annoying warning.
+        // Not called from OnValidate() - that produces a warning here.
         AdaptSpriteTiling();
     }
     

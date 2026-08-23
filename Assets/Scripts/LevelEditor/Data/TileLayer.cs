@@ -2,12 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// A sparse tile layer (Background or Foreground), keyed first by owning
-/// screen id and then by local cell coordinate within that screen. Screen
-/// ownership is deliberate: moving a Screen's Origin moves every tile bound
-/// to it without rewriting a single cell record.
-/// </summary>
 [Serializable]
 public class TileLayer
 {

@@ -12,13 +12,13 @@ public class ZiplineActivator : MonoBehaviour, IEntityActivator
     }
 #endif
 
-    // Called at the moment of attaching with the tail
+    // Called when attaching with the tail.
     public void SendActivation()
     {
         Zipline.ReceiveActivation();
     }
 
-    // Called at the moment of releasing the tail
+    // Called when releasing the tail.
     public void SendDeactivation()
     {
         Zipline.ReceiveDeactivation();

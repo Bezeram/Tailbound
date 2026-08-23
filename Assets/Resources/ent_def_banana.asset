@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fc6743ade18e5894fb0cee226bed6e48, type: 3}
-  m_Name: ent_def_blinker
+  m_Name: ent_def_banana
   m_EditorClassIdentifier: Assembly-CSharp::EntityDefinition
   serializationData:
     SerializedFormat: 2
@@ -21,11 +21,11 @@ MonoBehaviour:
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes: []
-  TypeId: 4
-  DisplayName: Blinker
+  TypeId: banana
+  DisplayName: Banana
   Icon: {fileID: 1919671772731642912, guid: a54ff90ad4c427444bf2f5534b4e20a0, type: 3}
-  Category: script
+  Category: collectable
   IsSpawnPoint: 0
-  Backing: 1
-  Prefab: {fileID: 0}
-  Script: {fileID: 9027929339269108002, guid: f1f3fff25d8e4d4587950898d31a1ff7, type: 3}
+  Backing: 0
+  Prefab: {fileID: 6875926637267647423, guid: 784ee24d6666dcc438080eaa7f0dbacc, type: 3}
+  Script: {fileID: 0}

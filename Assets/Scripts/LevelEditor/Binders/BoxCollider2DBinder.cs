@@ -2,9 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Starter native-component adapter for BoxCollider2D.
-/// </summary>
 public class BoxCollider2DBinder : INativeComponentBinder
 {
     public Type UnityType => typeof(BoxCollider2D);

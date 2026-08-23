@@ -1,12 +1,6 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// A room within a level: a rectangle on the shared grid. Tiles and entities
-/// bind to a screen by <see cref="Id"/> and store coordinates relative to
-/// <see cref="Origin"/>, so moving/resizing a screen moves its content with
-/// it without touching any of that content's records.
-/// </summary>
 [Serializable]
 public class ScreenDef
 {

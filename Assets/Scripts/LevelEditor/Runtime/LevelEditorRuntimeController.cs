@@ -7,15 +7,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-/// <summary>
-/// Entry point for the runtime level editor. Bootstraps a Canvas and
-/// EventSystem if the scene doesn't already have one, owns the current
-/// in-memory LevelAsset, and wires the toolbar (New / Save / Load /
-/// + Screen) to the ScreenCanvasView.
-///
-/// Attach this to a single empty GameObject in the Level Editor scene -
-/// everything else is built at runtime, no prefab required.
-/// </summary>
 public class LevelEditorRuntimeController : MonoBehaviour
 {
     private const float ToolbarHeight = 44f;
@@ -25,10 +16,8 @@ public class LevelEditorRuntimeController : MonoBehaviour
     [SerializeField] private string _PlayTestSceneName = "PlayTest";
 
     private LevelAsset _Level;
-    // The name this level is actually saved under on disk, if any - null for
-    // a never-saved level. Distinct from _NameField.text, which is just
-    // whatever's currently typed (may not match any saved file yet). Lets
-    // RenameLevel know which old file to delete.
+    // Saved-on-disk name, if any; null if never saved. Differs from
+    // _NameField.text (whatever's currently typed).
     private string _LoadedLevelName;
     private ScreenCanvasView _CanvasView;
     private TMP_InputField _NameField;
@@ -38,23 +27,17 @@ public class LevelEditorRuntimeController : MonoBehaviour
     private Image _BackgroundLayerButtonImage;
     private Image _ForegroundLayerButtonImage;
     private GameObject _EntityPalettePanel;
-    // Keyed by TypeId - lets UpdateEntityPaletteButtonColors() find each
-    // button again after the panel's been rebuilt (RebuildEntityPalettePanel
-    // destroys and recreates every button, so this is repopulated each time).
+    // Keyed by TypeId; repopulated on every palette rebuild.
     private readonly Dictionary<string, Image> _EntityPaletteButtonImages = new();
     private TMP_Text _StatusLabel;
     private GameObject _OpenScriptButton;
     private GameObject _EntityInspectorPanel;
     private RectTransform _EntityInspectorContent;
     private readonly ScriptPropertySchemaCollector _ScriptPropertySource = new();
-    // Sentinel (not a real selection state) so the first Update() always
-    // builds the panel's initial content, even though SelectedEntityId also
-    // starts at -1.
+    // Sentinel so the first Update() always builds initial content.
     private int _InspectedEntityId = -2;
 
-    // New Script Entity dialog - creates real runtime content (see
-    // RuntimeEntityIO), no Editor/AssetDatabase dependency, so this works
-    // the same in a standalone build as it does here.
+    // New Script Entity dialog - creates a real RuntimeEntityIO entity.
     private GameObject _NewScriptEntityPanel;
     private TMP_InputField _NewEntityDisplayNameField;
     private TMP_InputField _NewEntityCategoryField;
@@ -66,26 +49,19 @@ public class LevelEditorRuntimeController : MonoBehaviour
         EnsureEventSystem();
         Canvas canvas = EnsureCanvas();
 
-        // ScreenCanvasView is created first (and so sits behind, in sibling
-        // order) so the toolbar and its Load dropdown - built after, below -
-        // render on top of it instead of being hidden underneath.
+        // Created first so the toolbar renders on top of it.
         _CanvasView = ScreenCanvasView.Create(canvas.transform);
         var canvasRect = (RectTransform)_CanvasView.transform;
         canvasRect.offsetMax = new Vector2(0, -ToolbarHeight);
 
         BuildToolbar(canvas.transform);
 
-        // Coming back from a Play Test rather than a fresh launch of this
-        // scene - restore the level that was being edited instead of
-        // starting blank. Consumed once here; PlayTestSession.IsPlaytesting
-        // is what gated the playtest scene's level source and its "back to
-        // editor" hotkey, so it must go false as soon as we're back.
+        // Returning from Play Test - restore the level being edited.
         if (PlayTestSession.IsPlaytesting)
         {
             PlayTestSession.IsPlaytesting = false;
             LoadLevel(PlayTestSession.LevelSlotName);
-            // LoadLevel just set these from the playtest scratch slot -
-            // restore what they actually were before Play Test was pressed.
+            // Restore what these were before Play Test overwrote them.
             _NameField.text = PlayTestSession.ReturnDisplayName;
             _LoadedLevelName = PlayTestSession.ReturnLoadedLevelName;
         }
@@ -95,13 +71,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Polls for a selection change rather than reacting to an event -
-    /// EntityMarkerView mutates ScreenCanvasView.SelectedEntityId directly
-    /// from pointer handlers (click, drag) with no notification hook, so
-    /// this is the cheapest way to notice without adding one just for this.
-    /// Also handles keyboard shortcuts every frame - see HandleKeybinds.
-    /// </summary>
     private void Update()
     {
         if (_CanvasView.SelectedEntityId != _InspectedEntityId)
@@ -113,11 +82,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         HandleKeybinds();
     }
 
-    /// <summary>
-    /// One keybind per toolbar action (shown in each button's own label) -
-    /// skipped entirely while a text field has focus, so typing a level/tile
-    /// name or a property value never gets hijacked by e.g. "g".
-    /// </summary>
     private void HandleKeybinds()
     {
         if (IsTypingInField())
@@ -138,19 +102,12 @@ public class LevelEditorRuntimeController : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.Delete) || Input.GetKeyDown(KeyCode.Backspace)) DeleteSelected();
     }
 
-    /// <summary>True while a TMP_InputField (Level Name, a property row's
-    /// field, ...) has input focus - lets HandleKeybinds step aside rather
-    /// than hijack ordinary typing.</summary>
     private static bool IsTypingInField()
     {
         var selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
         return selected != null && selected.GetComponent<TMP_InputField>() != null;
     }
 
-    /// <summary>Context-sensitive Delete/Backspace - the selected entity in
-    /// Entities mode, otherwise the selected screen. Neither "Delete Entity"
-    /// nor "Delete Screen" has a dedicated toolbar button anymore - this
-    /// keybind is the only way to delete either now.</summary>
     private void DeleteSelected()
     {
         if (_CanvasView.Mode == ScreenCanvasView.InteractionMode.Entities)
@@ -164,8 +121,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
         if (EventSystem.current != null)
             return;
 
-        // activeInputHandler is "Both" for this project, so the legacy
-        // StandaloneInputModule (no InputActionAsset wiring required) works.
+        // activeInputHandler is "Both", so the legacy StandaloneInputModule works.
         new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
     }
 
@@ -214,11 +170,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
         _NameField = CreateInputField(barRect, "Level Name", 180);
         _NameField.text = "New Level";
 
-        // Every button's own keybind is shown right in its label rather than
-        // as a separate legend - HandleKeybinds is the single source of
-        // truth for what each key actually does, this is just documentation.
-        // No "Delete Entity" button anymore - Delete/Backspace (context-
-        // sensitive, see DeleteSelected) is its only way to fire now.
+        // Each button's keybind is shown in its own label.
         CreateButton(barRect, "New (^N)", NewLevel, 80);
         CreateButton(barRect, "Save (^S)", SaveLevel, 80);
         CreateButton(barRect, "Rename (^R)", RenameLevel, 100);
@@ -241,11 +193,8 @@ public class LevelEditorRuntimeController : MonoBehaviour
         UpdateStatusLabel();
     }
 
-    // Always visible regardless of mode (unlike the two palette panels) -
-    // snap state in particular needs to be readable while placing entities.
-    // Anchored bottom-left: top-left is the Load dropdown's spot and
-    // top-right is the two palette panels', so bottom-left is the one
-    // corner nothing else ever occupies.
+    // Always visible, unlike the palette panels - anchored bottom-left,
+    // the one corner nothing else uses.
     private void CreateStatusPanel(Transform parent)
     {
         var go = new GameObject(
@@ -276,16 +225,12 @@ public class LevelEditorRuntimeController : MonoBehaviour
         _StatusLabel.color = new Color(1f, 1f, 1f, 0.8f);
         _StatusLabel.enableWordWrapping = true;
 
-        // Only meaningful for a ScriptBehavior entity - hidden the rest of
-        // the time (no selection, or a NativePrefab entity with no script to
-        // open). UpdateOpenScriptButton keeps this in sync with selection.
+        // Only shown for a ScriptBehavior entity with a script assigned;
+        // UpdateOpenScriptButton keeps it in sync with selection.
         _OpenScriptButton = CreateButton(go.transform, "Open Script", OpenSelectedEntityScript, 480, 32f, 18).gameObject;
         _OpenScriptButton.SetActive(false);
     }
 
-    /// <summary>Shows/hides the status panel's "Open Script" button for
-    /// whatever's currently selected - only a ScriptBehavior (MiniScript)
-    /// entity with a script actually assigned has one to open.</summary>
     private void UpdateOpenScriptButton()
     {
         if (_OpenScriptButton == null)
@@ -300,9 +245,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         _OpenScriptButton.SetActive(show);
     }
 
-    /// <summary>Opens the currently selected entity's MiniScript source with
-    /// the OS's default handler for it - same mechanism the New Script
-    /// Entity dialog uses right after creating one (OpenWithDefaultApp).</summary>
     private void OpenSelectedEntityScript()
     {
         var instance = _Level.Entities.Find(e => e.Id == _CanvasView.SelectedEntityId);
@@ -320,11 +262,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         OpenWithDefaultApp(path);
     }
 
-    /// <summary>Resolves a Script TextAsset back to an on-disk path -
-    /// RuntimeEntityIO.GetSourcePath covers a runtime-created entity type
-    /// (see its own comment: no Unity import pipeline behind it), while an
-    /// Editor-imported one (MiniScriptImporter) only has an AssetDatabase
-    /// path, hence the #if.</summary>
     private static string GetScriptPath(TextAsset script)
     {
         string runtimePath = RuntimeEntityIO.GetSourcePath(script);
@@ -345,10 +282,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
         go.AddComponent<LayoutElement>().preferredWidth = width;
         go.GetComponent<Image>().color = new Color(0.25f, 0.25f, 0.25f, 1f);
 
-        // TMP_InputField expects textViewport to be a distinct child (with its
-        // own RectMask2D), not the input field's own rect - matching Unity's
-        // own TMP_InputField prefab structure here rather than the shortcut
-        // used before, which could make typed input behave unreliably.
+        // textViewport needs its own RectMask2D child, not the field's own rect.
         var viewportGO = new GameObject("Text Area", typeof(RectTransform), typeof(RectMask2D));
         viewportGO.transform.SetParent(go.transform, false);
         var viewportRect = (RectTransform)viewportGO.transform;
@@ -379,9 +313,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         return field;
     }
 
-    /// <summary>Returns the button's own background Image, so a caller that
-    /// wants to highlight it later (e.g. whichever tile layer is active)
-    /// can hang onto a reference instead of rebuilding the button.</summary>
     private static Image CreateButton(Transform parent, string label, UnityEngine.Events.UnityAction onClick, float width, float height = 28f, int fontSize = 14)
     {
         var go = new GameObject(label + " Button", typeof(RectTransform), typeof(Image), typeof(Button));
@@ -389,11 +320,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
 
         var layoutElement = go.AddComponent<LayoutElement>();
         layoutElement.preferredWidth = width;
-        // Without an explicit preferredHeight, a VerticalLayoutGroup with
-        // childForceExpandHeight = false (the Load list) collapses this
-        // button to zero height - visible label, but nothing clickable.
-        // The toolbar's HorizontalLayoutGroup masks the same gap by force-
-        // expanding height, which is why only the Load list showed this.
+        // Without preferredHeight, a non-expanding VerticalLayoutGroup collapses this to zero height.
         layoutElement.preferredHeight = height;
 
         var image = go.GetComponent<Image>();
@@ -473,8 +400,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
         for (int i = _LoadListContent.childCount - 1; i >= 0; i--)
             Destroy(_LoadListContent.GetChild(i).gameObject);
 
-        // The Play Test scratch slot is an implementation detail, not a
-        // level the user saved - never list it.
+        // Play Test's scratch slot isn't a real saved level - never list it.
         var levels = LevelIO.ListLevels().Where(name => name != PlayTestSession.LevelSlotName).ToList();
         Debug.Log($"[LevelEditor] Found {levels.Count} saved level(s) under {Application.persistentDataPath}/Levels");
         if (levels.Count == 0)
@@ -654,9 +580,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         return buttonImage;
     }
 
-    /// <summary>Greens out whichever entity-type button matches
-    /// ScreenCanvasView.ActiveEntityTypeId (the type that'll be placed next),
-    /// same pattern as UpdateActiveLayerButtonColors for the layer toggle.</summary>
     private void UpdateEntityPaletteButtonColors()
     {
         foreach (KeyValuePair<string, Image> entry in _EntityPaletteButtonImages)
@@ -664,12 +587,8 @@ public class LevelEditorRuntimeController : MonoBehaviour
     }
 
     // ------------------------------------------------------------------
-    // New Script Entity dialog - creates a real RuntimeEntityIO entity
-    // (a starter .ms file + a JSON record, both plain files under
-    // Application.persistentDataPath), so unlike the AssetDatabase-based
-    // version this used to be, it works the same in a standalone build as
-    // it does here. No Type Id field or script picker - see OpenDialog/
-    // CreateNewScriptEntity for why.
+    // New Script Entity dialog - creates a RuntimeEntityIO entity (a
+    // starter .ms file + JSON record under persistentDataPath).
     // ------------------------------------------------------------------
 
     private void OpenNewScriptEntityDialog()
@@ -688,8 +607,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
             typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
         go.transform.SetParent(parent, false);
 
-        // Centered - this is a modal-ish dialog, not a corner panel like
-        // everything else, since it needs room for several fields at once.
+        // Centered - a modal dialog, not a corner panel.
         var rect = (RectTransform)go.transform;
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -741,14 +659,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         return CreateCompactInputField(parent, 600, "", 18);
     }
 
-    /// <summary>
-    /// Creates a new runtime script entity (RuntimeEntityIO - a starter .ms
-    /// file plus a JSON record under persistentDataPath, no Unity asset
-    /// involved) from Display Name/Category/Icon/Is Spawn Point, adds it to
-    /// EntityCatalog immediately so it shows up in the palette without a
-    /// reload, and opens the new script in whatever app the OS has
-    /// associated with .ms files.
-    /// </summary>
     private void CreateNewScriptEntity()
     {
         string displayName = _NewEntityDisplayNameField.text.Trim();
@@ -771,10 +681,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         OpenWithDefaultApp(scriptPath);
     }
 
-    /// <summary>Lowercases, strips anything that isn't a letter/digit, and
-    /// collapses runs of stripped characters into single underscores - "Fire
-    /// Trap!" becomes "fire_trap". Falls back to "entity" if that leaves
-    /// nothing usable.</summary>
     private static string SlugifyTypeId(string displayName)
     {
         var builder = new System.Text.StringBuilder();
@@ -790,8 +696,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         return string.IsNullOrEmpty(slug) ? "entity" : slug;
     }
 
-    /// <summary>Appends "_2", "_3", ... until the id no longer collides with
-    /// an existing entity type.</summary>
     private static string MakeUniqueTypeId(string baseId)
     {
         if (!EntityCatalog.Lookup.ContainsKey(baseId))
@@ -808,35 +712,12 @@ public class LevelEditorRuntimeController : MonoBehaviour
         return candidate;
     }
 
-    /// <summary>
-    /// Launches the OS's default handler for the given file (e.g. the
-    /// user's usual text/code editor for a .ms file) - UseShellExecute is
-    /// what makes Process.Start defer to file-type associations instead of
-    /// trying to execute the file directly. Not guaranteed: a machine with
-    /// no .ms association at all may show Windows' own "how do you want to
-    /// open this" picker instead, or in a locked-down environment fail
-    /// outright - both just logged, since the entity was already created
-    /// successfully either way; this is a convenience on top of that, not
-    /// a requirement for it.
-    /// </summary>
-    /// <summary>Opens RuntimeResourceLoader.CustomContentDirectory in the OS
-    /// file browser - a real folder on disk in a shipped build (unlike
-    /// Assets/Resources, which only exists inside the Unity project and gets
-    /// baked into the build's data files, unreachable by a player after the
-    /// fact) that setSprite/setAudioClip/entity-icon lookups now check first.
-    /// Created on demand here rather than assuming it already exists, so the
-    /// button always opens *something* even before a player's added anything.</summary>
     private static void OpenResourcesFolder()
     {
         Directory.CreateDirectory(RuntimeResourceLoader.CustomContentDirectory);
         OpenWithDefaultApp(RuntimeResourceLoader.CustomContentDirectory);
     }
 
-    /// <summary>Opens RuntimeEntityIO.EntitiesDirectory - where every
-    /// runtime-created MiniScript entity's .ms file actually lives - rather
-    /// than Assets/Scripts (this project's whole C# codebase, not
-    /// modder-facing content, and Editor-only besides). Same on-demand
-    /// creation reasoning as OpenResourcesFolder above.</summary>
     private static void OpenScriptsFolder()
     {
         Directory.CreateDirectory(RuntimeEntityIO.EntitiesDirectory);
@@ -855,9 +736,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         }
     }
 
-    /// <summary>Rebuilds the entity palette panel from scratch so a newly
-    /// created entity type (or any other EntityCatalog change) shows up
-    /// without needing to reopen the level editor.</summary>
     private void RebuildEntityPalettePanel()
     {
         bool wasActive = _EntityPalettePanel.activeSelf;
@@ -871,8 +749,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
     // Entity inspector (component property overrides)
     // ------------------------------------------------------------------
 
-    // Bottom-right - the one corner nothing else occupies (Load is top-left,
-    // the tile/entity palettes are top-right, Status is bottom-left).
+    // Bottom-right - the only corner nothing else uses.
     private GameObject CreateEntityInspectorPanel(Transform parent)
     {
         var go = new GameObject(
@@ -901,17 +778,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         return go;
     }
 
-    /// <summary>
-    /// Rebuilds the inspector's contents for whatever ScreenCanvasView.SelectedEntityId
-    /// currently is. The property schema is never authored on the
-    /// EntityDefinition itself (see its own comment) - for a NativePrefab
-    /// entity it comes from whichever INativePrefabAdapter targets a
-    /// component on its Prefab (NativePrefabAdapterRegistry); for a
-    /// ScriptBehavior entity it comes from running its Script once to
-    /// collect its expose(...) calls (RenderScriptProperties). Called on
-    /// every selection change and after every edit/reset, since edits can
-    /// change which fields are highlighted as overridden.
-    /// </summary>
     private void RefreshEntityInspector()
     {
         _InspectedEntityId = _CanvasView.SelectedEntityId;
@@ -975,13 +841,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Runs the script once (ScriptPropertySchemaCollector - a throwaway
-    /// Interpreter, not the real gameplay one) purely to collect its
-    /// expose(key, defaultValue) calls, then renders the same kind of rows
-    /// as a NativePrefab's adapter Schema, keyed under the shared
-    /// ScriptPropertyResolver.AdapterId instead of a per-prefab adapter id.
-    /// </summary>
     private void RenderScriptProperties(EntityInstance instance, EntityDefinition def)
     {
         if (def.Script == null)
@@ -1016,18 +875,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         label.color = subHeader ? new Color(1f, 1f, 1f, 0.6f) : Color.white;
     }
 
-    /// <summary>
-    /// One editable row for a single PropertyDef: a label (amber when an
-    /// override exists), a type-appropriate control pre-filled with the
-    /// given effective value (already resolved by the caller - a
-    /// NativePrefab's adapter.Read or a ScriptBehavior's PropertyDef.
-    /// DefaultValue, override applied either way), and a reset button that
-    /// clears just this property's override. Edits commit on end-edit/
-    /// value-changed via SetOverride, then rebuild the whole panel so the
-    /// highlight and (for numeric fields) any range clamping are reflected
-    /// immediately. adapterId is just the ComponentOverrides key to write
-    /// under - see EntityPropertyResolver/ScriptPropertyResolver.
-    /// </summary>
     private void CreatePropertyRow(Transform parent, EntityInstance instance, string adapterId, PropertyDef propDef, PropertyValue value)
     {
         bool isOverridden = instance.ComponentOverrides.TryGetValue(adapterId, out var existingOverrides)
@@ -1133,7 +980,7 @@ public class LevelEditorRuntimeController : MonoBehaviour
                     if (ColorUtility.TryParseHtmlString(text, out Color parsed))
                         Commit(PropertyValue.FromColor(parsed));
                     else
-                        RefreshEntityInspector(); // invalid hex - just revert the display
+                        RefreshEntityInspector(); // invalid hex, revert display
                 });
                 break;
             }
@@ -1183,10 +1030,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
             instance.ComponentOverrides.Remove(adapterId);
     }
 
-    /// <summary>Minimal TMP_InputField for inline inspector rows - same
-    /// viewport/mask structure CreateInputField uses (TMP_InputField needs
-    /// textViewport to be a distinct masked child), just without a
-    /// placeholder since these are always pre-filled with a real value.</summary>
     private static TMP_InputField CreateCompactInputField(Transform parent, float width, string initialText, int fontSize = 12)
     {
         var go = new GameObject("Field", typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
@@ -1249,14 +1092,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
 
     private void SaveLevel() => SaveInternal();
 
-    /// <summary>
-    /// Saves under the Level Name field's current text. Shared by Save and
-    /// Rename - the only difference is Rename additionally deletes whatever
-    /// this level was previously saved as (see RenameLevel), so plain Save
-    /// still works as "Save As" for anyone who wants that (type a new name,
-    /// hit Save, and the old file is left alone as a separate level).
-    /// Returns the name saved under, or null if saving was blocked/skipped.
-    /// </summary>
     private string SaveInternal()
     {
         if (_Level == null)
@@ -1280,12 +1115,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         return name;
     }
 
-    /// <summary>
-    /// Renames the current level: saves under the Level Name field's
-    /// current text, and - if this level was already saved under a
-    /// different name - deletes that old file, so the rename doesn't leave
-    /// an orphaned duplicate behind the way plain Save alone would.
-    /// </summary>
     private void RenameLevel()
     {
         string oldName = _LoadedLevelName;
@@ -1300,13 +1129,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Saves the in-memory level to the Play Test scratch slot and hands off
-    /// to the PlayTest scene, which boots real gameplay from it via
-    /// LevelInstantiator - no manual scene duplication or prefab wiring per
-    /// playtest. Press the in-game "back to editor" key (F1 by default) to
-    /// return here with this same level still loaded.
-    /// </summary>
     private void PlayTestLevel()
     {
         if (_Level == null || _Level.Screens.Count == 0)
@@ -1332,7 +1154,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         SceneManager.LoadScene(_PlayTestSceneName);
     }
 
-    /// <summary>True if every screen has at least one entity whose type is marked IsSpawnPoint.</summary>
     private bool AllScreensHaveSpawnPoint(out int missingScreenId)
     {
         foreach (var screen in _Level.Screens)

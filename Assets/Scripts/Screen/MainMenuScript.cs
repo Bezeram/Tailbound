@@ -5,8 +5,7 @@ public class MainMenuScript : MonoBehaviour
 {
     public void NewGame()
     {
-        // Delete save file
-        File.Delete(SaveSystem.SaveFilePath); 
+        File.Delete(SaveSystem.SaveFilePath);
         StartGame("Level_1");
     }
 

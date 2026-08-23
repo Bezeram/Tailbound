@@ -2,12 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// The canonical, source-of-truth description of a level. Authored and
-/// edited entirely at runtime by the level editor UI, then written to disk
-/// as JSON via LevelIO - there is no Unity scene or ScriptableObject asset
-/// backing this data.
-/// </summary>
 [Serializable]
 public class LevelAsset
 {
@@ -40,10 +34,6 @@ public class LevelAsset
         return Screens.Find(s => s.Id == id);
     }
 
-    /// <summary>
-    /// Whether candidate would overlap any screen other than excludeId.
-    /// Screens that merely touch at an edge are not considered overlapping.
-    /// </summary>
     public bool ScreenOverlaps(RectInt candidate, int excludeId)
     {
         foreach (var screen in Screens)
@@ -58,10 +48,6 @@ public class LevelAsset
         return false;
     }
 
-    /// <summary>
-    /// Removes a screen and every tile/entity owned by it, so nothing is
-    /// left referencing a ScreenId that no longer exists.
-    /// </summary>
     public void RemoveScreen(int screenId)
     {
         Screens.RemoveAll(s => s.Id == screenId);

@@ -3,11 +3,6 @@ using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-/// <summary>
-/// One paintable tile within a <see cref="Tileset"/>. Serves both the
-/// Background and Foreground layers - <see cref="CollisionType"/> is simply
-/// unused when painted on the Background.
-/// </summary>
 [Serializable]
 public class TileDef
 {
@@ -19,10 +14,8 @@ public class TileDef
     public Sprite Sprite;
     public RuleTile RuleTile;
 
-    // EnumToggleButtons instead of a dropdown: Odin's dropdown-selector popup
-    // (OdinMenuTree) crashes on this Unity version with a MissingMethodException
-    // from a removed/changed internal UIElements API. Toggle buttons use a
-    // different, simpler drawer that avoids that code path entirely.
+    // EnumToggleButtons, not a dropdown - Odin's dropdown popup crashes on
+    // this Unity version (MissingMethodException from a removed UIElements API).
     [EnumToggleButtons]
     public TileCollisionType CollisionType = TileCollisionType.None;
     public string Category;

@@ -2,26 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-/// <summary>
-/// Picks the correct sprite for a TileDef.RuleTile by evaluating its rules
-/// against neighboring cells - within the same screen, and also across into
-/// whichever adjacent screen (if any) actually owns a neighbor cell that
-/// falls outside this one's own bounds, so a rule tile paints correctly
-/// right up to a shared screen edge instead of treating everything beyond
-/// its own screen as empty. Works without a real Tilemap component - the
-/// runtime editor's canvas renders painted cells as pooled uGUI Images
-/// (TileCellPool), deliberately not an actual Tilemap (see LevelInstantiator's
-/// history with that). Reads the RuleTile asset's own rule data directly
-/// rather than going through Tilemap/ITilemap, which would need a real
-/// Tilemap in the loop.
-///
-/// Scope: only literal "This"/"NotThis" neighbor matching, first matching
-/// rule wins (same precedence a real Tilemap uses), and only a rule's first
-/// sprite - no random/animated output, no RuleTransform rotation/mirror
-/// variant matching. Covers ordinary terrain autotiling; a RuleTile that
-/// relies on rotation/mirroring or random sprite variants won't render
-/// identically to how it would inside a real Tilemap.
-/// </summary>
 public static class RuleTileEvaluator
 {
     public static Sprite ResolveSprite(
@@ -62,13 +42,6 @@ public static class RuleTileEvaluator
         return true;
     }
 
-    /// <summary>
-    /// Resolves one neighbor cell's TileId, whether it belongs to this
-    /// screen or - if the local coordinate falls outside this screen's own
-    /// bounds - to whichever other screen's bounds contain that world cell.
-    /// A neighbor position that isn't owned by any screen at all (open space
-    /// past a level's edge) is just empty, same as before.
-    /// </summary>
     private static bool TryGetNeighborTileId(
         Vector2Int localCell, Dictionary<Vector2Int, TileRef> sameScreenCells,
         ScreenDef screen, LevelAsset level, TileLayer layer, out string tileId)
@@ -100,8 +73,7 @@ public static class RuleTileEvaluator
                 return true;
             }
 
-            // Found the screen that owns this world cell, but it has no
-            // tile there - definitely empty, no need to keep searching.
+            // This screen owns the cell but has no tile there - definitely empty.
             break;
         }
 

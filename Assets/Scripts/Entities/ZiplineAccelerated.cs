@@ -33,23 +33,21 @@ public class ZiplineAccelerated : ActivatableEntity
     [ReadOnly, ShowInInspector] private bool IsActive;
     void ReattachBelt()
     {
-        // Reposition connecting belt after moving the start and end points.
+        // Repositions the belt after the start/end points move.
         float delta_x = _StartTransform.position.x - _EndTransform.position.x;
         float delta_y = _StartTransform.position.y - _EndTransform.position.y;
 
-        // Reposition attachment
         if (AttachmentAtStart)
         {
             _AttachmentTransform.position = _StartTransform.position;
         }
 
-        // Retransform belt
         _BeltTransform.position = (_StartTransform.position + _EndTransform.position) / 2.0f;
         _BeltTransform.localScale = new Vector3(Vector3.Distance(_StartTransform.position, _EndTransform.position) * 0.20f, 1.0f, 1.0f);
         _BeltTransform.rotation = Quaternion.Euler(0.0f, 0.0f, 180.0f / Mathf.PI * Mathf.Atan2(delta_y, delta_x));
     }
 
-    // Where the ZipLine is in between the StartPoint and EndPoint
+    // Progress between StartPoint and EndPoint
     private float _Speed = 0f;
     private Vector3 _Direction = Vector2.zero;
     private float _TimerRetraction = 0f;
@@ -57,7 +55,6 @@ public class ZiplineAccelerated : ActivatableEntity
 
     void Awake()
     {
-        // Init referenced transforms
         if (_StartTransform == null)
             _StartTransform = transform.Find("StartPoint");
         if (_EndTransform == null)
@@ -72,7 +69,7 @@ public class ZiplineAccelerated : ActivatableEntity
             _AudioSource.volume = 0.3f;
         }
 
-        // By default, the Zipline is ready to start the moment it is instantiated.
+        // Ready to start immediately on instantiation.
         _TimerReset = 2 * Settings.Zipline.DelayResetSeconds;
     }
 
@@ -93,10 +90,8 @@ public class ZiplineAccelerated : ActivatableEntity
 
     void Start()
     {
-        // Initially off
         IsActive = false;
         CurrentState = State.Idle;
-        // Init direction
         _AttachmentTransform.transform.position = _StartTransform.transform.position;
         _Direction = _EndTransform.transform.position - _StartTransform.transform.position;
         _Direction.Normalize();
@@ -104,10 +99,8 @@ public class ZiplineAccelerated : ActivatableEntity
 
     void Update()
     {
-        // Only run in Editor Mode
         if (!Application.isPlaying)
         {
-            // Reattach belt
             ReattachBelt();
             return;
         }
@@ -118,11 +111,9 @@ public class ZiplineAccelerated : ActivatableEntity
                 {
                     _TimerReset += Time.deltaTime;
 
-                    // Start moving if active
                     if (IsActive && _TimerReset > Settings.Zipline.DelayResetSeconds)
                     {
                         CurrentState = State.Forward;
-                        // Play sound
                         _AudioSource.clip = _ForwardAudioClip;
                         _AudioSource.loop = false;
                         _AudioSource.Play();
@@ -131,18 +122,14 @@ public class ZiplineAccelerated : ActivatableEntity
                 }
             case State.Forward:
                 {
-                    // Accelerate
                     _Speed += Time.deltaTime * Settings.Zipline.AccelerationForward;
-                    // Cap max speed
                     _Speed = Mathf.Clamp(_Speed, 0f, Settings.Zipline.MaxSpeedForward);
 
                     _AttachmentTransform.position += _Direction * Time.deltaTime * _Speed;
-                    // Check if the end has been reached
                     if (AttachmentReachedAt(_StartTransform, _EndTransform))
                     {
                         CurrentState = State.IdleEnd;
                         _Speed = 0f;
-                        // Play sound
                         _AudioSource.clip = _ImpactAudioClip;
                         _AudioSource.loop = false;
                         _AudioSource.Play();
@@ -152,12 +139,10 @@ public class ZiplineAccelerated : ActivatableEntity
             case State.IdleEnd:
                 {
                     _TimerRetraction += Time.deltaTime;
-                    // Wait a bit before starting to retract
                     if (_TimerRetraction > Settings.Zipline.DelayRetractionSeconds)
                     {
                         CurrentState = State.Backward;
                         _TimerRetraction = 0f;
-                        // Play sound
                         _AudioSource.clip = _RetractionAudioClip;
                         _AudioSource.loop = true;
                         _AudioSource.Play();
@@ -166,19 +151,15 @@ public class ZiplineAccelerated : ActivatableEntity
                 break;
             case State.Backward:
                 {
-                    // Accelerate
                     _Speed += Time.deltaTime * Settings.Zipline.AccelerationBackwards;
-                    // Cap max speed
                     _Speed = Mathf.Clamp(_Speed, 0f, Settings.Zipline.MaxSpeedBackwards);
 
                     _AttachmentTransform.transform.position -= _Direction * Time.deltaTime * _Speed;
-                    // Check if the ZipLine has returned to the beginning
                     if (AttachmentReachedAt(_EndTransform, _StartTransform))
                     {
                         CurrentState = State.Idle;
                         _Speed = 0f;
                         _TimerReset = 0f;
-                        // Play sound
                         _AudioSource.clip = _ResetAudioClip;
                         _AudioSource.loop = false;
                         _AudioSource.Play();
