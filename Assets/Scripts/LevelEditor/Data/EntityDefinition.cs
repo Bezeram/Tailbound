@@ -8,7 +8,6 @@ public class EntityDefinition : SerializedScriptableObject
     public string TypeId;
     public string DisplayName;
     public Sprite Icon;
-    public string Category;
 
     // Grid snapping is a global editor mode, not a per-type default - no field here for it.
 

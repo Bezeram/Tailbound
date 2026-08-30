@@ -92,8 +92,21 @@ public class ScriptEntityRunner : MonoBehaviour, IExposePropertyHost
             if (lastWriteUtc == _WatchedFileLastWriteUtc)
                 return false;
 
+            string text;
+            try
+            {
+                text = File.ReadAllText(_WatchedFilePath);
+            }
+            catch (IOException)
+            {
+                // Locked by whatever's editing it (e.g. a save in progress) -
+                // _WatchedFileLastWriteUtc is left unset so this retries next
+                // frame instead of silently skipping the reload.
+                return false;
+            }
+
             _WatchedFileLastWriteUtc = lastWriteUtc;
-            _Script = new TextAsset(File.ReadAllText(_WatchedFilePath));
+            _Script = new TextAsset(text);
             return _Script.text != _CompiledSource;
         }
 

@@ -40,7 +40,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
     // New Script Entity dialog - creates a real RuntimeEntityIO entity.
     private GameObject _NewScriptEntityPanel;
     private TMP_InputField _NewEntityDisplayNameField;
-    private TMP_InputField _NewEntityCategoryField;
     private TMP_InputField _NewEntityIconPathField;
     private Toggle _NewEntityIsSpawnPointToggle;
 
@@ -78,8 +77,36 @@ public class LevelEditorRuntimeController : MonoBehaviour
             RefreshEntityInspector();
             UpdateOpenScriptButton();
         }
+        else
+        {
+            CheckInspectedScriptForChanges();
+        }
 
         HandleKeybinds();
+    }
+
+    // Cheap per-frame poll (a single file-timestamp check) for whatever
+    // ScriptBehavior entity is currently inspected, so editing its .ms file
+    // externally refreshes the expose()'d properties shown here live -
+    // without this, the change is only picked up on the next EntityCatalog
+    // load, i.e. an app restart.
+    private void CheckInspectedScriptForChanges()
+    {
+        if (_InspectedEntityId < 0)
+            return;
+
+        var instance = _Level.Entities.Find(e => e.Id == _InspectedEntityId);
+        if (instance == null || !EntityCatalog.Lookup.TryGetValue(instance.TypeId, out var def)
+            || def.Backing != EntityBackingKind.ScriptBehavior || def.Script == null)
+            return;
+
+        var reloaded = RuntimeEntityIO.ReloadIfChanged(def.Script);
+        if (reloaded == def.Script)
+            return;
+
+        def.Script = reloaded;
+        Debug.Log($"[LevelEditor] '{def.TypeId}': script changed on disk - refreshing exposed properties.");
+        RefreshEntityInspector();
     }
 
     private void HandleKeybinds()
@@ -594,7 +621,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
     private void OpenNewScriptEntityDialog()
     {
         _NewEntityDisplayNameField.text = "";
-        _NewEntityCategoryField.text = "script";
         _NewEntityIconPathField.text = "";
         _NewEntityIsSpawnPointToggle.isOn = false;
         _NewScriptEntityPanel.SetActive(true);
@@ -627,7 +653,6 @@ public class LevelEditorRuntimeController : MonoBehaviour
         CreateInspectorHeader(go.transform, "New Script Entity");
 
         _NewEntityDisplayNameField = CreateLabeledField(go.transform, "Display Name");
-        _NewEntityCategoryField = CreateLabeledField(go.transform, "Category");
         _NewEntityIconPathField = CreateLabeledField(go.transform, "Icon (Resources path to a Sprite, optional)");
 
         var spawnRowGO = new GameObject("SpawnRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
@@ -669,11 +694,10 @@ public class LevelEditorRuntimeController : MonoBehaviour
         }
 
         string typeId = MakeUniqueTypeId(SlugifyTypeId(displayName));
-        string category = _NewEntityCategoryField.text.Trim();
         string iconPath = _NewEntityIconPathField.text.Trim();
         bool isSpawnPoint = _NewEntityIsSpawnPointToggle.isOn;
 
-        var def = RuntimeEntityIO.Create(typeId, displayName, category, isSpawnPoint, iconPath, out string scriptPath);
+        var def = RuntimeEntityIO.Create(typeId, displayName, isSpawnPoint, iconPath, out string scriptPath);
         EntityCatalog.AddRuntimeDefinition(def);
         RebuildEntityPalettePanel();
         _NewScriptEntityPanel.SetActive(false);
@@ -848,6 +872,8 @@ public class LevelEditorRuntimeController : MonoBehaviour
             CreateLabel(_EntityInspectorContent, "This entity type has no Script assigned.", 18);
             return;
         }
+
+        def.Script = RuntimeEntityIO.ReloadIfChanged(def.Script);
 
         var schema = _ScriptPropertySource.GetExposedProperties(def);
         if (schema.Count == 0)

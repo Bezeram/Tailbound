@@ -10,7 +10,6 @@ public static class RuntimeEntityIO
     {
         public string TypeId;
         public string DisplayName;
-        public string Category;
         public bool IsSpawnPoint;
         public string ScriptFileName;
         // Resources-folder path, no extension; empty/null means no icon.
@@ -22,13 +21,61 @@ public static class RuntimeEntityIO
     // On-disk source file for a runtime-built TextAsset; ScriptEntityRunner
     // polls it for live-reload.
     private static readonly Dictionary<TextAsset, string> _SourcePaths = new();
+    private static readonly Dictionary<TextAsset, DateTime> _SourceLastWriteUtc = new();
 
     public static string GetSourcePath(TextAsset script)
     {
         return script != null && _SourcePaths.TryGetValue(script, out var path) ? path : null;
     }
 
-    public static EntityDefinition Create(string typeId, string displayName, string category, bool isSpawnPoint, string iconPath, out string scriptPath)
+    // Reloads `script` from disk if its source file changed since the last
+    // check - used by the level editor's inspector to pick up expose()'d
+    // properties live, instead of needing the whole app restarted. Returns
+    // the same instance (no-op) for a TextAsset with no tracked source path
+    // (e.g. an Editor-imported one, which Unity's own import pipeline
+    // already keeps current), if the file's gone, or if nothing changed.
+    public static TextAsset ReloadIfChanged(TextAsset script)
+    {
+        if (script == null)
+            return null;
+
+        string path = GetSourcePath(script);
+        if (path == null || !File.Exists(path))
+            return script;
+
+        var writeUtc = File.GetLastWriteTimeUtc(path);
+        if (_SourceLastWriteUtc.TryGetValue(script, out var known) && writeUtc == known)
+            return script;
+
+        string text;
+        try
+        {
+            text = File.ReadAllText(path);
+        }
+        catch (IOException)
+        {
+            // Locked by whatever's editing it (e.g. a save in progress) -
+            // try again next call rather than recording writeUtc as seen.
+            return script;
+        }
+
+        if (text == script.text)
+        {
+            // Touched but content-identical - just record it, no need to
+            // replace the TextAsset (its .text is already correct).
+            _SourceLastWriteUtc[script] = writeUtc;
+            return script;
+        }
+
+        var reloaded = new TextAsset(text) { name = script.name };
+        _SourcePaths.Remove(script);
+        _SourcePaths[reloaded] = path;
+        _SourceLastWriteUtc.Remove(script);
+        _SourceLastWriteUtc[reloaded] = writeUtc;
+        return reloaded;
+    }
+
+    public static EntityDefinition Create(string typeId, string displayName, bool isSpawnPoint, string iconPath, out string scriptPath)
     {
         Directory.CreateDirectory(EntitiesDirectory);
 
@@ -40,7 +87,6 @@ public static class RuntimeEntityIO
         {
             TypeId = typeId,
             DisplayName = displayName,
-            Category = category,
             IsSpawnPoint = isSpawnPoint,
             ScriptFileName = scriptFileName,
             IconPath = iconPath,
@@ -84,7 +130,6 @@ public static class RuntimeEntityIO
         var def = ScriptableObject.CreateInstance<EntityDefinition>();
         def.TypeId = record.TypeId;
         def.DisplayName = record.DisplayName;
-        def.Category = record.Category;
         def.IsSpawnPoint = record.IsSpawnPoint;
         def.Backing = EntityBackingKind.ScriptBehavior;
         def.Script = scriptAsset;

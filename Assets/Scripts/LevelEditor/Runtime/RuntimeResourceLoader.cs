@@ -7,8 +7,8 @@ public static class RuntimeResourceLoader
 {
     public static string CustomContentDirectory => Path.Combine(Application.persistentDataPath, "Resources");
 
-    // 100 is Unity's default for a freshly-imported texture - the least surprising guess.
-    private const float DefaultPixelsPerUnit = 100f;
+    // Matches the project's own pixel-art convention (16px tiles = 1 world unit).
+    private const float PixelsPerUnit = 16f;
 
     private static readonly string[] SpriteExtensions = { ".png", ".jpg", ".jpeg" };
 
@@ -66,9 +66,11 @@ public static class RuntimeResourceLoader
                     return null;
                 }
 
+                // Point, not the Texture2D default of Bilinear - crisp pixel art, no edge blur.
+                texture.filterMode = FilterMode.Point;
                 texture.name = Path.GetFileNameWithoutExtension(filePath);
                 return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
-                    new Vector2(0.5f, 0.5f), DefaultPixelsPerUnit);
+                    new Vector2(0.5f, 0.5f), PixelsPerUnit, 0, SpriteMeshType.FullRect);
             }
             catch (Exception exception)
             {
