@@ -32,15 +32,27 @@ public class Spikes : MonoBehaviour
     
     private readonly Vector2 _ExtendDirection = Vector2.right;
     
+    // Runs at real runtime too (unlike OnValidate) - needed so a
+    // SpikesAdapter-applied Direction override actually rotates a
+    // LevelInstantiator-built instance, not just an Editor-placed one.
+    public void ApplyDirection()
+    {
+        float angle = (int)Direction * 90;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+    }
+
+    void Awake()
+    {
+        ApplyDirection();
+    }
+
     void OnValidate()
     {
         if (_Collider == null)
             _Collider = GetComponent<BoxCollider2D>();
-        
-        SnapCountToStep();
 
-        float angle = (int)Direction * 90;
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        SnapCountToStep();
+        ApplyDirection();
 
         if (Mathf.Abs(Count - 1) <= 0e-4)
         {

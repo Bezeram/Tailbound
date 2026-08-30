@@ -6,6 +6,7 @@ public static class NativePrefabAdapterRegistry
     private static readonly List<INativePrefabAdapter> _Adapters = new()
     {
         new SpringAdapter(),
+        new SpikesAdapter(),
     };
 
     public static bool TryGetForPrefab(GameObject prefab, out INativePrefabAdapter adapter)

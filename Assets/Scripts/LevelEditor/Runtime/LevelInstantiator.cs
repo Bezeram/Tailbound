@@ -1,10 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 public class LevelInstantiator : MonoBehaviour
 {
+    // Comfortably below every other sortingOrder used in the project (all default to 0).
+    private const int BackgroundSortingOrder = -100;
+
     [SerializeField] private GameObject _ScreenPrefab;
     [SerializeField] private GameObject _TilesPrefab;
     [SerializeField] private GameObject _PlayerPrefab;
@@ -135,6 +139,24 @@ public class LevelInstantiator : MonoBehaviour
         // Set layer for actual collisions
         int solidGroundLayer = LayerMask.NameToLayer("SolidGround");
         foregroundTilemap.gameObject.layer = solidGroundLayer;
+
+        // Background must render behind everything else - entities and
+        // Foreground all default to sortingOrder 0, so without this the two
+        // tilemaps' relative draw order isn't guaranteed.
+        var backgroundRenderer = backgroundTilemap.GetComponent<TilemapRenderer>();
+        if (backgroundRenderer != null)
+        {
+            backgroundRenderer.sortingOrder = BackgroundSortingOrder;
+            backgroundRenderer.sortingLayerID = SortingLayer.NameToID("Background");
+        }
+
+        var foregroundRenderer = foregroundTilemap.GetComponent<TilemapRenderer>();
+        if (foregroundRenderer != null)
+            foregroundRenderer.sortingLayerID = SortingLayer.NameToID("Solid");
+
+        // Composite avoids self-shadowing seams between adjacent solid tiles.
+        foregroundTilemap.gameObject.AddComponent<ShadowCaster2D>();
+        foregroundTilemap.gameObject.AddComponent<CompositeShadowCaster2D>();
 
         PaintTilemap(backgroundTilemap, level.Background, screenDef, tileCache, collidable: false);
         PaintTilemap(foregroundTilemap, level.Foreground, screenDef, tileCache, collidable: true);
