@@ -24,7 +24,7 @@ MonoBehaviour:
   Tiles:
   - Id: 1
     DisplayName: Ground (RuleTile)
-    Sprite: {fileID: 0}
+    Sprite: {fileID: 7899992400651793162, guid: 99a0526665290c14ab8e007005c34f1e, type: 3}
     RuleTile: {fileID: 11400000, guid: b14ca7511b8d6604aa8eaf6969a1cda3, type: 2}
     Category: 
   - Id: 2
