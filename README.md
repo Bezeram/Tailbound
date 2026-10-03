@@ -53,7 +53,7 @@ Grab onto anything grabbable, build up momentum, and let go at the right moment 
 - `expose("Speed", 3.0)` turns any script variable into a property you can edit per-instance in the editor's inspector.
 - Drop your own **PNG sprites and WAV sounds** into the mod folder and refer to them from scripts — no rebuild required.
 
-A small example, from `Assets/Scripts/LevelEditor/ScriptBehaviors/Examples/Blinker.ms`:
+A small example of an entity bobbing vertically:
 
 ```
 speed = expose("Speed", 3.0)
